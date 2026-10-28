@@ -2,12 +2,10 @@
 name = "lodijke-rust-cms"
 version = "1.0.0"
 edition = "2021"
-authors = ["Janna van Vrijberge"]
-description = "Self-hosted Rust Axum CMS & Solid POD Bridge voor Archief Familie Schot & Bout (Tholen & Bol van Lodijke)"
 
 [dependencies]
 axum = "0.7"
-tokio = { version = "1.39", features = ["full"] }
+tokio = { version = "1.38", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tower-http = { version = "0.5", features = ["fs", "cors"] }
