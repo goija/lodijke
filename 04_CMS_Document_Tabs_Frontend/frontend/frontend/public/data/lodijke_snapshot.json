@@ -1,0 +1,107 @@
+{
+  "data": {
+    "cmsRecords": [
+      {
+        "id": "1",
+        "code": "WOO-2026-369",
+        "titel": "Oesterperceel No. 369 - Bol van Lodijke & Oudelandse Visrechten",
+        "datum": "2026-10-15",
+        "categorie": "Visserij & Erfgoed",
+        "status": "Gevalideerd (Belanghebbende)"
+      },
+      {
+        "id": "2",
+        "code": "ARC-LOD-01",
+        "titel": "Archeologische Waarneming Kasteel Lodijke (-3,20m NAP)",
+        "datum": "2026-09-22",
+        "categorie": "Archeologie Schelde Delta",
+        "status": "Gearchiveerd"
+      },
+      {
+        "id": "3",
+        "code": "WOO-MOL-150",
+        "titel": "Visserijpercelen Molenplaat (150 ha) & Bergse Diepsluis",
+        "datum": "2026-10-02",
+        "categorie": "Natuur & Visrecht",
+        "status": "Actief Dossier"
+      }
+    ],
+    "grampsCore": [
+      {
+        "grampsId": "I0103",
+        "naam": "W. Bout",
+        "beroepStatus": "Rechthebbende / Erfgenaam Stamreeks",
+        "relatieReimerswaal": "Directe lijn erfopvolging en historische visrechten Verdronken Land van Reimerswaal",
+        "familieRelaties": ["F0042 (Gezin Guiljam-Bout)", "I0104 (M.J.M.M. Goijarts-Bout)"]
+      },
+      {
+        "grampsId": "I0104",
+        "naam": "M.J.M.M. Goijarts-Bout",
+        "beroepStatus": "Onderzoeker Geodesie, Historische Cartografie & Bestuursrecht",
+        "relatieReimerswaal": "Houder Oudelandse Visrecht & Belanghebbende Geopark Schelde Delta",
+        "familieRelaties": ["F0042 (Gezin Guiljam-Bout)", "I0103 (W. Bout)", "I0088 (C.M. Guiljam)"]
+      },
+      {
+        "grampsId": "I0088",
+        "naam": "Catharina Machalina (C.M.) Guiljam",
+        "beroepStatus": "Overlevende Watersnoodramp 1953 Sint-Maartensdijk",
+        "relatieReimerswaal": "Stamreeks Hein Guiljam (19e-eeuwse schaapherder Sint-Maartensdijk) & Reimerswaal",
+        "familieRelaties": ["F0042", "I0012 (Hein Guiljam)"]
+      }
+    ],
+    "geoParcels": [
+      {
+        "parcelId": "PERCEEL-369",
+        "naam": "Oesterperceel No. 369 (Bol van Lodijke)",
+        "gebied": "Oosterschelde / Verdronken Land van Reimerswaal",
+        "oppervlakteHa": 12.5,
+        "rdX": 68120,
+        "rdY": 388050,
+        "lat": 51.4772,
+        "lng": 4.1315,
+        "napDiepteM": -1.80,
+        "wooReferentie": "WOO-2026-369",
+        "geojsonPolygon": "{\"type\":\"Polygon\",\"coordinates\":[[[4.1280,51.4755],[4.1350,51.4755],[4.1350,51.4790],[4.1280,51.4790],[4.1280,51.4755]]]}"
+      },
+      {
+        "parcelId": "ARC-LOD-01",
+        "naam": "Kasteel Lodijke & Verdronken Dorp Lodijke",
+        "gebied": "Geopark Schelde Delta / Reimerswaal",
+        "oppervlakteHa": 4.2,
+        "rdX": 68450,
+        "rdY": 387600,
+        "lat": 51.4731,
+        "lng": 4.1362,
+        "napDiepteM": -3.20,
+        "wooReferentie": "ARC-LOD-01",
+        "geojsonPolygon": "{\"type\":\"Point\",\"coordinates\":[4.1362,51.4731]}"
+      },
+      {
+        "parcelId": "MOLENPLAAT-150",
+        "naam": "Visserijpercelen Molenplaat (150 ha)",
+        "gebied": "Bergse Diepsluis / Oosterschelde Kom",
+        "oppervlakteHa": 150.0,
+        "rdX": 72500,
+        "rdY": 390200,
+        "lat": 51.4965,
+        "lng": 4.1945,
+        "napDiepteM": -2.10,
+        "wooReferentie": "WOO-MOL-150",
+        "geojsonPolygon": "{\"type\":\"Polygon\",\"coordinates\":[[[4.1820,51.4910],[4.2070,51.4910],[4.2070,51.5020],[4.1820,51.5020],[4.1820,51.4910]]]}"
+      },
+      {
+        "parcelId": "STAD-REIMERSWAAL",
+        "naam": "Verdronken Stad Reimerswaal (Rijksmonument)",
+        "gebied": "Verdronken Land van Zuid-Beveland",
+        "oppervlakteHa": 45.0,
+        "rdX": 70200,
+        "rdY": 389100,
+        "lat": 51.4866,
+        "lng": 4.1614,
+        "napDiepteM": -1.50,
+        "wooReferentie": "WOO-REI-1530",
+        "geojsonPolygon": "{\"type\":\"Point\",\"coordinates\":[4.1614,51.4866]}"
+      }
+    ]
+  }
+}
