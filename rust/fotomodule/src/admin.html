@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fotomodule Beheer — Schot, Bout &amp; Bol van Lodijke</title>
+<style>
+  :root { --meekrab-700:#8b2229; --meekrab-800:#731b21; --meekrab-900:#561318; --meekrab-50:#fdf7f7; --sand:#f9f7f2; --border:#d8cfc4; --ink:#18181b; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--sand); color:var(--ink); font:400 16px/1.6 'Inter',system-ui,sans-serif; }
+  a { color:var(--meekrab-700); }
+  .wrap { max-width:1280px; margin:0 auto; padding:20px; }
+  header.top { background:var(--meekrab-800); color:#fff; border-bottom:3px solid var(--meekrab-900); }
+  header.top .wrap { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding:12px 20px; }
+  header.top h1 { font-size:1.05rem; margin:0; }
+  .mono { font-family:'JetBrains Mono',ui-monospace,monospace; }
+  .btn { min-height:40px; display:inline-flex; align-items:center; justify-content:center; padding:6px 14px; font-weight:600; font-size:.85rem; border-radius:7px; cursor:pointer; border:1.5px solid var(--border); background:#fff; color:var(--ink); transition:all .15s; }
+  .btn:hover { border-color:var(--meekrab-700); background:var(--meekrab-50); }
+  .btn-primary { background:var(--meekrab-700); border-color:var(--meekrab-900); color:#fff; }
+  .btn-danger { background:#fff; border-color:#c53030; color:#c53030; }
+  .input { min-height:40px; padding:6px 10px; font-size:.9rem; border-radius:7px; border:1.5px solid #c5b9ac; background:#fff; color:var(--ink); width:100%; }
+  .input:focus { outline:none; border-color:var(--meekrab-700); box-shadow:0 0 0 3px rgba(139,34,41,.14); }
+  .card { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:18px; margin-top:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-top:18px; }
+  .stat { background:var(--meekrab-800); color:#fff; border-radius:10px; padding:14px 16px; }
+  .stat .val { font-size:1.7rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
+  .stat .lbl { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; opacity:.85; }
+  .grid-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+  #dropzone { border:2px dashed var(--meekrab-700); background:var(--meekrab-50); border-radius:10px; padding:22px; text-align:center; margin-bottom:12px; transition:background .15s; }
+  #dropzone.drag { background:#faeaea; }
+  .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+  .photos { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:16px; }
+  .photo-card { background:#fff; border:1.5px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  .photo-card .meta-bar { background:var(--sand); border-bottom:1px solid var(--border); padding:5px 10px; display:flex; justify-content:space-between; font-size:.7rem; }
+  .photo-card img { width:100%; height:170px; object-fit:contain; background:var(--sand); cursor:zoom-in; }
+  .photo-card .body { padding:12px; flex:1; }
+  .photo-card .body h3 { font-size:.95rem; margin:0 0 4px; }
+  .photo-card .body p { font-size:.78rem; color:#52525b; margin:0; }
+  .photo-card .actions { display:flex; gap:6px; padding:10px; border-top:1px solid var(--border); }
+  table.tbl { width:100%; border-collapse:collapse; font-size:.85rem; }
+  table.tbl th { background:var(--meekrab-800); color:#fff; padding:9px; text-align:left; }
+  table.tbl td { padding:8px 9px; border-bottom:1px solid var(--border); }
+  #toast { position:fixed; top:14px; left:50%; transform:translateX(-50%); background:var(--meekrab-800); color:#fff; padding:10px 16px; border-radius:8px; display:none; z-index:99; font-size:.85rem; box-shadow:0 4px 14px rgba(0,0,0,.25); }
+  dialog { border:1.5px solid var(--border); border-radius:12px; padding:20px; max-width:640px; width:92vw; }
+  dialog::backdrop { background:rgba(0,0,0,.5); }
+  dialog h2 { margin:0 0 12px; font-size:1.05rem; color:var(--meekrab-800); }
+  #lightbox { position:fixed; inset:0; background:rgba(0,0,0,.85); display:none; align-items:center; justify-content:center; z-index:98; }
+  #lightbox img { max-width:94vw; max-height:86vh; border-radius:6px; }
+  .empty { text-align:center; color:#71717a; padding:40px; }
+  footer { text-align:center; font-size:.72rem; color:#71717a; padding:24px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Archief Familie Schot &amp; Bout — Fotomodule Beheer (Rust Axum)</h1>
+    <span class="mono" style="font-size:.72rem">Bol van Lodijke • Perceel 369 • Poort 8082</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="cards">
+    <div class="stat"><div class="val" id="statTotal">0</div><div class="lbl">Foto's totaal</div></div>
+    <div class="stat"><div class="val" id="statSize">0 MB</div><div class="lbl">Opslag</div></div>
+    <div class="stat"><div class="val" id="statCats">0</div><div class="lbl">Categorieen</div></div>
+    <div class="stat"><div class="val" id="statFiltered">0</div><div class="lbl">In huidige weergave</div></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 10px;font-size:1rem">Nieuwe foto('s) uploaden</h2>
+    <div id="dropzone">
+      <div style="font-weight:600">Sleep foto's hierheen of kies bestanden</div>
+      <div id="dz-status" class="mono" style="font-size:.75rem;color:#52525b">Nog geen bestand geselecteerd.</div>
+      <label class="btn btn-primary" style="margin-top:10px">Kies foto's<input id="fileInput" type="file" accept="image/*" multiple hidden /></label>
+    </div>
+    <div class="grid-form">
+      <input id="upTitle" class="input" placeholder="Titel van de foto" />
+      <input id="upCategory" class="input" list="catList" placeholder="Categorie" />
+      <input id="upYear" class="input" placeholder="Jaar (bijv. 1902)" />
+      <input id="upLocation" class="input" placeholder="Locatie (bijv. Tholen)" />
+      <input id="upDesc" class="input" placeholder="Toelichting" style="grid-column:1/-1" />
+    </div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="uploadAll()">Toevoegen aan fotoalbum</button>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="searchInput" class="input" style="width:220px" placeholder="Zoek titel, beschrijving, locatie..." oninput="refresh()" />
+        <select id="catFilter" class="input" style="width:220px" onchange="refresh()"><option value="">Alle categorieen</option></select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="setLayout('grid')">Kaarten</button>
+        <button class="btn" onclick="setLayout('table')">Tabel</button>
+        <button class="btn" onclick="exportJson()">Exporteer JSON</button>
+        <label class="btn">Importeer JSON<input id="importInput" type="file" accept=".json" hidden onchange="importJson(event)" /></label>
+        <button class="btn" onclick="refresh()">Ververs</button>
+      </div>
+    </div>
+    <div id="photoArea" class="photos"></div>
+    <div id="tableWrap" style="display:none;margin-top:16px;overflow-x:auto"></div>
+  </div>
+</div>
+
+<footer>Rust Axum fotomodule — data opgeslagen in data/photos.json, bestanden in uploads/</footer>
+
+<div id="toast"></div>
+<div id="lightbox" onclick="this.style.display='none'"><img id="lbImg" alt="Vergrote weergave" /></div>
+
+<dialog id="editDialog">
+  <h2>Foto bewerken</h2>
+  <div class="grid-form">
+    <input id="edTitle" class="input" placeholder="Titel" />
+    <input id="edCategory" class="input" placeholder="Categorie" />
+    <input id="edYear" class="input" placeholder="Jaar" />
+    <input id="edLocation" class="input" placeholder="Locatie" />
+    <input id="edDesc" class="input" placeholder="Toelichting" style="grid-column:1/-1" />
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+    <button class="btn" onclick="document.getElementById('editDialog').close()">Annuleren</button>
+    <button class="btn btn-primary" onclick="saveEdit()">Opslaan</button>
+  </div>
+</dialog>
+
+<datalist id="catList"></datalist>
+
+<script>
+const API = '/api/photos';
+let photos = [], layout = 'grid', editId = null;
+
+function fmtSize(b){ if(b>1048576) return (b/1048576).toFixed(1)+' MB'; if(b>1024) return (b/1024).toFixed(0)+' KB'; return b+' B'; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',3500); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadStats(){
+  const r = await fetch('/api/photos/stats'); const s = await r.json();
+  document.getElementById('statTotal').textContent = s.total;
+  document.getElementById('statSize').textContent = fmtSize(s.total_size_bytes);
+  document.getElementById('statCats').textContent = Object.keys(s.categories||{}).length;
+}
+
+async function loadCategories(){
+  const r = await fetch('/api/categories'); const cats = await r.json();
+  const sel = document.getElementById('catFilter'); const cur = sel.value;
+  sel.innerHTML = '<option value="">Alle categorieen</option>' + cats.map(c=>`<option ${cur===c?'selected':''}>${esc(c)}</option>`).join('');
+  document.getElementById('catList').innerHTML = cats.map(c=>`<option>${esc(c)}</option>`).join('');
+}
+
+async function refresh(){
+  const q = document.getElementById('searchInput').value.trim();
+  const cat = document.getElementById('catFilter').value;
+  const params = new URLSearchParams(); if(q) params.set('q',q); if(cat) params.set('category',cat);
+  const r = await fetch(API + (params.toString()?('?'+params.toString()):''));
+  photos = await r.json();
+  document.getElementById('statFiltered').textContent = photos.length;
+  render();
+}
+
+function render(){
+  const area = document.getElementById('photoArea'), tbl = document.getElementById('tableWrap');
+  if(!photos.length){
+    area.innerHTML='<div class="empty" style="grid-column:1/-1">Geen foto\'s gevonden (nog).</div>'; tbl.innerHTML=''; tbl.style.display='none';
+    area.style.display='grid'; return;
+  }
+  if(layout==='grid'){
+    tbl.style.display='none'; area.style.display='grid';
+    area.innerHTML = photos.map(p=>`
+      <div class="photo-card">
+        <div class="meta-bar"><span>${esc(p.category)}</span><span>${esc(p.year)}</span></div>
+        <img src="/uploads/${encodeURIComponent(p.filename)}" alt="${esc(p.title)}" loading="lazy" onclick="showLightbox('${p.id}')" />
+        <div class="body"><h3>${esc(p.title)}</h3><p>${esc(p.desc)}</p><p class="mono" style="font-size:.68rem;margin-top:4px">${esc(p.location)} • ${fmtSize(p.size_bytes)}</p></div>
+        <div class="actions">
+          <button class="btn" style="min-height:32px" onclick="openEdit('${p.id}')">Bewerk</button>
+          <button class="btn btn-danger" style="min-height:32px" onclick="removePhoto('${p.id}')">Verwijder</button>
+        </div>
+      </div>`).join('');
+  } else {
+    area.style.display='none'; tbl.style.display='block';
+    tbl.innerHTML = `<table class="tbl"><thead><tr><th>Beeld</th><th>Titel</th><th>Categorie</th><th>Jaar</th><th>Locatie</th><th>Grootte</th><th>Actie</th></tr></thead><tbody>${
+      photos.map(p=>`<tr><td><img src="/uploads/${encodeURIComponent(p.filename)}" style="width:72px;height:48px;object-fit:cover;border-radius:4px" loading="lazy" onclick="showLightbox('${p.id}')" /></td><td><strong>${esc(p.title)}</strong><div style="font-size:.72rem;color:#52525b">${esc(p.desc)}</div></td><td>${esc(p.category)}</td><td>${esc(p.year)}</td><td>${esc(p.location)}</td><td class="mono">${fmtSize(p.size_bytes)}</td><td><button class="btn" style="min-height:30px" onclick="openEdit('${p.id}')">Bewerk</button> <button class="btn btn-danger" style="min-height:30px" onclick="removePhoto('${p.id}')">Del</button></td></tr>`).join('')
+    }</tbody></table>`;
+  }
+}
+
+function setLayout(l){ layout=l; render(); toast(l==='grid'?'Kaartweergave':'Tabelweergave.'); }
+
+function showLightbox(id){ const p=photos.find(x=>x.id===id); if(!p) return; document.getElementById('lbImg').src='/uploads/'+encodeURIComponent(p.filename); document.getElementById('lightbox').style.display='flex'; }
+
+// ---------- Upload ----------
+let pendingFiles = [];
+function setFiles(files){ pendingFiles=[...files]; document.getElementById('dz-status').textContent = pendingFiles.length+' bestand(en) geselecteerd.'; }
+document.getElementById('fileInput').addEventListener('change', e=>setFiles(e.target.files));
+const dz=document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files.length)setFiles(e.dataTransfer.files);});
+
+async function uploadAll(){
+  if(!pendingFiles.length){ toast('Selecteer eerst een foto.'); return; }
+  let ok=0;
+  for(const f of pendingFiles){
+    const fd=new FormData(); fd.append('file',f);
+    fd.append('title',document.getElementById('upTitle').value);
+    fd.append('category',document.getElementById('upCategory').value);
+    fd.append('year',document.getElementById('upYear').value);
+    fd.append('location',document.getElementById('upLocation').value);
+    fd.append('desc',document.getElementById('upDesc').value);
+    const r=await fetch(API,{method:'POST',body:fd});
+    if(r.ok){ok++;}else{toast('Upload mislukt: '+(await r.text()));}
+  }
+  toast(ok+' foto(s) toegevoegd.');
+  pendingFiles=[]; document.getElementById('fileInput').value='';
+  document.getElementById('dz-status').textContent='Nog geen bestand geselecteerd.';
+  await Promise.all([loadStats(),loadCategories(),refresh()]);
+}
+
+// ---------- Bewerken / verwijderen ----------
+function openEdit(id){
+  const p=photos.find(x=>x.id===id); if(!p) return; editId=id;
+  edTitle.value=p.title; edCategory.value=p.category; edYear.value=p.year; edLocation.value=p.location; edDesc.value=p.desc;
+  document.getElementById('editDialog').showModal();
+}
+async function saveEdit(){
+  const body={ title:edTitle.value, category:edCategory.value, year:edYear.value, location:edLocation.value, desc:edDesc.value };
+  const r=await fetch(API+'/'+editId,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  document.getElementById('editDialog').close();
+  if(r.ok){ toast('Wijzigingen opgeslagen.'); await Promise.all([loadStats(),loadCategories(),refresh()]); } else toast('Opslaan mislukt.');
+}
+async function removePhoto(id){
+  if(!confirm('Deze foto definitief verwijderen (incl. bestand)?')) return;
+  const r=await fetch(API+'/'+id,{method:'DELETE'});
+  if(r.ok||r.status===204){ toast('Foto verwijderd.'); await Promise.all([loadStats(),refresh()]); } else toast('Verwijderen mislukt.');
+}
+
+// ---------- Export / Import ----------
+function exportJson(){
+  window.open('/api/photos/export','_blank');
+}
+async function importJson(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  try{
+    const arr=JSON.parse(await f.text());
+    const r=await fetch('/api/photos/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)});
+    const res=await r.json();
+    toast(`Import klaar: ${res.imported} toegevoegd, ${res.skipped} overgeslagen.`);
+    await Promise.all([loadStats(),loadCategories(),refresh()]);
+  }catch(e){ toast('Ongeldig JSON-bestand.'); }
+  ev.target.value='';
+}
+
+loadStats(); loadCategories(); refresh();
+</script>
+</body>
+</html>
