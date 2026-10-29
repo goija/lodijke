@@ -11,33 +11,33 @@
       </div>
     </header>
 
-    <!-- Navigatie Tabbladen met Hash Routing -->
+    <!-- Navigatie Tabbladen -->
     <nav class="tab-nav">
-      <a href="#sporen" :class="{ active: activeTab === 'sporen' }" @click="setTab('sporen')">
+      <button :class="{ active: activeTab === 'sporen' }" @click="setTab('sporen')">
         🗺️ Sporen & Kaarten (#sporen)
-      </a>
-      <a href="#dossiers" :class="{ active: activeTab === 'dossiers' }" @click="setTab('dossiers')">
+      </button>
+      <button :class="{ active: activeTab === 'dossiers' }" @click="setTab('dossiers')">
         🎣 Visserij Dossiers (#dossiers)
-      </a>
-      <a href="#percelen" :class="{ active: activeTab === 'percelen' }" @click="setTab('percelen')">
+      </button>
+      <button :class="{ active: activeTab === 'percelen' }" @click="setTab('percelen')">
         📍 Perceel 369 Details (#percelen)
-      </a>
+      </button>
     </nav>
 
     <main class="main-content">
-      <!-- Sectie 1: Sporen & Kaarten (Zichtbaar op #sporen) -->
+      <!-- Sectie 1: Sporen & Kaarten -->
       <section class="card" v-show="activeTab === 'sporen' || activeTab === 'kaarten'">
         <h2>🗺️ Geodetische Percelen & Historische Sporen (GeoJSON / Leaflet)</h2>
         <p>
           Interactieve kaartweergave met de 4 geodetische percelen uit <code>lodijke-percelen.geojson</code>, waaronder <strong>Oesterperceel No. 369</strong> op de Bol van Lodijke en de polder-klepduiker.
         </p>
         
-        <!-- Kaart container -->
-        <div ref="mapContainer" class="map-view"></div>
+        <!-- Uniek expliciet ID voor de Leaflet container -->
+        <div id="leaflet-map" ref="mapContainer" class="map-view"></div>
       </section>
 
       <!-- Sectie 2: Archiefstukken & Dossiers -->
-      <section class="card" v-show="activeTab === 'dossiers' || activeTab === 'sporen'">
+      <section class="card" v-show="activeTab === 'dossiers'">
         <div class="card-header">
           <h2>🎣 Archiefstukken & Concessie Dossiers</h2>
           <button @click="fetchGraphQLData" class="btn">⚡ Herlaad Gegevens</button>
@@ -66,15 +66,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-
-// Herstel standaard Leaflet marker iconen paden voor Vite builds
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: '[suspicious link removed]',
-  iconUrl: '[suspicious link removed]',
-  shadowUrl: '[suspicious link removed]',
-})
 
 const isConnected = ref(false)
 const statusText = ref('Verbinden...')
@@ -140,7 +131,7 @@ const geoJsonData = {
 
 const updateTabFromHash = () => {
   const hash = window.location.hash.replace('#', '')
-  if (hash) {
+  if (hash === 'sporen' || hash === 'dossiers' || hash === 'percelen') {
     activeTab.value = hash
   } else {
     activeTab.value = 'sporen'
@@ -154,17 +145,21 @@ const setTab = (tabName) => {
 
 const initMap = async () => {
   await nextTick()
-  if (!mapContainer.value) return
+  const el = document.getElementById('leaflet-map') || mapContainer.value
+  if (!el) return
 
   if (leafletMap) {
     leafletMap.remove()
     leafletMap = null
   }
 
-  // Initialiseer Leaflet
-  leafletMap = L.map(mapContainer.value).setView([51.51, 4.18], 12)
+  // Initialiseer Leaflet kaart
+  leafletMap = L.map(el, {
+    center: [51.51, 4.18],
+    zoom: 12
+  })
 
-  // OpenStreetMap tegellaag
+  // OpenStreetMap tegellaag via HTTPS
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors | Lodijke Geodata'
@@ -190,13 +185,13 @@ const initMap = async () => {
     }
   }).addTo(leafletMap)
 
-  // Zoom automatisch in
-  leafletMap.fitBounds(geoLayer.getBounds(), { padding: [20, 20] })
+  // Zoom in op de percelen
+  leafletMap.fitBounds(geoLayer.getBounds(), { padding: [30, 30] })
 
-  // Essentieel voor v-show / tabwissels: herberekend tegelafmetingen
-  setTimeout(() => {
-    if (leafletMap) leafletMap.invalidateSize()
-  }, 200)
+  // Meervoudige tegel-herberekening garandeert weergave op Vercel
+  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 100)
+  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 500)
+  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 1000)
 }
 
 watch(activeTab, async (newTab) => {
@@ -260,6 +255,7 @@ const fetchGraphQLData = async () => {
 onMounted(() => {
   updateTabFromHash()
   window.addEventListener('hashchange', updateTabFromHash)
+  window.addEventListener('resize', () => { if (leafletMap) leafletMap.invalidateSize() })
   fetchGraphQLData()
   initMap()
 })
@@ -316,19 +312,22 @@ onUnmounted(() => {
   display: flex;
   background-color: #661010;
   padding: 0 2rem;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
-.tab-nav a {
+.tab-nav button {
+  background: transparent;
+  border: none;
   color: #FFDDDD;
-  text-decoration: none;
   padding: 0.8rem 1.2rem;
   font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.2s;
 }
 
-.tab-nav a:hover, .tab-nav a.active {
+.tab-nav button:hover, .tab-nav button.active {
   color: white;
   border-bottom-color: #FFD700;
   background-color: rgba(255,255,255,0.1);
@@ -354,10 +353,11 @@ onUnmounted(() => {
 .card h2 { color: #8B1E1E; margin-top: 0; }
 
 .map-view {
-  height: 520px;
-  min-height: 520px;
-  width: 100%;
-  display: block;
+  height: 520px !important;
+  min-height: 520px !important;
+  width: 100% !important;
+  display: block !important;
+  position: relative !important;
   border-radius: 8px;
   border: 2px solid #8B1E1E;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

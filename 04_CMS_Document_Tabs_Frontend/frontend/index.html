@@ -3,7 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lodijke Master Platform - Vue 3 CMS & Geodetische Kaarten</title>
+    <title>Lodijke Master Platform - Vue 3 CMS & Kaarten</title>
+    <!-- Globale Leaflet CSS in head garandeert correcte tegel-positionering op Vercel -->
+    <link rel="stylesheet" href="[suspicious link removed]" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color: #F9F8F6;
+      }
+      .leaflet-container {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 500px !important;
+        z-index: 1;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
