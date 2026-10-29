@@ -13,7 +13,7 @@
 
     <!-- Navigatie Tabbladen -->
     <nav class="tab-nav">
-      <button :class="{ active: activeTab === 'sporen' }" @click="setTab('sporen')">
+      <button :class="{ active: activeTab === 'sporen' || activeTab === 'mappenboom' }" @click="setTab('sporen')">
         🗺️ Sporen & Kaarten (#sporen)
       </button>
       <button :class="{ active: activeTab === 'dossiers' }" @click="setTab('dossiers')">
@@ -25,14 +25,13 @@
     </nav>
 
     <main class="main-content">
-      <!-- Sectie 1: Sporen & Kaarten -->
-      <section class="card" v-show="activeTab === 'sporen' || activeTab === 'kaarten'">
+      <!-- Sectie 1: Sporen & Kaarten & Mappenboom -->
+      <section class="card" v-show="activeTab === 'sporen' || activeTab === 'kaarten' || activeTab === 'mappenboom'">
         <h2>🗺️ Geodetische Percelen & Historische Sporen (GeoJSON / Leaflet)</h2>
         <p>
           Interactieve kaartweergave met de 4 geodetische percelen uit <code>lodijke-percelen.geojson</code>, waaronder <strong>Oesterperceel No. 369</strong> op de Bol van Lodijke en de polder-klepduiker.
         </p>
         
-        <!-- Uniek expliciet ID voor de Leaflet container -->
         <div id="leaflet-map" ref="mapContainer" class="map-view"></div>
       </section>
 
@@ -131,7 +130,9 @@ const geoJsonData = {
 
 const updateTabFromHash = () => {
   const hash = window.location.hash.replace('#', '')
-  if (hash === 'sporen' || hash === 'dossiers' || hash === 'percelen') {
+  if (hash === 'sporen' || hash === 'kaarten' || hash === 'mappenboom') {
+    activeTab.value = hash
+  } else if (hash === 'dossiers' || hash === 'percelen') {
     activeTab.value = hash
   } else {
     activeTab.value = 'sporen'
@@ -153,19 +154,16 @@ const initMap = async () => {
     leafletMap = null
   }
 
-  // Initialiseer Leaflet kaart
   leafletMap = L.map(el, {
     center: [51.51, 4.18],
     zoom: 12
   })
 
-  // OpenStreetMap tegellaag via HTTPS
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors | Lodijke Geodata'
   }).addTo(leafletMap)
 
-  // GeoJSON percelen toevoegen
   const geoLayer = L.geoJSON(geoJsonData, {
     style: {
       color: '#8B1E1E',
@@ -185,17 +183,14 @@ const initMap = async () => {
     }
   }).addTo(leafletMap)
 
-  // Zoom in op de percelen
   leafletMap.fitBounds(geoLayer.getBounds(), { padding: [30, 30] })
 
-  // Meervoudige tegel-herberekening garandeert weergave op Vercel
   setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 100)
-  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 500)
-  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 1000)
+  setTimeout(() => { if (leafletMap) leafletMap.invalidateSize() }, 400)
 }
 
 watch(activeTab, async (newTab) => {
-  if (newTab === 'sporen' || newTab === 'kaarten') {
+  if (newTab === 'sporen' || newTab === 'kaarten' || newTab === 'mappenboom') {
     await nextTick()
     if (leafletMap) {
       leafletMap.invalidateSize()
@@ -249,7 +244,7 @@ const fetchGraphQLData = async () => {
     }
   ]
   isConnected.value = true
-  statusText.value = 'Vercel Live (Sporen)'
+  statusText.value = 'Vercel Live (Mappenboom)'
 }
 
 onMounted(() => {
