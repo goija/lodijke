@@ -1,13 +1,13 @@
 <template>
   <div class="lodijke-interface" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     
-    <!-- 1. MENU PANEL -->
+    <!-- 1. MENU PANEL (Sidebar Navigation Index) -->
     <aside class="menu-panel">
       <div class="brand-header">
         <div class="logo-icon">🏛️</div>
         <div class="brand-text" v-if="!sidebarCollapsed">
           <h2>Lodijke Platform</h2>
-          <span class="version-tag">v2.5 Master Core</span>
+          <span class="version-tag">v3.0 Master Core</span>
         </div>
         <button class="btn-toggle-sidebar" @click="sidebarCollapsed = !sidebarCollapsed" :title="sidebarCollapsed ? 'Menu uitklappen' : 'Menu inklappen'">
           {{ sidebarCollapsed ? '▶' : '◀' }}
@@ -15,7 +15,7 @@
       </div>
 
       <nav class="nav-menu">
-        <div class="menu-section-title" v-if="!sidebarCollapsed">PLATFORM MODULES</div>
+        <div class="menu-section-title" v-if="!sidebarCollapsed">PLATFORM MODULES (INDEX)</div>
         
         <button 
           v-for="item in menuItems" 
@@ -37,7 +37,7 @@
         </div>
         <div class="status-item">
           <span class="dot live"></span>
-          <span>PDF & GRAMPS Core: <code>Ready</code></span>
+          <span>Solid POD Vault: <code>Active</code></span>
         </div>
       </div>
     </aside>
@@ -72,7 +72,7 @@
           <div class="vp-header">
             <span class="vp-tag">VIEWPORT 1</span>
             <select v-model="activePrimaryModule" class="vp-module-select">
-              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} {{ m.label }}</option>
+              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} [{{ m.code }}] {{ m.label }}</option>
             </select>
           </div>
           <div class="vp-body">
@@ -85,7 +85,7 @@
           <div class="vp-header">
             <span class="vp-tag">VIEWPORT 2</span>
             <select v-model="activeSecondaryModule" class="vp-module-select">
-              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} {{ m.label }}</option>
+              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} [{{ m.code }}] {{ m.label }}</option>
             </select>
           </div>
           <div class="vp-body">
@@ -98,7 +98,7 @@
           <div class="vp-header">
             <span class="vp-tag">VIEWPORT 3</span>
             <select v-model="activeTertiaryModule" class="vp-module-select">
-              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} {{ m.label }}</option>
+              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} [{{ m.code }}] {{ m.label }}</option>
             </select>
           </div>
           <div class="vp-body">
@@ -111,7 +111,7 @@
           <div class="vp-header">
             <span class="vp-tag">VIEWPORT 4</span>
             <select v-model="activeQuaternaryModule" class="vp-module-select">
-              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} {{ m.label }}</option>
+              <option v-for="m in menuItems" :key="m.id" :value="m.id">{{ m.icon }} [{{ m.code }}] {{ m.label }}</option>
             </select>
           </div>
           <div class="vp-body">
@@ -136,17 +136,17 @@ import Tab12PdfModule from './Tab12PdfModule.vue';
 const sidebarCollapsed = ref(false);
 const layoutMode = ref('split-h');
 
-const activePrimaryModule = ref('pdf');
-const activeSecondaryModule = ref('genealogie');
+const activePrimaryModule = ref('genealogie');
+const activeSecondaryModule = ref('pdf');
 const activeTertiaryModule = ref('kaarten');
 const activeQuaternaryModule = ref('mappenbomen');
 
 const menuItems = [
-  { id: 'pdf', label: 'PDF Reader & Editor', icon: '📕', code: 'M-12', comp: Tab12PdfModule, category: 'Documenten' },
-  { id: 'genealogie', label: 'GRAMPS Genealogy Core', icon: '🌳', code: 'M-02', comp: Tab01Genealogie, category: 'Stamboom' },
-  { id: 'kaarten', label: 'GIS & Leaflet Kaarten', icon: '📍', code: 'M-06', comp: Tab04Kaarten, category: 'Geodata' },
-  { id: 'mappenbomen', label: 'Mappenbomen & Bomen', icon: '📂', code: 'M-10', comp: TabMappenbomen, category: 'Structuur' },
   { id: 'home', label: 'Platform Home', icon: '🏛️', code: 'M-00', comp: Tab00Home, category: 'Overzicht' },
+  { id: 'genealogie', label: 'GRAMPS Genealogie Core', icon: '🌳', code: 'M-02', comp: Tab01Genealogie, category: 'Stamboom' },
+  { id: 'pdf', label: 'PDF Reader & Editor', icon: '📕', code: 'M-12', comp: Tab12PdfModule, category: 'Documenten' },
+  { id: 'kaarten', label: 'GIS & Leaflet Kaarten', icon: '📍', code: 'M-06', comp: Tab04Kaarten, category: 'Geodata' },
+  { id: 'mappenbomen', label: 'Master Mappenbomen', icon: '📂', code: 'M-10', comp: TabMappenbomen, category: 'Structuur' },
 ];
 
 function selectModule(id) { activePrimaryModule.value = id; }
