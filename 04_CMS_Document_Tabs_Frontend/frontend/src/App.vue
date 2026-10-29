@@ -1,6 +1,6 @@
 <template>
   <div class="platform-wrapper">
-    <!-- BORDEAUXRODE TOP NAVIGATIEBALK MET SLIDING DRAWER TOGGLE & TABS -->
+    <!-- BORDEAUXRODE TOP NAVIGATIEBALK -->
     <header class="navbar">
       <div class="nav-container">
         <div class="brand-left">
@@ -35,7 +35,7 @@
       </div>
     </header>
 
-    <!-- LINKER SLIDING MENU DRAWER (SNELMENU, API STATUS & FILTERING) -->
+    <!-- LINKER SLIDING MENU DRAWER -->
     <transition name="slide-left">
       <aside v-if="leftDrawerOpen" class="sliding-drawer left-drawer">
         <div class="drawer-header">
@@ -55,37 +55,19 @@
         </div>
 
         <div class="drawer-section">
-          <h4>LIVE BACKEND NODES</h4>
-          <div class="node-status-row">
-            <span>🦀 Axum GraphQL (:8082)</span>
-            <span class="badge-online">ACTIEF</span>
-          </div>
-          <div class="node-status-row">
-            <span>🎙️ Rust Podcast RSS (:8081)</span>
-            <span class="badge-online">SYSTEMD</span>
-          </div>
-          <div class="node-status-row">
-            <span>🐍 Python Geodesy REST (:8080)</span>
-            <span class="badge-online">STANDBY</span>
-          </div>
-          <div class="node-status-row">
-            <span>🗺️ PDOK BRK WFS v5.0</span>
-            <span class="badge-online">VERBONDEN</span>
-          </div>
-        </div>
-
-        <div class="drawer-section">
-          <h4>HISTORISCHE ANKERPUNTEN</h4>
-          <p class="drawer-meta">
-            <strong>Oesterperceel No. 369:</strong> 12,5 ha op de Bol van Lodijke (RD X=68120, Y=388050, -1.80m tot -2.10m NAP).<br/>
-            <strong>Concessiehouder:</strong> Reder B.W. Schot (1840–1925).<br/>
-            <strong>Stamreeks:</strong> I0103 (W. Bout) &amp; I0088 (C.M. Guiljam).
-          </p>
+          <h4>SNELLE KAARTSPRONGEN (BEOOSTEN SCHELDE)</h4>
+          <ul class="drawer-nav-list">
+            <li @click="flyToLocation(51.47633, 4.13750, 15); leftDrawerOpen = false">🎯 Oesterperceel No. 369 (Bol van Lodijke)</li>
+            <li @click="flyToLocation(51.47310, 4.13620, 16); leftDrawerOpen = false">🏰 Kasteel Lodijke (ARC-LOD-01, -3.20m NAP)</li>
+            <li @click="flyToLocation(51.49650, 4.19450, 14); leftDrawerOpen = false">🐟 Molenplaat Visserijpercelen (150 ha)</li>
+            <li @click="flyToLocation(51.48660, 4.16140, 14); leftDrawerOpen = false">🌊 Verdronken Stad Reimerswaal</li>
+            <li @click="flyToLocation(51.52650, 4.08150, 14); leftDrawerOpen = false">🏛️ Sint-Maartensdijk / Scherpenisse (Tholen)</li>
+          </ul>
         </div>
       </aside>
     </transition>
 
-    <!-- RECHTER SLIDING DOSSIER INSPECTOR (OPENT BIJ KLIK OP EEN WOO-SPOOR OF BRON) -->
+    <!-- RECHTER SLIDING DOSSIER INSPECTOR -->
     <transition name="slide-right">
       <aside v-if="activeDrawerSpoor" class="sliding-drawer right-drawer">
         <div class="drawer-header">
@@ -126,54 +108,63 @@
 
     <!-- HERO BANNER -->
     <section id="home" class="hero-banner">
-      <h1>Zeeuws Visserij Dossier &amp; Lodijke Archiefbeheer — Beoosten Schelde</h1>
+      <h1>Zeeuws Visserij Dossier &amp; Lodijke Archiefbeheer</h1>
       <div class="hero-sub">
-        Oesterperceel No. 369 (Bol van Lodijke) • Molenplaat (150 ha) • Kasteel Lodijke (-3,20m NAP) • Stamreeks I0103
+        Oesterperceel No. 369 (Bol van Lodijke, 12,5 ha) • Kasteel Lodijke (-3,20m NAP) • Molenplaat (150 ha) • Stamreeks I0103
       </div>
       <div class="hero-btn-group">
         <button class="hero-cta" @click="switchTab('woosporen')">
-          Bekijk &amp; Beheer de {{ wooSporen.length }} Woo-Sporen (A–F)
+          Bekijk de {{ wooSporen.length }} Woo-Sporen
         </button>
-        <button class="hero-cta secondary-cta" @click="switchTab('beoostenschelde')">
-          📡 Open Beoosten Schelde API, RSS &amp; Podcast Hub
+        <button class="hero-cta secondary-cta" @click="focusPerceel369">
+          📍 Centreer Perceel No. 369 op Kaart
         </button>
       </div>
     </section>
 
-    <!-- MAIN CONTENT CONTAINER MET DYNAMISCHE TABS -->
+    <!-- MAIN CONTENT CONTAINER -->
     <main class="main-container">
 
       <!-- =====================================================================
-           ONDERDEEL 1: GEODETISCHE KAARTWEERGAVE & PERCEEL NO. 369 (GIS)
+           1. GEODETISCHE KAARTWEERGAVE & PERCEEL NO. 369 (BUGVRIJ & DIRECT GELADEN)
            ===================================================================== -->
       <section v-show="activeMainTab === 'overzicht' || activeMainTab === 'gis'" id="gis" class="card-section">
         <div class="section-header-flex">
           <div>
-            <h2 class="section-title">📍 Geodetische Kaartweergave &amp; Perceel No. 369 (Beoosten Schelde)</h2>
+            <h2 class="section-title">📍 Geodetische Kaartweergave &amp; Perceel No. 369</h2>
             <p class="section-subtitle">
               Oesterperceel No. 369 op de Bol van Lodijke (12,5 ha, RD X=68120 Y=388050) van Reder Benjamin Willem Schot (1840–1925).
             </p>
           </div>
-          <button class="recenter-btn" @click="focusPerceel369">🎯 Centreer Perceel 369</button>
+          <div class="map-status-pill" :class="{ ready: mapReady }">
+            {{ mapReady ? '✔ Kaart & PDOK Lagen Geladen' : '⏳ Kaarttegels laden...' }}
+          </div>
         </div>
 
+        <!-- KAART BEDieningsbalk -->
         <div class="map-toolbar">
           <div class="layer-group">
             <strong>Basiskaart:</strong>
-            <button :class="{ active: baseMode === 'osm' }" @click="setBaseLayer('osm')">OpenStreetMap</button>
+            <button :class="{ active: baseMode === 'osm' }" @click="setBaseLayer('osm')">OpenStreetMap (Snel)</button>
+            <button :class="{ active: baseMode === 'pdok_brt' }" @click="setBaseLayer('pdok_brt')">PDOK Topografisch (BRT)</button>
             <button :class="{ active: baseMode === 'ortho' }" @click="setBaseLayer('ortho')">PDOK Luchtfoto (25cm)</button>
-            <button :class="{ active: baseMode === 'dark' }" @click="setBaseLayer('dark')">Maritiem Donker</button>
           </div>
           <div class="layer-group">
-            <strong>Rijkslagen (WMS):</strong>
+            <strong>Overlays:</strong>
             <label><input type="checkbox" v-model="overlays.kadaster" @change="syncOverlays" /> PDOK Kadastrale Kaart v5</label>
-            <label><input type="checkbox" v-model="overlays.bathymetrie" @change="syncOverlays" /> RWS Vaklodingen (-NAP)</label>
+            <label><input type="checkbox" v-model="overlays.ahn" @change="syncOverlays" /> PDOK AHN4 Diepte/Hoogte</label>
             <label><input type="checkbox" v-model="overlays.molenplaat" @change="syncOverlays" /> Molenplaat (150 ha)</label>
+          </div>
+          <div class="layer-group">
+            <button class="recenter-btn" @click="focusPerceel369">🎯 Perceel 369</button>
           </div>
         </div>
 
-        <div class="map-frame">
+        <!-- DE LEAFLET KAART CONTAINER MET VASTE HOOGTE EN RESIZE-OBSERVER -->
+        <div class="map-frame" ref="mapWrapperEl">
           <div id="lodijke-leaflet-map" ref="mapEl"></div>
+
+          <!-- GEODETISCHE TELEMETRIE OVERLAY LINKSONDER -->
           <div class="telemetry-overlay">
             <div>
               <strong>Coördinaten:</strong> RD EPSG:28992 (X:{{ cursorRd.x }}, Y:{{ cursorRd.y }}) |
@@ -187,24 +178,21 @@
       </section>
 
       <!-- =====================================================================
-           ONDERDEEL 2: DE 6 WOO-SPOREN (A t/m F) MET FILTER-TABS, SLIDING DRAWER & DELETE KNOPPEN
+           2. DE 6 WOO-SPOREN (A t/m F) MET DELETE KNOPPEN & SLIDING DOSSIER
            ===================================================================== -->
       <section v-show="activeMainTab === 'overzicht' || activeMainTab === 'woosporen'" id="woosporen" class="card-section">
         <div class="section-header-flex">
           <div>
             <h2 class="section-title">⚖️ De 6 Woo-Sporen (A t/m F) — Dossier &amp; Bewijsvoering</h2>
             <p class="section-subtitle">
-              Klik op een spoor om het <strong>Sliding Dossier Menu</strong> met archiefstukken, kadastrale leggers en GraphQL-records (:8082) te openen, op de kaart te lokaliseren of met 🗑️ te verwijderen.
+              Klik op een spoor om de bijbehorende archiefstukken, kadastrale leggers en GraphQL-records (:8082) in te zien of op de kaart te lokaliseren.
             </p>
           </div>
-          <div class="spoor-admin-controls">
-            <button class="btn-restore" @click="restoreDefaultSporen" title="Herstel alle 6 oorspronkelijke Woo-Sporen">
-              ↺ Herstel 6 Sporen ({{ wooSporen.length }}/6)
-            </button>
-          </div>
+          <button class="btn-restore" @click="restoreDefaultSporen">
+            ↺ Herstel 6 Sporen ({{ wooSporen.length }}/6)
+          </button>
         </div>
 
-        <!-- Sub-Tabs voor snelle filtering van de Woo-Sporen -->
         <div class="sub-tabs-bar">
           <button :class="['sub-tab', spoorFilter === 'ALLE' ? 'active' : '']" @click="spoorFilter = 'ALLE'">
             Alle Sporen ({{ wooSporen.length }})
@@ -221,16 +209,15 @@
         </div>
 
         <div class="grid-3">
-          <div v-for="(spoor, idx) in filteredWooSporen" :key="spoor.code" class="spoor-card">
+          <div v-for="spoor in filteredWooSporen" :key="spoor.code" class="spoor-card">
             <div>
               <div class="spoor-header">
                 <span class="spoor-badge">{{ spoor.code }}</span>
                 <span class="spoor-status">{{ spoor.status }}</span>
-                <!-- GEVRAAGDE DELETE KNOP PER WOO-SPOOR -->
                 <button
                   class="btn-card-delete"
                   @click.stop="deleteSpoorByCode(spoor.code)"
-                  :title="`Verwijder ${spoor.code} uit het overzicht`"
+                  :title="`Verwijder ${spoor.code}`"
                 >
                   🗑️ Verwijder
                 </button>
@@ -242,7 +229,7 @@
             <div class="spoor-footer">
               <button class="link-btn" @click="zoomToSpoor(spoor)">📍 Toon op GIS-kaart</button>
               <button class="link-btn secondary" @click="openSpoorDrawer(spoor)">
-                📄 Open Dossier ({{ spoor.ref }}) ➔
+                📄 Open Dossier ({{ spoor.ref }})
               </button>
             </div>
           </div>
@@ -250,26 +237,24 @@
       </section>
 
       <!-- =====================================================================
-           ONDERDEEL 3: HISTORISCH VISSERIJDOSSIER BEOOSTEN SCHELDE —
-                        API PROVIDERS, RSS READERS, PODCASTS & LOKALE MEDIA
+           3. HISTORISCH VISSERIJDOSSIER BEOOSTEN SCHELDE (API, RSS, PODCASTS)
            ===================================================================== -->
       <section v-show="activeMainTab === 'overzicht' || activeMainTab === 'beoostenschelde'" id="beoostenschelde" class="card-section">
         <div class="section-header-flex">
           <div>
             <h2 class="section-title">📡 Historisch Visserijdossier Beoosten Schelde — API's, RSS, Podcasts &amp; Lokale Media</h2>
             <p class="section-subtitle">
-              Real-time koppeling met kadastrale/hydrografische API-providers, de lokale Rust Axum Podcast/RSS-server (<code>:8081</code>) en historische media uit Tholen, Sint-Maartensdijk, Scherpenisse, Yerseke en het Verdronken Land van Reimerswaal.
+              Koppeling met kadastrale/hydrografische API-providers, de lokale Rust Axum Podcast/RSS-server (<code>:8081</code>) en historische bronnen uit Tholen, Sint-Maartensdijk, Scherpenisse, Yerseke en Reimerswaal.
             </p>
           </div>
         </div>
 
-        <!-- INTERNE TABS VOOR DE BEOOSTEN SCHELDE HUB -->
         <div class="sub-tabs-bar">
           <button :class="['sub-tab', mediaSubTab === 'apis' ? 'active' : '']" @click="mediaSubTab = 'apis'">
-            🔌 API Providers &amp; Geodata Endpoints (6)
+            🔌 API Providers &amp; Geodata Endpoints ({{ apiProviders.length }})
           </button>
           <button :class="['sub-tab', mediaSubTab === 'rss' ? 'active' : '']" @click="mediaSubTab = 'rss'">
-            📰 RSS Reader Beoosten Schelde &amp; Archief Feeds
+            📰 RSS Reader Beoosten Schelde ({{ rssItems.length }})
           </button>
           <button :class="['sub-tab', mediaSubTab === 'podcasts' ? 'active' : '']" @click="mediaSubTab = 'podcasts'">
             🎙️ Podcasts &amp; Audio-Archief (:8081)
@@ -279,7 +264,7 @@
           </button>
         </div>
 
-        <!-- TAB 3A: API PROVIDERS -->
+        <!-- API PROVIDERS -->
         <div v-if="mediaSubTab === 'apis'" class="grid-3">
           <div v-for="(api, i) in apiProviders" :key="api.id" class="media-card">
             <div class="spoor-header">
@@ -291,15 +276,15 @@
             <code class="endpoint-url">{{ api.endpoint }}</code>
             <p>{{ api.toepassing }}</p>
             <div class="spoor-footer">
-              <a :href="api.endpoint" target="_blank" rel="noopener noreferrer" class="link-btn">⚡ Test Endpoint ↗</a>
+              <a :href="api.endpoint" target="_blank" rel="noopener noreferrer" class="link-btn">⚡ Open Endpoint ↗</a>
             </div>
           </div>
         </div>
 
-        <!-- TAB 3B: RSS READER BEOOSTEN SCHELDE -->
+        <!-- RSS READER -->
         <div v-if="mediaSubTab === 'rss'" class="rss-layout">
           <div class="rss-sidebar">
-            <h4>GEABONNEERDE FEEDS (BEOOSTEN SCHELDE)</h4>
+            <h4>KANALEN BEOOSTEN SCHELDE</h4>
             <div
               v-for="feed in rssChannels"
               :key="feed.id"
@@ -311,7 +296,7 @@
             </div>
           </div>
           <div class="rss-feed-list">
-            <div v-for="(item, idx) in filteredRssItems" :key="item.id" class="rss-article">
+            <div v-for="item in filteredRssItems" :key="item.id" class="rss-article">
               <div class="rss-article-header">
                 <span class="rss-source-tag">{{ item.bron }}</span>
                 <span class="rss-date">{{ item.datum }}</span>
@@ -320,14 +305,14 @@
               <h4>{{ item.titel }}</h4>
               <p>{{ item.samenvatting }}</p>
               <div class="rss-meta-links">
-                <span class="woo-chip">Dossier: {{ item.dossierKoppeling }}</span>
-                <button class="link-btn secondary" @click="switchTab('gis')">📍 Bekijk Locatie in Beoosten Schelde</button>
+                <span class="woo-chip">{{ item.dossierKoppeling }}</span>
+                <button class="link-btn secondary" @click="focusPerceel369">📍 Toon op GIS-Kaart</button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- TAB 3C: PODCASTS & AUDIO-ARCHIEF (RUST AXUM :8081) -->
+        <!-- PODCASTS -->
         <div v-if="mediaSubTab === 'podcasts'" class="grid-2">
           <div v-for="(pod, idx) in podcastEpisodes" :key="pod.id" class="podcast-card">
             <div class="spoor-header">
@@ -339,14 +324,14 @@
             <p>{{ pod.beschrijving }}</p>
             <div class="audio-player-bar">
               <button class="play-btn" @click="activeAudio = pod">
-                {{ activeAudio && activeAudio.id === pod.id ? '⏸ Speelt af...' : '▶ Afspelen via :8081 Stream' }}
+                {{ activeAudio && activeAudio.id === pod.id ? '⏸ Stream Actief' : '▶ Start Audio (:8081)' }}
               </button>
               <code class="stream-path">{{ pod.streamUrl }}</code>
             </div>
           </div>
         </div>
 
-        <!-- TAB 3D: LOKALE MEDIA & HISTORISCHE VISSERIJKRONIEK BEOOSTEN SCHELDE -->
+        <!-- LOKALE MEDIA -->
         <div v-if="mediaSubTab === 'media'" class="grid-3">
           <div v-for="(krant, idx) in lokaleMediaArchief" :key="krant.id" class="media-card">
             <div class="spoor-header">
@@ -355,17 +340,17 @@
               <button class="btn-card-delete" @click="lokaleMediaArchief.splice(idx, 1)">🗑️</button>
             </div>
             <h3>{{ krant.kop }}</h3>
-            <p>{{ krant. citaat }}</p>
+            <p>{{ krant.citaat }}</p>
             <div class="spoor-footer">
               <span class="woo-chip">{{ krant.locatie }}</span>
-              <button class="link-btn secondary" @click="switchTab('mappenboom')">📂 Open Archiefstuk</button>
+              <button class="link-btn secondary" @click="switchTab('mappenboom')">📂 Bekijk in Mappenboom</button>
             </div>
           </div>
         </div>
       </section>
 
       <!-- =====================================================================
-           ONDERDEEL 4: DE 6 GEÏNTEGREERDE MAPPENBOMEN COMPONENT
+           4. MAPPENBOMEN & ARCHIEFSTRUCTUREN (6 BOMEN)
            ===================================================================== -->
       <section v-show="activeMainTab === 'overzicht' || activeMainTab === 'mappenboom'" id="mappenboom" class="card-section">
         <TabMappenbomen />
@@ -376,7 +361,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import L from 'leaflet'
 import TabMappenbomen from './components/TabMappenbomen.vue'
 
@@ -389,17 +374,20 @@ const selectedRssChannel = ref('ALLE')
 const activeAudio = ref(null)
 
 const mapEl = ref(null)
+const mapWrapperEl = ref(null)
+const mapReady = ref(false)
 const baseMode = ref('osm')
+
 const cursorRd = ref({ x: 68120, y: 388050 })
 const cursorWgs = ref({ lat: '51.47633', lng: '4.13750' })
 
 const overlays = ref({
   kadaster: true,
-  bathymetrie: true,
+  ahn: false,
   molenplaat: true
 })
 
-// Originele 6 Woo-Sporen dataset (zodat verwijderde sporen met 1 klik hersteld kunnen worden)
+// De 6 Woo-Sporen (A t/m F)
 const initialWooSporen = () => [
   {
     code: 'SPOOR A',
@@ -431,7 +419,7 @@ const initialWooSporen = () => [
     bewijsstukken: [
       'Sonar- en duikrapportage Kasteel Lodijke (muurwerk 15x16m op -3,20m NAP)',
       'Middelnederlandse Rijmkroniek van Melis Stoke inzake de Slag bij Lodijke (1301)',
-      'UNESCO Geopark Schelde Delta Geosite-registratie & RWS Vaklodingen bathymetrie'
+      'UNESCO Geopark Schelde Delta Geosite-registratie'
     ],
     graphqlQuery: '{ geoParcels(parcelId: "ARC-LOD-01") { naam rdX rdY napDiepteM wooReferentie } }'
   },
@@ -481,8 +469,7 @@ const initialWooSporen = () => [
     zoom: 14,
     bewijsstukken: [
       '14e-eeuwse Middelnederlandse charters betreffende de ambachtsheerlijkheden Beoosten Schelde',
-      'Oudelandse visrechten verankerd op de verdronken gronden van Reimerswaal (-1,50m NAP)',
-      'Kadastrale reconstructie Verdronken Land van Zuid-Beveland en Tholen'
+      'Oudelandse visrechten verankerd op de verdronken gronden van Reimerswaal (-1,50m NAP)'
     ],
     graphqlQuery: '{ geoParcels(parcelId: "STAD-REIMERSWAAL") { naam oppervlakteHa rdX rdY } }'
   },
@@ -498,8 +485,7 @@ const initialWooSporen = () => [
     zoom: 13,
     bewijsstukken: [
       'Uitspraak Rechtbank Zeeland-West-Brabant (BRE 24/5455 WOO, ECLI:NL:RBZWB:2025:6823)',
-      'Advies Bezwaarschriftencommissie 28-08-2026 (Zaak 1425030) & derde gewonnen Woo-procedure (oktober 2026)',
-      'Formele erkenning als belanghebbende onder de Awb en m.e.r.-richtlijnen Oosterschelde'
+      'Advies Bezwaarschriftencommissie 28-08-2026 (Zaak 1425030) & derde gewonnen Woo-procedure (oktober 2026)'
     ],
     graphqlQuery: '{ cmsRecords { id code titel status } }'
   }
@@ -527,9 +513,7 @@ function openSpoorDrawer(spoor) {
   activeDrawerSpoor.value = spoor
 }
 
-// =====================================================================
-// DATA VOOR BEOOSTEN SCHELDE: API PROVIDERS, RSS, PODCASTS & LOKALE MEDIA
-// =====================================================================
+// Data Beoosten Schelde Hub
 const apiProviders = ref([
   {
     id: 'api-axum',
@@ -541,19 +525,19 @@ const apiProviders = ref([
   },
   {
     id: 'api-pdok-brk',
-    naam: 'PDOK Kadastrale Kaart WFS/WMS v5.0',
-    protocol: 'OGC WMS / WFS',
+    naam: 'PDOK Kadastrale Kaart WMS v5.0',
+    protocol: 'OGC WMS 1.3.0',
     status: 'ACTIEF (EPSG:28992)',
-    endpoint: 'https://service.pdok.nl/kadaster/kadastralekaart/wms/v5_0',
-    toepassing: 'Officiële kadastrale perceelgrenzen voor Yerseke, Reimerswaal, Tholen en Scherpenisse (Sectie E 1552/1551).'
+    endpoint: 'https://service.pdok.nl/kadaster/kadastralekaart/wms/v5_0?request=GetCapabilities&service=WMS',
+    toepassing: 'Kadastrale perceelgrenzen (Perceel, KadastraleGrens) voor Yerseke, Reimerswaal, Tholen en Scherpenisse.'
   },
   {
-    id: 'api-rws-vaklodingen',
-    naam: 'Rijkswaterstaat Vaklodingen & Waterinfo',
-    protocol: 'OGC WMS / REST',
-    status: 'LIVE (-NAP)',
-    endpoint: 'https://geo.rijkswaterstaat.nl/services/ogc/gdr/vaklodingen/ows',
-    toepassing: 'Bathymetrische dieptemetingen Oosterschelde Kom: Bol van Lodijke (-1,80m NAP) en Kasteel Lodijke (-3,20m NAP).'
+    id: 'api-pdok-ortho',
+    naam: 'PDOK Luchtfoto Actueel Ortho 25cm WMTS',
+    protocol: 'OGC WMTS REST',
+    status: 'SNELLE TEGELS',
+    endpoint: 'https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0?request=GetCapabilities&service=WMTS',
+    toepassing: 'Direct gecachete 25cm luchtfoto-tegels van de Bol van Lodijke, Molenplaat en Bergse Diepsluis.'
   },
   {
     id: 'api-podcast-rss',
@@ -561,23 +545,7 @@ const apiProviders = ref([
     protocol: 'RSS 2.0 / systemd',
     status: 'ONLINE (:8081)',
     endpoint: 'http://localhost:8081/rss.xml',
-    toepassing: 'Lokale systemd-service die historische audioverslagen, hoorzittingen en veldopnames uit Beoosten Schelde serveert.'
-  },
-  {
-    id: 'api-zeeuws-archief',
-    naam: 'Zeeuws Archief & Krantenbank Zeeland API',
-    protocol: 'OAI-PMH / IIIF',
-    status: 'GEKOPPELD',
-    endpoint: 'https://www.zeeuwsarchief.nl/',
-    toepassing: 'Ontsluiting van de leggers van het Bestuur der Visserijen (1825–1935) en veilingcatalogi van oesterpercelen.'
-  },
-  {
-    id: 'api-burn-ocr',
-    naam: 'Rust Burn Neural OCR Engine (Middelnederlands)',
-    protocol: 'Lokaal / Python :8080',
-    status: 'STANDBY',
-    endpoint: 'http://localhost:8080/api/ocr/charters',
-    toepassing: 'Automatische transcriptie van 14e-eeuwse Zeeuwse oorkonden, visrecht-charters en rekeningen van Beoosten Schelde.'
+    toepassing: 'Lokale systemd-service voor historische audioverslagen en hoorzittingen uit Beoosten Schelde.'
   }
 ])
 
@@ -604,7 +572,7 @@ const rssItems = ref([
     bron: 'Bestuursrechtelijke Monitor Gemeente Tholen & ZWB',
     datum: '15 okt 2026',
     titel: 'Derde Woo-procedure gewonnen: Belanghebbende-status Awb & m.e.r. formeel verankerd',
-    samenvatting: 'Na eerdere uitspraak ECLI:NL:RBZWB:2025:6823 (BRE 24/5455) en bezwaaradvies Zaak 1425030 is de belanghebbende-positie voor het Oosterscheldebekken en Beoosten Schelde onherroepelijk vastgesteld.',
+    samenvatting: 'Na uitspraak ECLI:NL:RBZWB:2025:6823 (BRE 24/5455) en bezwaaradvies Zaak 1425030 is de belanghebbende-positie voor het Oosterscheldebekken onherroepelijk vastgesteld.',
     dossierKoppeling: 'SPOOR F (AWB-MER-2026)'
   },
   {
@@ -613,7 +581,7 @@ const rssItems = ref([
     bron: 'Dossier-Zuurdeeg & Molenplaat Pachtregister',
     datum: '08 okt 2026',
     titel: 'Analyse van de 150 ha visserijpercelen op de Molenplaat en Bergse Diepsluis',
-    samenvatting: 'Samenhang tussen de oude kreekruggen van het Verdronken Land en de hedendaagse pachtpercelen onder Zaak 1456324 in kaart gebracht met RWS Vaklodingen.',
+    samenvatting: 'Samenhang tussen de oude kreekruggen van het Verdronken Land en de pachtpercelen onder Zaak 1456324 in kaart gebracht.',
     dossierKoppeling: 'SPOOR C (WOO-MOL-150)'
   },
   {
@@ -622,7 +590,7 @@ const rssItems = ref([
     bron: 'Geopark Schelde Delta — Onderwaterarcheologie',
     datum: '22 sep 2026',
     titel: 'Muurresten Kasteel Lodijke (ARC-LOD-01) op -3,20m NAP gekoppeld aan 14e-eeuwse bronnen',
-    samenvatting: 'De bakstenen fundamenten op de rand van het Gat van Lodijke bevestigen de ligging uit de kroniek van Melis Stoke (1301) en de inundatie bij de Sint-Felixvloed (1530).',
+    samenvatting: 'De bakstenen fundamenten op de rand van het Gat van Lodijke bevestigen de ligging uit de kroniek van Melis Stoke (1301).',
     dossierKoppeling: 'SPOOR B (ARC-LOD-01)'
   }
 ])
@@ -653,25 +621,7 @@ const podcastEpisodes = ref([
     duur: '34:40',
     bronServer: 'Rust Axum :8081',
     streamUrl: 'http://localhost:8081/streams/aflevering02_visrecht_zuurdeeg.mp3',
-    beschrijving: 'Juridische en historisch-cartografische analyse van de visrechten op verdronken ambachtsheerlijkheden tussen Tholen, Yerseke en Bergen op Zoom.'
-  },
-  {
-    id: 'pod-3',
-    reeks: 'AFLEVERING 03 • STAMREEKS & WATERSNOOD',
-    titel: 'Van Sint-Maartensdijk (1953) tot de Stuiting van 8 oktober 2026',
-    duur: '24:05',
-    bronServer: 'Rust Axum :8081',
-    streamUrl: 'http://localhost:8081/streams/aflevering03_guiljam_bout_tholen.mp3',
-    beschrijving: 'Mondelinge geschiedenis en archiefstukken rond C.M. Guiljam (I0088), schaapherder Hein Guiljam en de hedendaagse erfrechtelijke en bestuursrechtelijke procedures.'
-  },
-  {
-    id: 'pod-4',
-    reeks: 'AFLEVERING 04 • MIDDELNEDERLANDSE BRONNEN',
-    titel: 'Kasteel Lodijke (1301–1530) voorgelezen in het oorspronkelijke Middelnederlands',
-    duur: '19:50',
-    bronServer: 'Rust Axum :8081',
-    streamUrl: 'http://localhost:8081/streams/aflevering04_middelnederlands_lodijke.mp3',
-    beschrijving: 'Integrale voordracht en bespreking van de 14e-eeuwse passages over Lodijke, het Rentmeesterschap Beoosten Schelde en Quade Saterdach (5 november 1530).'
+    beschrijving: 'Juridische en historisch-cartografische analyse van de visrechten op verdronken ambachtsheerlijkheden Beoosten Schelde.'
   }
 ])
 
@@ -682,7 +632,7 @@ const lokaleMediaArchief = ref([
     publicatie: 'Middelburgsche Courant / Staatsblad',
     locatie: 'Bol van Lodijke / Yerseke',
     kop: 'Verpachting van 203 Visserijpercelen op de Schelde en Zeeuwsche Stromen',
-    citaat: 'Toewijzing van Oesterperceel No. 369 (groot 12,50.00 hectare op de Bol van Lodijke) aan reder en oesterkweker B.W. Schot, gekoppeld aan 11 oesterputten te Yerseke.'
+    citaat: 'Toewijzing van Oesterperceel No. 369 (12,50.00 ha op de Bol van Lodijke) aan reder B.W. Schot, gekoppeld aan 11 oesterputten te Yerseke.'
   },
   {
     id: 'med-2',
@@ -690,7 +640,7 @@ const lokaleMediaArchief = ref([
     publicatie: 'Rekeningen Rentmeester Beoosten Schelde',
     locatie: 'Kasteel & Ambacht Lodijke',
     kop: 'Inundatie van het Land van Lodijke en de dorpen rond Reimerswaal',
-    citaat: 'Op Quade Saterdach (Sint-Felixvloed, 5 november 1530) en de Allerheiligenvloed van 1532 bezwijken de dijken van het ambacht Lodijke; de visrechten blijven als heerlijk recht bestaan.'
+    citaat: 'Op Quade Saterdach (Sint-Felixvloed, 5 november 1530) bezwijken de dijken van Lodijke; de visrechten blijven als heerlijk recht bestaan.'
   },
   {
     id: 'med-3',
@@ -698,16 +648,17 @@ const lokaleMediaArchief = ref([
     publicatie: 'Regionale Kroniek Tholen & Eendrachtbode',
     locatie: 'Sint-Maartensdijk & Scherpenisse',
     kop: 'Van de Rampnacht in Sint-Maartensdijk tot Kadastrale Reconstructie Platteweg',
-    citaat: 'Verankering van de familiegeschiedenis Guiljam-Bout op het eiland Tholen, gecorreleerd met kadastrale percelen in Sint-Maartensdijk en Scherpenisse (Sectie E 1552/1551).'
+    citaat: 'Verankering van de familiegeschiedenis Guiljam-Bout op het eiland Tholen (Sint-Maartensdijk en Scherpenisse Sectie E 1552/1551).'
   }
 ])
 
 // =====================================================================
-// LEAFLET GIS KAART LOGICA
+// GEOPTIMALISEERDE, BUGVRIJE LEAFLET KAART ENGINE (NON-REACTIVE)
 // =====================================================================
 let map = null
+let resizeObserver = null
 let baseTileLayers = {}
-let wmsOverlayLayers = {}
+let overlayLayers = {}
 let perceel369Marker = null
 
 function wgs84ToRd(lat, lng) {
@@ -729,18 +680,12 @@ function wgs84ToRd(lat, lng) {
   }
 }
 
-function switchTab(tabName) {
-  activeMainTab.value = tabName
-  if ((tabName === 'overzicht' || tabName === 'gis') && map) {
-    setTimeout(() => {
-      map.invalidateSize()
-    }, 200)
-  }
-}
-
 function initLeafletMap() {
   if (!mapEl.value) return
-  if (map) map.remove()
+  if (map) {
+    map.remove()
+    map = null
+  }
 
   const centerLat = 51.47633
   const centerLng = 4.13750
@@ -748,45 +693,66 @@ function initLeafletMap() {
   map = L.map(mapEl.value, {
     center: [centerLat, centerLng],
     zoom: 14,
-    zoomControl: true
+    preferCanvas: true,
+    zoomControl: true,
+    fadeAnimation: true
   })
 
-  baseTileLayers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // 1. Snelle WMTS & XYZ Basiskaarten (geen trage WMS voor basiskaarten!)
+  baseTileLayers.osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap | PDOK | Lodijke Master Platform'
+    crossOrigin: true,
+    updateWhenIdle: false,
+    keepBuffer: 4,
+    attribution: '&copy; OpenStreetMap | PDOK | Lodijke Platform'
   })
 
-  baseTileLayers.ortho = L.tileLayer.wms('https://service.pdok.nl/hwh/luchtfotorgb/wms/v1_0', {
-    layers: 'Actueel_orthoHR',
-    format: 'image/jpeg',
-    transparent: false,
-    maxZoom: 19,
-    attribution: 'PDOK Luchtfoto 25cm'
-  })
+  baseTileLayers.pdok_brt = L.tileLayer(
+    'https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/EPSG:3857/{z}/{x}/{y}.png',
+    {
+      maxZoom: 19,
+      crossOrigin: true,
+      attribution: 'PDOK BRT Achtergrondkaart'
+    }
+  )
 
-  baseTileLayers.dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '&copy; CartoDB Dark | Beoosten Schelde'
-  })
+  baseTileLayers.ortho = L.tileLayer(
+    'https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0/Actueel_orthoHR/EPSG:3857/{z}/{x}/{y}.jpeg',
+    {
+      maxZoom: 19,
+      crossOrigin: true,
+      attribution: 'PDOK Luchtfoto 25cm WMTS'
+    }
+  )
 
+  baseTileLayers.osm.on('load', () => {
+    mapReady.value = true
+  })
   baseTileLayers.osm.addTo(map)
 
-  wmsOverlayLayers.bathymetrie = L.tileLayer.wms('https://geo.rijkswaterstaat.nl/services/ogc/gdr/vaklodingen/ows', {
-    layers: 'vaklodingen_kb131_2634',
+  // 2. Gecorrigeerde PDOK Kadastrale Kaart v5 WMS (geldige v5 laagnamen: KadastraleGrens,Perceel)
+  overlayLayers.kadaster = L.tileLayer.wms('https://service.pdok.nl/kadaster/kadastralekaart/wms/v5_0', {
+    layers: 'KadastraleGrens,Perceel,Nummeraanduidingreeks',
     format: 'image/png',
     transparent: true,
-    opacity: 0.55,
-    attribution: 'RWS Vaklodingen (-NAP)'
-  })
-
-  wmsOverlayLayers.kadaster = L.tileLayer.wms('https://service.pdok.nl/kadaster/kadastralekaart/wms/v5_0', {
-    layers: 'Kadastralekaart',
-    format: 'image/png',
-    transparent: true,
+    version: '1.3.0',
+    crs: L.CRS.EPSG3857,
     opacity: 0.85,
     attribution: 'Kadaster v5'
   })
 
+  // 3. Gecorrigeerde PDOK AHN4 Hoogte/Diepte WMS
+  overlayLayers.ahn = L.tileLayer.wms('https://service.pdok.nl/rws/ahn/wms/v1_0', {
+    layers: 'dsm_05m',
+    format: 'image/png',
+    transparent: true,
+    version: '1.3.0',
+    crs: L.CRS.EPSG3857,
+    opacity: 0.55,
+    attribution: 'PDOK AHN4'
+  })
+
+  // 4. Polygoon Oesterperceel No. 369 (12,5 ha, Bol van Lodijke)
   const perceel369Bounds = [
     [51.4745, 4.1335],
     [51.4745, 4.1415],
@@ -794,10 +760,10 @@ function initLeafletMap() {
     [51.4782, 4.1335]
   ]
   L.polygon(perceel369Bounds, {
-    color: '#dc2626',
+    color: '#b91c1c',
     weight: 2.5,
     fillColor: '#ef4444',
-    fillOpacity: 0.28
+    fillOpacity: 0.30
   }).addTo(map)
 
   perceel369Marker = L.circleMarker([centerLat, centerLng], {
@@ -818,8 +784,9 @@ function initLeafletMap() {
     )
     .openPopup()
 
+  // 5. Kasteel Lodijke (ARC-LOD-01 op -3.20m NAP)
   L.circleMarker([51.4731, 4.1362], {
-    radius: 7,
+    radius: 8,
     color: '#ffffff',
     weight: 2,
     fillColor: '#d97706',
@@ -834,8 +801,9 @@ function initLeafletMap() {
       { className: 'custom-red-popup' }
     )
 
+  // 6. Verdronken Stad Reimerswaal
   L.circleMarker([51.4866, 4.1614], {
-    radius: 7,
+    radius: 8,
     color: '#ffffff',
     weight: 2,
     fillColor: '#2563eb',
@@ -850,7 +818,8 @@ function initLeafletMap() {
       { className: 'custom-red-popup' }
     )
 
-  wmsOverlayLayers.molenplaat = L.polygon(
+  // 7. Molenplaat Visserijpercelen (150 ha)
+  overlayLayers.molenplaat = L.polygon(
     [
       [51.4910, 4.1820],
       [51.4910, 4.2070],
@@ -859,7 +828,7 @@ function initLeafletMap() {
     ],
     {
       color: '#0284c7',
-      weight: 2,
+      weight: 2.5,
       fillColor: '#38bdf8',
       fillOpacity: 0.25
     }
@@ -881,10 +850,23 @@ function initLeafletMap() {
     cursorRd.value = wgs84ToRd(e.latlng.lat, e.latlng.lng)
   })
 
+  // Automatische ResizeObserver zodat de kaart NOOIT meer half of grijs laadt
+  if (window.ResizeObserver && mapWrapperEl.value) {
+    resizeObserver = new ResizeObserver(() => {
+      if (map) {
+        map.invalidateSize({ animate: false })
+      }
+    })
+    resizeObserver.observe(mapWrapperEl.value)
+  }
+
   setTimeout(() => {
-    map.invalidateSize()
-    perceel369Marker.openPopup()
-  }, 200)
+    if (map) {
+      map.invalidateSize()
+      mapReady.value = true
+      if (perceel369Marker) perceel369Marker.openPopup()
+    }
+  }, 150)
 }
 
 function setBaseLayer(mode) {
@@ -899,7 +881,7 @@ function setBaseLayer(mode) {
 function syncOverlays() {
   if (!map) return
   Object.keys(overlays.value).forEach(key => {
-    const layer = wmsOverlayLayers[key]
+    const layer = overlayLayers[key]
     if (!layer) return
     if (overlays.value[key]) {
       if (!map.hasLayer(layer)) map.addLayer(layer)
@@ -909,32 +891,49 @@ function syncOverlays() {
   })
 }
 
+function switchTab(tabName) {
+  activeMainTab.value = tabName
+  nextTick(() => {
+    if (map) {
+      map.invalidateSize()
+    }
+  })
+}
+
+function flyToLocation(lat, lng, zoom = 15) {
+  switchTab('overzicht')
+  nextTick(() => {
+    if (map) {
+      map.invalidateSize()
+      map.flyTo([lat, lng], zoom, { duration: 0.7 })
+    }
+  })
+}
+
 function focusPerceel369() {
-  switchTab('gis')
-  if (!map) return
-  map.flyTo([51.47633, 4.13750], 15, { duration: 0.8 })
-  if (perceel369Marker) perceel369Marker.openPopup()
+  flyToLocation(51.47633, 4.13750, 15)
+  setTimeout(() => {
+    if (perceel369Marker) perceel369Marker.openPopup()
+  }, 750)
 }
 
 function zoomToSpoor(spoor) {
   activeDrawerSpoor.value = null
-  switchTab('gis')
-  if (map) {
-    setTimeout(() => {
-      map.invalidateSize()
-      map.flyTo([spoor.lat, spoor.lng], spoor.zoom || 15, { duration: 0.9 })
-    }, 150)
-  }
+  flyToLocation(spoor.lat, spoor.lng, spoor.zoom || 15)
 }
 
 onMounted(async () => {
   await nextTick()
   initLeafletMap()
 })
+
+onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+  if (map) map.remove()
+})
 </script>
 
 <style scoped>
-/* TOP NAVBAR & SLIDING DRAWERS */
 .navbar {
   background: #7f1d1d;
   border-bottom: 1px solid #991b1b;
@@ -984,14 +983,9 @@ onMounted(async () => {
   cursor: pointer;
   text-decoration: none;
   font-family: inherit;
-  transition: all 0.15s;
 }
 .nav-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
-.nav-btn.active-pill {
-  background: #ffffff;
-  color: #7f1d1d;
-  font-weight: 700;
-}
+.nav-btn.active-pill { background: #ffffff; color: #7f1d1d; font-weight: 700; }
 .count-pill {
   background: #991b1b;
   color: #fff;
@@ -1001,7 +995,7 @@ onMounted(async () => {
   margin-left: 4px;
 }
 
-/* SLIDING DRAWERS (LINKS & RECHTS) */
+/* SLIDING DRAWERS */
 .sliding-drawer {
   position: fixed;
   top: 54px;
@@ -1019,7 +1013,6 @@ onMounted(async () => {
 }
 .left-drawer { left: 0; border-right: 2px solid #7f1d1d; }
 .right-drawer { right: 0; width: 440px; border-left: 3px solid #dc2626; }
-
 .drawer-header {
   display: flex;
   justify-content: space-between;
@@ -1038,34 +1031,18 @@ onMounted(async () => {
   cursor: pointer;
 }
 .drawer-section { margin-bottom: 20px; }
-.drawer-section h4 { font-size: 0.75rem; color: #f87171; letter-spacing: 0.5px; margin: 0 0 8px 0; }
+.drawer-section h4 { font-size: 0.75rem; color: #f87171; margin: 0 0 8px 0; }
 .drawer-nav-list { list-style: none; padding: 0; margin: 0; }
 .drawer-nav-list li {
   padding: 9px 12px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   color: #e2e8f0;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   background: #1e293b;
 }
 .drawer-nav-list li:hover { background: #7f1d1d; color: #fff; }
-.node-status-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  padding: 6px 0;
-  border-bottom: 1px dashed #334155;
-}
-.badge-online {
-  background: #065f46;
-  color: #6ee7b7;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-.drawer-meta { font-size: 0.8rem; color: #94a3b8; line-height: 1.5; }
 .meta-strip { display: flex; gap: 14px; font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px; }
 .drawer-lead { font-size: 0.88rem; color: #e2e8f0; line-height: 1.5; }
 .evidence-list { padding-left: 18px; font-size: 0.84rem; color: #cbd5e1; line-height: 1.6; }
@@ -1081,7 +1058,7 @@ onMounted(async () => {
 
 .slide-left-enter-active, .slide-left-leave-active,
 .slide-right-enter-active, .slide-right-leave-active {
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transition: transform 0.22s ease, opacity 0.22s ease;
 }
 .slide-left-enter-from, .slide-left-leave-to { transform: translateX(-100%); opacity: 0; }
 .slide-right-enter-from, .slide-right-leave-to { transform: translateX(100%); opacity: 0; }
@@ -1091,11 +1068,11 @@ onMounted(async () => {
   background: linear-gradient(180deg, #651212 0%, #7f1d1d 100%);
   color: #ffffff;
   text-align: center;
-  padding: 36px 20px;
+  padding: 34px 20px;
   border-bottom: 3px solid #991b1b;
 }
 .hero-banner h1 { margin: 0 0 8px 0; font-size: 1.85rem; font-weight: 700; }
-.hero-sub { font-size: 0.9rem; color: #fecaca; margin-bottom: 18px; }
+.hero-sub { font-size: 0.9rem; color: #fecaca; margin-bottom: 16px; }
 .hero-btn-group { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
 .hero-cta {
   background: #ffffff;
@@ -1106,7 +1083,6 @@ onMounted(async () => {
   font-weight: 700;
   border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 .hero-cta.secondary-cta {
   background: rgba(0,0,0,0.28);
@@ -1114,7 +1090,7 @@ onMounted(async () => {
   border: 1px solid #fca5a5;
 }
 
-/* CARDS & SUB-TABS */
+/* MAIN CONTAINER & KAART */
 .main-container { max-width: 1240px; margin: 0 auto; padding: 24px 20px 60px; }
 .card-section {
   background: #ffffff;
@@ -1135,42 +1111,19 @@ onMounted(async () => {
 .section-title { margin: 0 0 4px 0; color: #881313; font-size: 1.22rem; }
 .section-subtitle { margin: 0; color: #475569; font-size: 0.88rem; }
 
-.sub-tabs-bar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-  border-bottom: 2px solid #f1f5f9;
-  padding-bottom: 10px;
+.map-status-pill {
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: #fef3c7;
+  color: #92400e;
 }
-.sub-tab {
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
-  padding: 7px 14px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.sub-tab.active {
-  background: #7f1d1d;
-  color: #ffffff;
-  border-color: #7f1d1d;
+.map-status-pill.ready {
+  background: #dcfce7;
+  color: #166534;
 }
 
-.btn-restore {
-  background: #0f172a;
-  color: #ffffff;
-  border: none;
-  padding: 7px 13px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* KAART SECTIE */
 .map-toolbar {
   display: flex;
   justify-content: space-between;
@@ -1194,23 +1147,30 @@ onMounted(async () => {
 }
 .layer-group button.active { background: #7f1d1d; color: #ffffff; border-color: #7f1d1d; }
 .recenter-btn {
-  background: #881313;
-  color: #ffffff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
+  background: #881313 !important;
+  color: #ffffff !important;
   font-weight: 600;
-  cursor: pointer;
 }
+
 .map-frame {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 520px;
+  min-height: 520px;
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid #1e293b;
+  background: #cad2d3;
 }
-#lodijke-leaflet-map { width: 100%; height: 100%; }
+#lodijke-leaflet-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
 .telemetry-overlay {
   position: absolute;
   bottom: 12px;
@@ -1227,7 +1187,36 @@ onMounted(async () => {
   pointer-events: none;
 }
 
-/* WOO SPOREN KAARTEN + DELETE KNOPPEN */
+/* SUB-TABS & CARDS */
+.sub-tabs-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+.sub-tab {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sub-tab.active { background: #7f1d1d; color: #ffffff; border-color: #7f1d1d; }
+.btn-restore {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 7px 13px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
 .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
 .spoor-card, .media-card, .podcast-card {
@@ -1274,10 +1263,7 @@ onMounted(async () => {
   font-weight: 700;
   cursor: pointer;
 }
-.btn-card-delete:hover, .btn-delete-spoor:hover {
-  background: #dc2626;
-  color: #ffffff;
-}
+.btn-card-delete:hover, .btn-delete-spoor:hover { background: #dc2626; color: #ffffff; }
 .clickable-title { cursor: pointer; margin: 4px 0 8px 0; font-size: 1rem; color: #1e293b; }
 .clickable-title:hover { color: #7f1d1d; text-decoration: underline; }
 .spoor-card p, .media-card p, .podcast-card p {
@@ -1299,8 +1285,6 @@ onMounted(async () => {
   text-decoration: none;
 }
 .link-btn.secondary { background: #e2e8f0; color: #1e293b; }
-
-/* RSS & PODCAST STYLING */
 .endpoint-url {
   display: block;
   background: #f1f5f9;
@@ -1312,12 +1296,7 @@ onMounted(async () => {
   word-break: break-all;
 }
 .rss-layout { display: grid; grid-template-columns: 260px 1fr; gap: 18px; }
-.rss-sidebar {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 12px;
-  border-radius: 8px;
-}
+.rss-sidebar { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; }
 .rss-sidebar h4 { margin: 0 0 10px 0; font-size: 0.76rem; color: #64748b; }
 .rss-channel-item {
   padding: 9px 10px;
