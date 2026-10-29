@@ -4,12 +4,14 @@ version = "7.0.0"
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.8", features = ["macros"] }
+bytes = "1"
+multer = "3"
+axum = { version = "0.8", features = ["macros", "multipart"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json"] }
-tower-http = { version = "0.6", features = ["cors", "serve-dir"] }
+tower-http = { version = "0.6", features = ["cors", "fs"] }
 async-graphql = { version = "7.0", features = ["chrono", "url", "uuid"] }
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }

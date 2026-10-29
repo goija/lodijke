@@ -1,0 +1,90 @@
+// Mini Lodijke CMS — Alleen foto's
+mod fotomodule;
+
+use axum::{routing::{get, post, delete}, extract::{Path, State}, Json, Router};
+use serde_json::json;
+use std::path::PathBuf;
+use tokio::sync::RwLock;
+use tower_http::{cors::CorsLayer, services::{ServeDir, ServeFile}};
+use std::net::SocketAddr;
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    base_dir: PathBuf,
+    photos: Arc<RwLock<Vec<fotomodule::Photo>>>,
+}
+
+#[tokio::main]
+async fn main() {
+    let base_dir = std::env::current_dir().unwrap();
+    let port: u16 = std::env::var("PORT").unwrap_or_else(|_| "8082".to_string()).parse().unwrap_or(8082);
+    let dist_dir = base_dir.join("frontend").join("dist");
+
+    std::fs::create_dir_all(&dist_dir).ok();
+    let index = dist_dir.join("index.html");
+    if !index.exists() {
+        std::fs::write(&index, "<html><body><h1>Lodijke CMS</h1><p>Status: OK</p></body></html>").ok();
+    }
+
+    let photos = Arc::new(RwLock::new(fotomodule::load_photos(&base_dir).await));
+    let state = AppState { base_dir: base_dir.clone(), photos };
+
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/api/photos", get(list_photos))
+        .route("/api/photos/upload", post(upload_photo))
+        .route("/api/photos/:id", delete(delete_photo))
+        .merge(fotomodule::router())
+        .route_service("/", ServeFile::new(index))
+        .nest_service("/assets", ServeDir::new(dist_dir.join("assets")))
+        .layer(CorsLayer::permissive())
+        .with_state(state);
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    println!("🚀 Start op http://{}", addr);
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
+
+async fn health(Json(_): Json<serde_json::Value>) -> Json<serde_json::Value> {
+    Json(json!({"status": "OK", "module": "fotos", "timestamp": chrono::Utc::now().to_rfc3339()}))
+}
+
+async fn list_photos(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let p = s.photos.read().await;
+    Json(json!({"count": p.len(), "photos": p.iter().map(|x| x.clone()).collect::<Vec<_>>()}))
+}
+
+async fn upload_photo(mut multipart: axum::extract::Multipart, State(s): State<AppState>) -> (u16, Json<serde_json::Value>) {
+    let upload_dir = s.base_dir.join("data").join("photos");
+    std::fs::create_dir_all(&upload_dir).ok();
+    
+    while let Ok(Some(field)) = multipart.next_field().await {
+        if field.name() == Some("file") {
+            let data = field.bytes().await.unwrap();
+            let ext = field.file_name().and_then(|n| std::path::Path::new(n).extension().and_then(|e| e.to_str())).unwrap_or("jpg");
+            let name = format!("{}_{}.{}", uuid::Uuid::new_v4(), chrono::Utc::now().timestamp(), ext);
+            let path = upload_dir.join(&name);
+            std::fs::write(&path, &data).unwrap();
+            
+            let mut photos = s.photos.write().await;
+            photos.insert(0, fotomodule::Photo {
+                id: uuid::Uuid::new_v4().to_string(),
+                title: "Upload".into(),
+                filename: name,
+                uploaded_at: chrono::Utc::now(),
+                ..Default::default()
+            });
+            
+            return (201, Json(json!({"success": true})));
+        }
+    }
+    (400, Json(json!({"error": "Geen bestand"})))
+}
+
+async fn delete_photo(Path(id): Path<String>, State(s): State<AppState>) -> Json<serde_json::Value> {
+    let mut photos = s.photos.write().await;
+    photos.retain(|p| p.id != id);
+    Json(json!({"deleted": true}))
+}

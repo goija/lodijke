@@ -1,6 +1,0 @@
-● lodijke-cms-server.service - Archief & AvoRed Rust Axum CMS + Vue 3 (Schot, Bout & Bol van Lodijke)
-     Loaded: loaded (]8;;file://ontwerp-GA/home/ontwerp/.config/systemd/user/lodijke-cms-server.service/home/ontwerp/.config/systemd/user/lodijke-cms-server.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
-     Active: activating (auto-restart) (Result: exit-code) since Thu 2026-10-29 07:46:06 CET; 2ms ago
-    Process: 623519 ExecStart=/home/ontwerp/lodijke/target/release/lodijke-cms-server [0;1;31m(code=exited, status=203/EXEC)[0m
-   Main PID: 623519 (code=exited, status=203/EXEC)
-        CPU: 6ms

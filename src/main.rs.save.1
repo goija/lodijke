@@ -1,0 +1,295 @@
+/==============================================================================
+// Lodijke CMS — fotomodule (alles in één bestand)
+//==============================================================================
+
+use axum::{
+    extract::{Multipart, Path, State},
+    http::StatusCode,
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use std::{fs, net::SocketAddr, path::PathBuf, sync::Arc};
+use tokio::sync::RwLock;
+use tower_http::{
+    cors::CorsLayer,
+    services::{ServeDir, ServeFile},
+};
+use uuid::Uuid;
+
+//------------------------------------------------------------------------------
+// Modellen
+//------------------------------------------------------------------------------
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct Photo {
+    id: String,
+    title: String,
+    description: Option<String>,
+    category: Option<String>,
+    filename: String,
+    uploaded_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize)]
+struct NewPhoto {
+    title: String,
+    description: Option<String>,
+    category: Option<String>,
+    filename: String,
+}
+
+#[derive(Clone)]
+struct AppState {
+    base_dir: PathBuf,
+    photos: Arc<RwLock<Vec<Photo>>>,
+}
+
+//------------------------------------------------------------------------------
+// Main
+//------------------------------------------------------------------------------
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+
+    let base_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let port: u16 = std::env::var("PORT")
+        .unwrap_or_else(|_| "8082".to_string())
+        .parse()
+        .unwrap_or(8082);
+
+    let data_dir = base_dir.join("data");
+    let photo_dir = data_dir.join("photos");
+    let dist_dir = base_dir.join("frontend").join("dist");
+
+    let _ = fs::create_dir_all(&photo_dir);
+    let _ = fs::create_dir_all(dist_dir.join("assets"));
+
+    let index = dist_dir.join("index.html");
+    if !index.exists() {
+        let _ = fs::write(
+            &index,
+            "<!DOCTYPE html><html lang=\"nl\"><head><meta charset=\"utf-8\">\
+             <title>Lodijke CMS</title></head><body>\
+             <h1>Lodijke Archief</h1><p>Status: OK</p></body></html>",
+        );
+    }
+
+    let photos = load_photos(&data_dir);
+
+    let state = AppState {
+        base_dir: base_dir.clone(),
+        photos: Arc::new(RwLock::new(photos)),
+    };
+
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/api/photos", get(list_photos).post(create_photo))
+        .route("/api/photos/upload", post(upload_photo))
+        .route("/api/photos/categories", get(categories))
+        .route("/api/photos/{id}", get(get_photo).delete(delete_photo))
+        .nest_service("/media", ServeDir::new(photo_dir))
+        .route_service("/", ServeFile::new(index))
+        .nest_service("/assets", ServeDir::new(dist_dir.join("assets")))
+        .layer(CorsLayer::permissive())
+        .with_state(state);
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    tracing::info!("Lodijke CMS luistert op http://{}", addr);
+
+    let listener = match tokio::net::TcpListener::bind(addr).await {
+        Ok(l) => l,
+        Err(e) => {
+            tracing::error!("Kan poort {} niet binden: {}", port, e);
+            std::process::exit(1);
+        }
+    };
+
+    if let Err(e) = axum::serve(listener, app).await {
+        tracing::error!("Serverfout: {}", e);
+        std::process::exit(1);
+    }
+}
+
+//------------------------------------------------------------------------------
+// Handlers
+//------------------------------------------------------------------------------
+
+async fn health() -> Json<serde_json::Value> {
+    Json(json!({
+        "status": "OK",
+        "engine": "Lodijke CMS v9 — fotomodule",
+        "timestamp": Utc::now().to_rfc3339()
+    }))
+}
+
+async fn list_photos(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let guard = s.photos.read().await;
+    let items: Vec<Photo> = guard.clone();
+    Json(json!({ "total": items.len(), "photos": items }))
+}
+
+async fn get_photo(State(s): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
+    let guard = s.photos.read().await;
+    match guard.iter().find(|p| p.id == id) {
+        Some(p) => (StatusCode::OK, Json(json!(p))).into_response(),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(json!({ "error": "Foto niet gevonden" })),
+        )
+            .into_response(),
+    }
+}
+
+async fn create_photo(
+    State(s): State<AppState>,
+    Json(payload): Json<NewPhoto>,
+) -> impl IntoResponse {
+    let photo = Photo {
+        id: Uuid::new_v4().to_string(),
+        title: payload.title,
+        description: payload.description,
+        category: payload.category,
+        filename: payload.filename,
+        uploaded_at: Utc::now(),
+    };
+
+    {
+        let mut guard = s.photos.write().await;
+        guard.insert(0, photo.clone());
+        save_photos(&s.base_dir, &guard);
+    }
+
+    (
+        StatusCode::CREATED,
+        Json(json!({ "success": true, "photo": photo })),
+    )
+        .into_response()
+}
+
+async fn delete_photo(State(s): State<AppState>, Path(id): Path<String>) -> impl IntoResponse {
+    let mut guard = s.photos.write().await;
+    let before = guard.len();
+    guard.retain(|p| p.id != id);
+    let removed = before - guard.len();
+    save_photos(&s.base_dir, &guard);
+
+    Json(json!({ "success": true, "deleted": removed }))
+}
+
+async fn categories(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let guard = s.photos.read().await;
+    let mut cats: Vec<String> = guard.iter().filter_map(|p| p.category.clone()).collect();
+    cats.sort();
+    cats.dedup();
+    Json(json!({ "categories": cats }))
+}
+
+async fn upload_photo(State(s): State<AppState>, mut multipart: Multipart) -> impl IntoResponse {
+    let dir = s.base_dir.join("data").join("photos");
+    let _ = fs::create_dir_all(&dir);
+
+    let mut title: Option<String> = None;
+    let mut category: Option<String> = None;
+    let mut saved: Option<Photo> = None;
+
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+
+        match name.as_str() {
+            "title" => {
+                title = field.text().await.ok().filter(|t| !t.trim().is_empty());
+            }
+            "category" => {
+                category = field.text().await.ok().filter(|t| !t.trim().is_empty());
+            }
+            "file" => {
+                let orig = field.file_name().unwrap_or("foto.jpg").to_string();
+                let ext = PathBuf::from(&orig)
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("jpg")
+                    .to_string();
+
+                let fname = format!("{}.{}", Uuid::new_v4(), ext);
+
+                if let Ok(bytes) = field.bytes().await {
+                    if fs::write(dir.join(&fname), &bytes).is_ok() {
+                        saved = Some(Photo {
+                            id: Uuid::new_v4().to_string(),
+                            title: title.clone().unwrap_or(orig),
+                            description: None,
+                            category: category.clone(),
+                            filename: fname,
+                            uploaded_at: Utc::now(),
+                        });
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    match saved {
+        Some(photo) => {
+            {
+                let mut guard = s.photos.write().await;
+                guard.insert(0, photo.clone());
+                save_photos(&s.base_dir, &guard);
+            }
+            (
+                StatusCode::CREATED,
+                Json(json!({ "success": true, "photo": photo })),
+            )
+                .into_response()
+        }
+        None => (
+            StatusCode::BAD_REQUEST,
+            Json(json!({ "error": "Geen bestand ontvangen" })),
+        )
+            .into_response(),
+    }
+}
+
+//------------------------------------------------------------------------------
+// Helpers
+//------------------------------------------------------------------------------
+
+fn save_photos(base_dir: &PathBuf, photos: &[Photo]) {
+    let path = base_dir.join("data").join("photos.json");
+    if let Ok(text) = serde_json::to_string_pretty(photos) {
+        let _ = fs::write(path, text);
+    }
+}
+
+fn load_photos(data_dir: &PathBuf) -> Vec<Photo> {
+    let path = data_dir.join("photos.json");
+
+    if let Ok(text) = fs::read_to_string(&path) {
+        if let Ok(list) = serde_json::from_str::<Vec<Photo>>(&text) {
+            return list;
+        }
+    }
+
+    vec![       Photo {
+            id: "demo-001".to_string(),
+            title: "Hoogaars TH 2 \"Eben Haëzer\"".to_string(),
+            description: Some("Gebouwd 1902, werf Van Duivendijk".to_string()),
+            category: Some("Schepen".to_string()),
+            filename: "hoogaars-th2.jpg".to_string(),
+            uploaded_at: Utc::now(),
+        },
+        Photo {
+            id: "demo-002".to_string(),
+            title: "Visserijhaven Tholen".to_string(),
+            description: None,
+            category: Some("Haven".to_string()),
+            filename: "haven-tholen.jpg".to_string(),
+            uploaded_at: Utc::now(),
+        },
+    ]
+}
