@@ -1,45 +1,36 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, sync::Arc};
-use tokio::sync::RwLock;
-
-#[derive(Clone)]
-pub struct AppState {
-    pub cms_file_path: PathBuf,
-    pub cms_records: Arc<RwLock<Vec<CmsRecord>>>,
-    pub authors: Arc<RwLock<Vec<Author>>>,
-    pub posts: Arc<RwLock<Vec<PostItem>>>,
-    pub edits: Arc<RwLock<Vec<EditItem>>>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CmsRecord {
     pub id: String,
     pub title: String,
+    pub content: String,
     pub category: String,
-    pub date: String,
-    pub body: String,
+    pub tags: Vec<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub status: RecordStatus,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum RecordStatus { Draft, Published, Archived }
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Author {
+pub struct GeoParcelFeature {
     pub id: String,
     pub name: String,
-    pub role: String,
+    pub area_sqm: f64,
+    pub geometry: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PostItem {
+pub struct PdokPerceel {
     pub id: String,
-    pub author_id: String,
-    pub title: String,
-    pub content: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditItem {
-    pub id: String,
-    pub post_id: String,
-    pub proposed_content: String,
-    pub status: String, // "PENDING", "ACCEPTED", "REJECTED"
-    pub direction: String, // "INCOMING", "OUTGOING"
+    pub perceelnummer: String,
+    pub gemeente: String,
+    pub sectie: String,
+    pub oppervlakte: Option<f64>,
+    pub geometrie: serde_json::Value,
 }

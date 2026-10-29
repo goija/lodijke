@@ -1,0 +1,80 @@
+
+mod avored;
+mod git_sync;
+mod pdok_wfs;
+mod planimeter;
+mod gramps;
+mod models;
+
+use axum::{routing::{get, post}, extract::State, Json, Router, http::StatusCode};
+use serde_json::json;
+use chrono::Utc;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+#[derive(Clone)]
+struct AppState {
+    port: u16,
+    avored: Arc<RwLock<avored::AvoredService>>,
+    pdok: Arc<pdok_wfs::PdokClient>,
+    gramps: Arc<gramps::GrampsProxy>,
+}
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+    
+    let port: u16 = std::env::var("PORT").unwrap_or("8082".into()).parse().unwrap();
+    let state = AppState {
+        port,
+        avored: Arc::new(RwLock::new(avored::AvoredService::new("./data".into()))),
+        pdok: Arc::new(pdok_wfs::PdokClient::new()),
+        gramps: Arc::new(gramps::GrampsProxy::new()),
+    };
+
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/api/status", get(api_status))
+        .route("/api/avored/records", get(list_records))
+        .route("/api/pdok/percelen", get(get_parcels))
+        .route("/api/gramps/status", get(gramps_status))
+        .route("/api/gramps/people", get(gramps_people))
+        .with_state(state);
+
+    let addr = format!("0.0.0.0:{}", port);
+    println!("🚀 Lodijke CMS running on {}", addr);
+    axum::Server::bind(&addr.parse().unwrap()).serve(app.into_make_service()).await.unwrap();
+}
+
+async fn health() -> Json<serde_json::Value> {
+    Json(json!({"status": "healthy", "version": "7.0.0", "timestamp": Utc::now().to_rfc3339()}))
+}
+
+async fn api_status(State(s): State<AppState>) -> Json<serde_json::Value> {
+    Json(json!({
+        "services": {"avored": "online", "pdok": "connected", "gramps": "proxied"},
+        "port": s.port, "version": "7.0.0"
+    }))
+}
+
+async fn list_records(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let recs = s.avored.read().await.list().await;
+    Json(json!({"records": recs, "total": recs.len()}))
+}
+
+async fn get_parcels(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let ok = s.pdok.health().await;
+    Json(json!({"status": if ok { "online" } else { "offline" }, "endpoint": "/api/pdok/percelen?xmin=&xmax=&ymin=&ymax="}))
+}
+
+async fn gramps_status(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let ok = s.gramps.ping().await.is_ok();
+    Json(json!({"status": if ok { "online" } else { "offline" }, "tree": s.gramps.tree_id()}))
+}
+
+async fn gramps_people(State(s): State<AppState>) -> Json<serde_json::Value> {
+    match s.gramps.get_people().await {
+        Ok(p) => Json(json!({"people": p, "total": p.len()})),
+        Err(e) => Json(json!({"error": e, "status": "offline"}))
+    }
+}

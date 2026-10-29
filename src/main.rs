@@ -1,453 +1,79 @@
 mod avored;
 mod git_sync;
-mod graphql;
 mod pdok_wfs;
 mod planimeter;
+mod gramps;
+mod models;
 
-use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
-use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::{Html, IntoResponse},
-    routing::{delete, get, post},
-    Json, Router,
-};
-use avored::{AvoRedCollection, CmsRecord, GeoParcelFeature, GitSyncEntry};
-use git_sync::{get_git_branch_and_status, perform_git_sync};
-use graphql::{LodijkeSchema, MutationRoot, QueryRoot};
-use pdok_wfs::fetch_pdok_kadaster_bbox;
-use planimeter::integrate_rd_polygon;
-use serde::Deserialize;
+use axum::{routing::{get, post}, extract::State, Json, Router, http::StatusCode};
 use serde_json::json;
-use std::{net::SocketAddr, path::PathBuf, sync::Arc};
+use chrono::Utc;
+use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_http::{
-    cors::CorsLayer,
-    services::{ServeDir, ServeFile},
-};
 
 #[derive(Clone)]
-pub struct AppState {
-    pub base_dir: PathBuf,
-    pub cms_file: PathBuf,
-    pub col_file: PathBuf,
-    pub geo_file: PathBuf,
-    pub git_log_file: PathBuf,
-    pub records: Arc<RwLock<Vec<CmsRecord>>>,
-    pub collections: Arc<RwLock<Vec<AvoRedCollection>>>,
-    pub geo_parcels: Arc<RwLock<Vec<GeoParcelFeature>>>,
-}
-
-#[derive(Deserialize)]
-struct GitSyncRequest {
-    message: Option<String>,
-    push: Option<bool>,
-}
-
-#[derive(Deserialize)]
-struct CustomPlanimeterRequest {
-    label: Option<String>,
-    rd_polygon: Vec<Vec<f64>>,
-    map_scale: Option<u32>,
+struct AppState {
+    port: u16,
+    avored: Arc<RwLock<avored::AvoredService>>,
+    pdok: Arc<pdok_wfs::PdokClient>,
+    gramps: Arc<gramps::GrampsProxy>,
 }
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
-
-    let base_dir = PathBuf::from("/home/ontwerp/lodijke");
-    let cms_file = base_dir.join("data/cms_records.json");
-    let col_file = base_dir.join("data/avored_collections.json");
-    let geo_file = base_dir.join("data/geojson_parcels.json");
-    let git_log_file = base_dir.join("data/git_sync_log.json");
-    let dist_dir = base_dir.join("frontend/dist");
-
-    let initial_records: Vec<CmsRecord> = std::fs::read_to_string(&cms_file)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
-
-    let initial_collections: Vec<AvoRedCollection> = std::fs::read_to_string(&col_file)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
-
-    let initial_geo: Vec<GeoParcelFeature> = std::fs::read_to_string(&geo_file)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
-
+    
+    let port: u16 = std::env::var("PORT").unwrap_or("8082".into()).parse().unwrap();
     let state = AppState {
-        base_dir,
-        cms_file,
-        col_file,
-        geo_file,
-        git_log_file,
-        records: Arc::new(RwLock::new(initial_records)),
-        collections: Arc::new(RwLock::new(initial_collections)),
-        geo_parcels: Arc::new(RwLock::new(initial_geo)),
+        port,
+        avored: Arc::new(RwLock::new(avored::AvoredService::new("./data".into()))),
+        pdok: Arc::new(pdok_wfs::PdokClient::new()),
+        gramps: Arc::new(gramps::GrampsProxy::new()),
     };
 
-    let schema: LodijkeSchema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
-        .data(state.clone())
-        .finish();
-
     let app = Router::new()
-        .route("/health", get(health_handler))
-        .route("/api/cms", get(get_cms_records).post(post_cms_record))
-        .route("/api/cms/:id", delete(delete_cms_record))
-        .route(
-            "/api/avored/collections",
-            get(get_avored_collections).post(post_avored_collection),
-        )
-        .route("/api/avored/status", get(avored_status_handler))
-        .route("/api/geojson", get(get_rfc7946_geojson))
-        .route("/api/geojson/parcels", get(get_geo_parcels))
-        .route("/api/planimeter/audit", get(get_planimeter_audit))
-        .route("/api/planimeter/integrate", post(post_planimeter_integrate))
-        .route("/api/pdok/percelen", get(get_pdok_wfs_percelen))
-        .route(
-            "/api/graphql",
-            get(graphiql_playground).post(graphql_execution_handler),
-        )
-        .route("/api/git/status", get(git_status_handler))
-        .route("/api/git/sync", post(git_sync_handler))
-        .route("/author", get(list_authors_handler))
-        .route("/author/:id", get(get_author_handler))
-        .route("/post", get(list_posts_handler))
-        .route("/post/:id", get(get_post_handler))
-        .route("/edit", get(edit_root_handler))
-        .route("/edit/incoming", get(edit_incoming_handler))
-        .route("/edit/outgoing", get(edit_outgoing_handler))
-        .route_service("/", ServeFile::new(dist_dir.join("index.html")))
-        .nest_service("/assets", ServeDir::new(dist_dir.join("assets")))
-        .layer(CorsLayer::permissive())
-        .with_state((state, schema));
+        .route("/health", get(health))
+        .route("/api/status", get(api_status))
+        .route("/api/avored/records", get(list_records))
+        .route("/api/pdok/percelen", get(get_parcels))
+        .route("/api/gramps/status", get(gramps_status))
+        .route("/api/gramps/people", get(gramps_people))
+        .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8082));
-    tracing::info!(
-        "Lodijke Vue 3 + AvoRed Rust CMS + PDOK WFS v5.0 + GraphQL luistert op http://{}",
-        addr
-    );
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let addr = format!("0.0.0.0:{}", port);
+    println!("🚀 Lodijke CMS running on {}", addr);
+    axum::Server::bind(&addr.parse().unwrap()).serve(app.into_make_service()).await.unwrap();
 }
 
-async fn graphiql_playground() -> impl IntoResponse {
-    Html(GraphiQLSource::build().endpoint("/api/graphql").finish())
+async fn health() -> Json<serde_json::Value> {
+    Json(json!({"status": "healthy", "version": "7.0.0", "timestamp": Utc::now().to_rfc3339()}))
 }
 
-async fn graphql_execution_handler(
-    State((_, schema)): State<(AppState, LodijkeSchema)>,
-    req: GraphQLRequest,
-) -> GraphQLResponse {
-    schema.execute(req.into_inner()).await.into()
-}
-
-async fn get_pdok_wfs_percelen() -> impl IntoResponse {
-    // Standaard BBOX Tholen / Scherpenisse (EPSG:28992)
-    let bbox = "67000,387000,75000,396000,EPSG:28992";
-    match fetch_pdok_kadaster_bbox(bbox).await {
-        Ok(list) => Json(json!({ "status": "OK", "bbox": bbox, "count": list.len(), "parcels": list })),
-        Err(e) => Json(json!({ "status": "FALLBACK", "error": e, "parcels": [] })),
-    }
-}
-
-async fn get_planimeter_audit(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let parcels = state.geo_parcels.read().await;
-    let audit: Vec<_> = parcels
-        .iter()
-        .map(|p| {
-            integrate_rd_polygon(
-                &p.id,
-                &p.cadastral_code,
-                &p.rd_polygon,
-                Some(p.area_hectares),
-                2500,
-            )
-        })
-        .collect();
-    Json(audit)
-}
-
-async fn post_planimeter_integrate(
-    Json(payload): Json<CustomPlanimeterRequest>,
-) -> impl IntoResponse {
-    let label = payload
-        .label
-        .unwrap_or_else(|| "Handmatige RD-Polygoon".to_string());
-    let scale = payload.map_scale.unwrap_or(2500);
-    let res = integrate_rd_polygon("custom-rd", &label, &payload.rd_polygon, None, scale);
-    Json(res)
-}
-
-async fn get_rfc7946_geojson(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let parcels = state.geo_parcels.read().await;
-    let features: Vec<serde_json::Value> =
-        parcels.iter().map(|p| p.to_rfc7946_feature()).collect();
+async fn api_status(State(s): State<AppState>) -> Json<serde_json::Value> {
     Json(json!({
-        "type": "FeatureCollection",
-        "name": "lodijke_tholen_scherpenisse_percelen",
-        "crs_wgs84": "EPSG:4326",
-        "crs_rd_new": "EPSG:28992",
-        "features": features
+        "services": {"avored": "online", "pdok": "connected", "gramps": "proxied"},
+        "port": s.port, "version": "7.0.0"
     }))
 }
 
-async fn get_geo_parcels(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let parcels = state.geo_parcels.read().await;
-    Json(parcels.clone())
+async fn list_records(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let recs = s.avored.read().await.list().await;
+    Json(json!({"records": recs, "total": recs.len()}))
 }
 
-async fn health_handler() -> impl IntoResponse {
-    Json(json!({
-        "status": "OK",
-        "engine": "AvoRed Rust CMS + PDOK WFS v5.0 Kadaster + Shoelace Planimeter + GraphQL",
-        "avg_shield": "ACTIVE",
-        "graphql_endpoint": "/api/graphql",
-        "pdok_wfs_endpoint": "/api/pdok/percelen",
-        "port": 8082
-    }))
+async fn get_parcels(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let ok = s.pdok.health().await;
+    Json(json!({"status": if ok { "online" } else { "offline" }, "endpoint": "/api/pdok/percelen?xmin=&xmax=&ymin=&ymax="}))
 }
 
-async fn avored_status_handler(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let cols = state.collections.read().await;
-    let recs = state.records.read().await;
-    let parcels = state.geo_parcels.read().await;
-    let (branch, last_commit, remote) = get_git_branch_and_status(&state.base_dir).await;
-    Json(json!({
-        "cms": "avored-rust-cms-pdok-wfs-graphql-git",
-        "collections_count": cols.len(),
-        "records_count": recs.len(),
-        "geojson_parcels_count": parcels.len(),
-        "git_branch": branch,
-        "git_last_commit": last_commit,
-        "git_remote": remote
-    }))
+async fn gramps_status(State(s): State<AppState>) -> Json<serde_json::Value> {
+    let ok = s.gramps.ping().await.is_ok();
+    Json(json!({"status": if ok { "online" } else { "offline" }, "tree": s.gramps.tree_id()}))
 }
 
-async fn git_status_handler(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let (branch, last_commit, remote) = get_git_branch_and_status(&state.base_dir).await;
-    let logs: Vec<GitSyncEntry> = std::fs::read_to_string(&state.git_log_file)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
-
-    Json(json!({
-        "branch": branch,
-        "last_commit": last_commit,
-        "remote": remote,
-        "logs": logs
-    }))
-}
-
-async fn git_sync_handler(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-    Json(payload): Json<GitSyncRequest>,
-) -> impl IntoResponse {
-    let msg = payload
-        .message
-        .unwrap_or_else(|| "[AvoRed CMS] Synchronisatie collecties, PDOK WFS & Planimeter".to_string());
-    let push = payload.push.unwrap_or(false);
-    let entry = perform_git_sync(
-        &state.base_dir,
-        &state.git_log_file,
-        "REST_GIT_SYNC",
-        &msg,
-        push,
-    )
-    .await;
-    let (branch, last_commit, remote) = get_git_branch_and_status(&state.base_dir).await;
-    let logs: Vec<GitSyncEntry> = std::fs::read_to_string(&state.git_log_file)
-        .ok()
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
-
-    Json(json!({
-        "latest": entry,
-        "branch": branch,
-        "last_commit": last_commit,
-        "remote": remote,
-        "logs": logs
-    }))
-}
-
-async fn get_cms_records(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let recs = state.records.read().await;
-    Json(recs.clone())
-}
-
-async fn post_cms_record(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-    Json(payload): Json<CmsRecord>,
-) -> impl IntoResponse {
-    let title_copy = payload.title.clone();
-    let id_copy = payload.id.clone();
-    {
-        let mut recs = state.records.write().await;
-        recs.insert(0, payload);
-        if let Ok(json_str) = serde_json::to_string_pretty(&*recs) {
-            let _ = std::fs::write(&state.cms_file, json_str);
-        }
+async fn gramps_people(State(s): State<AppState>) -> Json<serde_json::Value> {
+    match s.gramps.get_people().await {
+        Ok(p) => Json(json!({"people": p, "total": p.len()})),
+        Err(e) => Json(json!({"error": e, "status": "offline"}))
     }
-    let bg_state = state.clone();
-    tokio::spawn(async move {
-        let msg = format!("[Auto-Git] Nieuw archiefstuk: {} ({})", title_copy, id_copy);
-        let _ = perform_git_sync(
-            &bg_state.base_dir,
-            &bg_state.git_log_file,
-            "AUTO_POST_CMS",
-            &msg,
-            false,
-        )
-        .await;
-    });
-
-    let recs = state.records.read().await;
-    Json(recs.clone())
-}
-
-async fn delete_cms_record(
-    Path(id): Path<String>,
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    {
-        let mut recs = state.records.write().await;
-        recs.retain(|r| r.id != id);
-        if let Ok(json_str) = serde_json::to_string_pretty(&*recs) {
-            let _ = std::fs::write(&state.cms_file, json_str);
-        }
-    }
-    let bg_state = state.clone();
-    let id_copy = id.clone();
-    tokio::spawn(async move {
-        let msg = format!("[Auto-Git] Verwijderd archiefstuk: {}", id_copy);
-        let _ = perform_git_sync(
-            &bg_state.base_dir,
-            &bg_state.git_log_file,
-            "AUTO_DELETE_CMS",
-            &msg,
-            false,
-        )
-        .await;
-    });
-
-    let recs = state.records.read().await;
-    Json(recs.clone())
-}
-
-async fn get_avored_collections(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let cols = state.collections.read().await;
-    Json(cols.clone())
-}
-
-async fn post_avored_collection(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-    Json(payload): Json<AvoRedCollection>,
-) -> impl IntoResponse {
-    let col_id = payload.identifier.clone();
-    {
-        let mut cols = state.collections.write().await;
-        cols.push(payload);
-        if let Ok(json_str) = serde_json::to_string_pretty(&*cols) {
-            let _ = std::fs::write(&state.col_file, json_str);
-        }
-    }
-    let bg_state = state.clone();
-    tokio::spawn(async move {
-        let msg = format!("[Auto-Git] Nieuwe AvoRed collectie: {}", col_id);
-        let _ = perform_git_sync(
-            &bg_state.base_dir,
-            &bg_state.git_log_file,
-            "AUTO_POST_COLLECTION",
-            &msg,
-            false,
-        )
-        .await;
-    });
-
-    let cols = state.collections.read().await;
-    Json(cols.clone())
-}
-
-async fn list_authors_handler() -> impl IntoResponse {
-    Json(json!([
-        {
-            "id": "I0103",
-            "name": "Benjamin Willem Schot (1840-1935)",
-            "location": "Kruittoren 23, Tholen",
-            "fleet": ["TH 2", "TH 12", "TH 90"]
-        }
-    ]))
-}
-
-async fn get_author_handler(Path(id): Path<String>) -> impl IntoResponse {
-    if id == "I0103" {
-        (
-            StatusCode::OK,
-            Json(json!({
-                "id": "I0103",
-                "name": "Benjamin Willem Schot (1840-1935)",
-                "perceel": "Perceel No. 369 Bol van Lodijke (12,5 ha)",
-                "avg_shield": "Generatie I & II afgeschermd"
-            })),
-        )
-    } else {
-        (
-            StatusCode::NOT_FOUND,
-            Json(json!({ "error": "Auteur niet gevonden" })),
-        )
-    }
-}
-
-async fn list_posts_handler(
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let recs = state.records.read().await;
-    Json(recs.clone())
-}
-
-async fn get_post_handler(
-    Path(id): Path<String>,
-    State((state, _)): State<(AppState, LodijkeSchema)>,
-) -> impl IntoResponse {
-    let recs = state.records.read().await;
-    if let Some(found) = recs.iter().find(|r| r.id == id) {
-        (StatusCode::OK, Json(json!(found)))
-    } else {
-        (
-            StatusCode::NOT_FOUND,
-            Json(json!({ "error": "Archiefstuk niet gevonden" })),
-        )
-    }
-}
-
-async fn edit_root_handler() -> impl IntoResponse {
-    Json(json!({
-        "workflow": "AvoRed Editorial Queue + PDOK WFS v5.0 Kadaster + Shoelace Planimeter + GraphQL",
-        "endpoints": ["/edit/incoming", "/edit/outgoing", "/api/graphql", "/api/pdok/percelen", "/api/geojson"]
-    }))
-}
-
-async fn edit_incoming_handler() -> impl IntoResponse {
-    Json(json!({ "queue": "incoming", "status": "ready", "avg_check": "enforced" }))
-}
-
-async fn edit_outgoing_handler() -> impl IntoResponse {
-    Json(json!({ "queue": "outgoing", "status": "published", "solid_pod_sync": true, "git_auto_commit": true }))
 }

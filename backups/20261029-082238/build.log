@@ -1,0 +1,76 @@
+   Compiling lodijke-cms-server v2.3.0 (/home/ontwerp/lodijke)
+error[E0277]: the trait bound `fn(_, _) -> _ {graphql_execution_handler}: Handler<_, _>` is not satisfied
+    --> src/main.rs:112:43
+     |
+ 112 |             get(graphiql_playground).post(graphql_execution_handler),
+     |                                      ---- ^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |                                      |
+     |                                      required by a bound introduced by this call
+     |
+     = help: the trait `Handler<_, _>` is not implemented for fn item `fn(_, _) -> _ {graphql_execution_handler}`
+     = note: Consider using `#[axum::debug_handler]` to improve the error message
+note: there are multiple different versions of crate `axum` in the dependency graph
+    --> /home/ontwerp/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/handler/mod.rs:134:1
+     |
+ 134 | pub trait Handler<T, S>: Clone + Send + Sized + 'static {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this is the expected trait
+     |
+    ::: /home/ontwerp/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.8.9/src/handler/mod.rs:148:1
+     |
+ 148 | pub trait Handler<T, S>: Clone + Send + Sync + Sized + 'static {
+     | --------------------------------------------------------------
+     | |
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     | this is the found trait
+     = help: you can use `cargo tree` to explore your dependency tree
+help: the following other types implement trait `Handler<T, S>`
+    --> /home/ontwerp/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:1309:1
+     |
+1309 | / impl<S> Handler<(), S> for MethodRouter<S>
+1310 | | where
+1311 | |     S: Clone + 'static,
+     | |_______________________^ `MethodRouter<S>` implements `Handler<(), S>`
+     |
+    ::: /home/ontwerp/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/handler/mod.rs:303:1
+     |
+ 303 | / impl<H, S, T, L> Handler<T, S> for Layered<L, H, T, S>
+ 304 | | where
+ 305 | |     L: Layer<HandlerService<H, T, S>> + Clone + Send + 'static,
+ 306 | |     H: Handler<T, S>,
+...    |
+ 310 | |     T: 'static,
+ 311 | |     S: 'static,
+     | |_______________^ `axum::handler::Layered<L, H, T, S>` implements `Handler<T, S>`
+note: required by a bound in `MethodRouter::<S>::post`
+    --> /home/ontwerp/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/axum-0.7.9/src/routing/method_routing.rs:324:16
+     |
+ 324 |             H: Handler<T, S>,
+     |                ^^^^^^^^^^^^^ required by this bound in `MethodRouter::<S>::post`
+...
+ 647 |     chained_handler_fn!(post, POST);
+     |     -------------------------------
+     |     |                   |
+     |     |                   required by a bound in this associated function
+     |     in this macro invocation
+     = note: the full name for the type has been written to '/home/ontwerp/lodijke/target/release/deps/lodijke_cms_server-3bf626601a8892d3.long-type-17388117334853508176.txt'
+     = note: consider using `--verbose` to print the full type name to the console
+     = note: this error originates in the macro `chained_handler_fn` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `lodijke-cms-server` (bin "lodijke-cms-server") due to 1 previous error

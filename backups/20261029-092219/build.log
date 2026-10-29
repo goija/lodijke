@@ -1,0 +1,10 @@
+    Updating crates.io index
+error: failed to select a version for `tower-http`.
+    ... required by package `lodijke-cms-server v7.0.0 (/home/ontwerp/lodijke)`
+versions that meet the requirements `^0.6` are: 0.6.11, 0.6.10, 0.6.9, 0.6.8, 0.6.7, 0.6.6, 0.6.4, 0.6.2, 0.6.1, 0.6.0
+
+package `lodijke-cms-server` depends on `tower-http` with feature `serve-dir` but `tower-http` does not have that feature.
+help: available features: add-extension, async-compression, auth, base64, catch-panic, compression-br, compression-deflate, compression-full, compression-gzip, compression-zstd, cors, decompression-br, decompression-deflate, decompression-full, decompression-gzip, decompression-zstd, default, follow-redirect, fs, full, futures-core, futures-util, httpdate, iri-string, limit, map-request-body, map-response-body, metrics, mime, mime_guess, normalize-path, percent-encoding, propagate-header, redirect, request-id, sensitive-headers, set-header, set-status, timeout, tokio, tokio-util, tower, trace, tracing, util, uuid, validate-request
+
+
+failed to select a version for `tower-http` which could resolve this conflict
