@@ -3,29 +3,43 @@
     <header class="header">
       <div class="brand">
         <h1>🏛️ Lodijke Master Platform</h1>
-        <p>Zeeuws Visserij Dossier & Geodetische Percelen (Oosterschelde & Tholen)</p>
+        <p>Zeeuws Visserij Dossier, Sporen & Geodetische Percelen</p>
       </div>
       <div class="status-badge" :class="{ online: isConnected }">
         <span class="indicator"></span>
-        Backend: {{ statusText }}
+        Status: {{ statusText }}
       </div>
     </header>
 
+    <!-- Navigatie Tabbladen met Hash Routing -->
+    <nav class="tab-nav">
+      <a href="#sporen" :class="{ active: activeTab === 'sporen' }" @click="setTab('sporen')">
+        🗺️ Sporen & Kaarten (#sporen)
+      </a>
+      <a href="#dossiers" :class="{ active: activeTab === 'dossiers' }" @click="setTab('dossiers')">
+        🎣 Visserij Dossiers (#dossiers)
+      </a>
+      <a href="#percelen" :class="{ active: activeTab === 'percelen' }" @click="setTab('percelen')">
+        📍 Perceel 369 Details (#percelen)
+      </a>
+    </nav>
+
     <main class="main-content">
-      <!-- Live Leaflet Kaart -->
-      <section class="card">
-        <h2>🗺️ Geodetische Percelen Kaart (GeoJSON / OpenStreetMap)</h2>
+      <!-- Sectie 1: Sporen & Kaarten (Zichtbaar op #sporen) -->
+      <section class="card" v-show="activeTab === 'sporen' || activeTab === 'kaarten'">
+        <h2>🗺️ Geodetische Percelen & Historische Sporen (GeoJSON / Leaflet)</h2>
         <p>
-          Interactieve kaart met de 4 geodetische percelen uit <code>lodijke-percelen.geojson</code>, waaronder <strong>Oesterperceel No. 369</strong> op de Bol van Lodijke.
+          Interactieve kaartweergave met de 4 geodetische percelen uit <code>lodijke-percelen.geojson</code>, waaronder <strong>Oesterperceel No. 369</strong> op de Bol van Lodijke en de polder-klepduiker.
         </p>
         
+        <!-- Kaart container -->
         <div ref="mapContainer" class="map-view"></div>
       </section>
 
-      <!-- Archiefstukken -->
-      <section class="card">
+      <!-- Sectie 2: Archiefstukken & Dossiers -->
+      <section class="card" v-show="activeTab === 'dossiers' || activeTab === 'sporen'">
         <div class="card-header">
-          <h2>🎣 Archiefstukken & Concessies</h2>
+          <h2>🎣 Archiefstukken & Concessie Dossiers</h2>
           <button @click="fetchGraphQLData" class="btn">⚡ Herlaad Gegevens</button>
         </div>
         
@@ -37,12 +51,20 @@
           </article>
         </div>
       </section>
+
+      <!-- Sectie 3: Perceel 369 Detail -->
+      <section class="card" v-show="activeTab === 'percelen'">
+        <h2>📍 Perceel 369 - Bol van Lodijke (12,5 ha)</h2>
+        <p>
+          Historische oesterkweekbank van B.W. Schot (1840–1935). Coördinaten: <strong>51.47833°N, 4.13750°E</strong> (RD X=68120, Y=388050).
+        </p>
+      </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -58,9 +80,10 @@ const isConnected = ref(false)
 const statusText = ref('Verbinden...')
 const records = ref([])
 const mapContainer = ref(null)
+const activeTab = ref('sporen')
 let leafletMap = null
 
-// GeoJSON percelen data (Oesterperceel 369, De Gortzak, Kruittoren 23, Scherpenisse)
+// GeoJSON percelen data
 const geoJsonData = {
   "type": "FeatureCollection",
   "features": [
@@ -115,6 +138,20 @@ const geoJsonData = {
   ]
 }
 
+const updateTabFromHash = () => {
+  const hash = window.location.hash.replace('#', '')
+  if (hash) {
+    activeTab.value = hash
+  } else {
+    activeTab.value = 'sporen'
+  }
+}
+
+const setTab = (tabName) => {
+  activeTab.value = tabName
+  window.location.hash = tabName
+}
+
 const initMap = async () => {
   await nextTick()
   if (!mapContainer.value) return
@@ -124,7 +161,7 @@ const initMap = async () => {
     leafletMap = null
   }
 
-  // Initialiseer Leaflet op het kaartcontainer element
+  // Initialiseer Leaflet
   leafletMap = L.map(mapContainer.value).setView([51.51, 4.18], 12)
 
   // OpenStreetMap tegellaag
@@ -133,7 +170,7 @@ const initMap = async () => {
     attribution: '© OpenStreetMap contributors | Lodijke Geodata'
   }).addTo(leafletMap)
 
-  // GeoJSON polygonen toevoegen met rode accenten
+  // GeoJSON percelen toevoegen
   const geoLayer = L.geoJSON(geoJsonData, {
     style: {
       color: '#8B1E1E',
@@ -153,14 +190,25 @@ const initMap = async () => {
     }
   }).addTo(leafletMap)
 
-  // Zoom automatisch in op de percelen
-  leafletMap.fitBounds(geoLayer.getBounds(), { padding: [30, 30] })
+  // Zoom automatisch in
+  leafletMap.fitBounds(geoLayer.getBounds(), { padding: [20, 20] })
 
-  // Forceer tegel-herberekening voor Vercel / mobiele viewports
+  // Essentieel voor v-show / tabwissels: herberekend tegelafmetingen
   setTimeout(() => {
     if (leafletMap) leafletMap.invalidateSize()
-  }, 250)
+  }, 200)
 }
+
+watch(activeTab, async (newTab) => {
+  if (newTab === 'sporen' || newTab === 'kaarten') {
+    await nextTick()
+    if (leafletMap) {
+      leafletMap.invalidateSize()
+    } else {
+      initMap()
+    }
+  }
+})
 
 const fetchGraphQLData = async () => {
   try {
@@ -189,11 +237,8 @@ const fetchGraphQLData = async () => {
         return
       }
     }
-  } catch (err) {
-    // Fallback voor publieke Vercel weergave wanneer lokale cargo run niet actief is
-  }
+  } catch (err) {}
 
-  // Ingebouwde Vercel fallback-records
   records.value = [
     {
       id: "doc-369",
@@ -209,15 +254,18 @@ const fetchGraphQLData = async () => {
     }
   ]
   isConnected.value = true
-  statusText.value = 'Vercel Live (Gat van Lodijk)'
+  statusText.value = 'Vercel Live (Sporen)'
 }
 
 onMounted(() => {
+  updateTabFromHash()
+  window.addEventListener('hashchange', updateTabFromHash)
   fetchGraphQLData()
   initMap()
 })
 
 onUnmounted(() => {
+  window.removeEventListener('hashchange', updateTabFromHash)
   if (leafletMap) {
     leafletMap.remove()
     leafletMap = null
@@ -264,6 +312,28 @@ onUnmounted(() => {
 
 .status-badge.online .indicator { background-color: #55FF55; }
 
+.tab-nav {
+  display: flex;
+  background-color: #661010;
+  padding: 0 2rem;
+  gap: 1rem;
+}
+
+.tab-nav a {
+  color: #FFDDDD;
+  text-decoration: none;
+  padding: 0.8rem 1.2rem;
+  font-weight: bold;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-nav a:hover, .tab-nav a.active {
+  color: white;
+  border-bottom-color: #FFD700;
+  background-color: rgba(255,255,255,0.1);
+}
+
 .main-content {
   max-width: 1100px;
   margin: 2rem auto;
@@ -285,7 +355,9 @@ onUnmounted(() => {
 
 .map-view {
   height: 520px;
+  min-height: 520px;
   width: 100%;
+  display: block;
   border-radius: 8px;
   border: 2px solid #8B1E1E;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
