@@ -1,0 +1,122 @@
+[
+  {
+    "id": "parcel-369",
+    "cadastral_code": "Lodijke Perceel No. 369",
+    "name": "Oesterperceel No. 369 — Bol van Lodijke (Oosterschelde)",
+    "municipality": "Reimerswaal / Tholen",
+    "section": "Bol van Lodijke",
+    "parcel_number": "369",
+    "area_hectares": 12.50,
+    "area_gemeten": 28.373,
+    "owner_lessee": "Benjamin Willem Schot (1840–1935) — Vloot TH 2 & TH 90",
+    "period": "1892–1935",
+    "rd_epsg": 28992,
+    "rd_centroid": [68120.0, 388050.0],
+    "rd_polygon": [
+      [67945.0, 387871.428571],
+      [68295.0, 387871.428571],
+      [68295.0, 388228.571429],
+      [67945.0, 388228.571429],
+      [67945.0, 387871.428571]
+    ],
+    "wgs84_epsg": 4326,
+    "wgs84_centroid": [4.13750, 51.47833],
+    "wgs84_polygon": [
+      [4.13490, 51.47708],
+      [4.14010, 51.47708],
+      [4.14010, 51.47958],
+      [4.13490, 51.47958],
+      [4.13490, 51.47708]
+    ]
+  },
+  {
+    "id": "schakerloo-I-360",
+    "cadastral_code": "Tholen Sectie I nr. 360",
+    "name": "Hofstede De Gortzak — Polder Schakerloo",
+    "municipality": "Tholen",
+    "section": "I",
+    "parcel_number": "360",
+    "area_hectares": 53.7483,
+    "area_gemeten": 122.00,
+    "owner_lessee": "Boogaart (1768) • Erven mr. T.A. Wagtho (1893) • Jacob Moelker (1915)",
+    "period": "1768–1915",
+    "rd_epsg": 28992,
+    "rd_centroid": [72650.0, 393420.0],
+    "rd_polygon": [
+      [72280.0, 393056.835676],
+      [73020.0, 393056.835676],
+      [73020.0, 393783.164324],
+      [72280.0, 393783.164324],
+      [72280.0, 393056.835676]
+    ],
+    "wgs84_epsg": 4326,
+    "wgs84_centroid": [4.20180, 51.52730],
+    "wgs84_polygon": [
+      [4.19650, 51.52400],
+      [4.20710, 51.52400],
+      [4.20710, 51.53060],
+      [4.19650, 51.53060],
+      [4.19650, 51.52400]
+    ]
+  },
+  {
+    "id": "tholen-A-107",
+    "cadastral_code": "Tholen Sectie A nr. 107",
+    "name": "Kruittoren 23 (Kruistoren 113h) & Oesterloods Contr'Escarpe",
+    "municipality": "Tholen",
+    "section": "A",
+    "parcel_number": "107",
+    "area_hectares": 0.18,
+    "area_gemeten": 0.4086,
+    "owner_lessee": "B.W. Schot, Anna Schot, C.J. Schot & J. Kegge (1901 / 1913)",
+    "period": "1863–1935",
+    "rd_epsg": 28992,
+    "rd_centroid": [74045.0, 393860.0],
+    "rd_polygon": [
+      [74022.5, 393840.0],
+      [74067.5, 393840.0],
+      [74067.5, 393880.0],
+      [74022.5, 393880.0],
+      [74022.5, 393840.0]
+    ],
+    "wgs84_epsg": 4326,
+    "wgs84_centroid": [4.22278, 51.53056],
+    "wgs84_polygon": [
+      [4.22240, 51.53038],
+      [4.22315, 51.53038],
+      [4.22315, 51.53074],
+      [4.22240, 51.53074],
+      [4.22240, 51.53038]
+    ]
+  },
+  {
+    "id": "scherpenisse-E-1551",
+    "cadastral_code": "Scherpenisse Sectie E 1551/1552",
+    "name": "Platteweg Scherpenisse & Eikenhouten Polder-Klepduiker",
+    "municipality": "Scherpenisse (Tholen)",
+    "section": "E",
+    "parcel_number": "1551-1552",
+    "area_hectares": 1.45,
+    "area_gemeten": 3.2913,
+    "owner_lessee": "Geboortegrond Maria Mathea Bolier (1840) & Waterstaat Scherpenisse",
+    "period": "1840–heden",
+    "rd_epsg": 28992,
+    "rd_centroid": [69215.0, 395110.0],
+    "rd_polygon": [
+      [69154.791, 395050.0],
+      [69275.209, 395050.0],
+      [69275.209, 395170.0],
+      [69154.791, 395170.0],
+      [69154.791, 395050.0]
+    ],
+    "wgs84_epsg": 4326,
+    "wgs84_centroid": [4.15280, 51.54210],
+    "wgs84_polygon": [
+      [4.15190, 51.54155],
+      [4.15370, 51.54155],
+      [4.15370, 51.54265],
+      [4.15190, 51.54265],
+      [4.15190, 51.54155]
+    ]
+  }
+]

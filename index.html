@@ -40,7 +40,6 @@
     };
   </script>
   <style>
-    /* STANDAARD OP A+ (19px) VOOR RUST EN OVERZICHT */
     :root { --base-font-size: 19px; }
     html {
       font-size: var(--base-font-size);
@@ -86,7 +85,7 @@
     .sliding-drawer-left {
       position: fixed;
       top: 0; left: 0; bottom: 0;
-      width: min(320px, 86vw);
+      width: min(340px, 88vw);
       background-color: #ffffff;
       border-right: 1.5px solid #dfd6cb;
       z-index: 60;
@@ -117,39 +116,61 @@
         z-index: 35;
         box-shadow: none;
       }
-      body.drawer-pinned .app-shell-content { margin-left: 320px; }
+      body.drawer-pinned .app-shell-content { margin-left: 340px; }
       body.drawer-pinned #drawerBackdrop { display: none !important; }
     }
-    .sliding-tab-strip {
+    /* De 2 Hoofdmenu knoppen bovenin */
+    .top-pillar-btn {
+      min-height: 48px;
+      padding: 0.5rem 1rem;
+      border-radius: 0.55rem;
+      border: 2px solid #d8cfc4;
+      background-color: #ffffff;
+      color: #18181b;
+      transition: all 0.15s ease;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      scrollbar-width: none;
-      gap: 0.35rem;
-      padding: 0.35rem 0.15rem;
+      justify-content: space-between;
+      gap: 0.75rem;
+      text-align: left;
     }
-    .sliding-tab-strip::-webkit-scrollbar { display: none; }
-    .folder-tab-btn {
-      min-height: 40px;
-      padding: 0.4rem 0.85rem;
+    .top-pillar-btn:hover {
+      border-color: #8b2229;
+      background-color: #fdf7f7;
+    }
+    .top-pillar-active {
+      background-color: #8b2229 !important;
+      color: #ffffff !important;
+      border-color: #561318 !important;
+      box-shadow: 0 2px 8px rgba(139, 34, 41, 0.22);
+    }
+    .top-pillar-active .pillar-sub {
+      color: #faeaea !important;
+    }
+    .top-pillar-active .pillar-badge {
+      background-color: #ffffff !important;
+      color: #731b21 !important;
+    }
+    .context-chip-btn {
+      min-height: 36px;
+      padding: 0.28rem 0.75rem;
       border-radius: 0.4rem;
       border: 1.5px solid #dfd6cb;
       background-color: #ffffff;
       color: #27272a;
       font-weight: 600;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       white-space: nowrap;
       transition: all 0.15s ease;
       cursor: pointer;
     }
-    .folder-tab-btn:hover {
-      background-color: #fdf7f7;
+    .context-chip-btn:hover {
       border-color: #8b2229;
-      color: #731b21;
+      background-color: #fdf7f7;
     }
-    .folder-tab-active {
-      background-color: #8b2229 !important;
+    .context-chip-active {
+      background-color: #731b21 !important;
       color: #ffffff !important;
       border-color: #561318 !important;
     }
@@ -171,6 +192,11 @@
       color: #ffffff !important;
       border-color: #561318 !important;
     }
+    .drawer-active-card {
+      border-color: #8b2229 !important;
+      background-color: #fdf7f7 !important;
+      box-shadow: inset 3px 0 0 #8b2229;
+    }
     .viewport-grid-single { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
     .viewport-grid-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
     @media (min-width: 1024px) {
@@ -191,103 +217,180 @@
     </div>
   </div>
 
-  <!-- LINKER SCHUIFMENU (STANDAARD OPEN & GESTRUCTUREERD) -->
-  <aside id="leftSlidingDrawer" class="sliding-drawer-left open" aria-label="Hoofdnavigatie">
+  <!-- ========================================================================= -->
+  <!-- VOLLEDIG LINKER SLIDING MENU (BEVAT ALLE 11 MENU'S, SUB-ITEMS & ROUTES)  -->
+  <!-- ========================================================================= -->
+  <aside id="leftSlidingDrawer" class="sliding-drawer-left open" aria-label="Volledig Archiefmenu">
     <div class="bg-meekrab-800 text-white p-3.5 border-b border-meekrab-950 space-y-2">
       <div class="flex items-center justify-between">
-        <span class="font-mono text-[11px] uppercase tracking-wider text-meekrab-100 font-semibold">Archiefmenu</span>
+        <span class="font-mono text-[11px] uppercase tracking-wider text-meekrab-100 font-semibold">Volledig Sliding Menu (01–11)</span>
         <div class="flex items-center gap-1">
           <button onclick="togglePinLeftDrawer()" id="btnPinDrawer" class="hidden xl:inline-flex px-2 py-0.5 bg-white/15 hover:bg-white/25 text-white rounded text-[11px]">Vastgezet</button>
           <button onclick="toggleLeftDrawer(false)" class="px-2 py-0.5 bg-white text-meekrab-900 rounded text-[11px] font-bold">Sluit</button>
         </div>
       </div>
       <div class="font-serif font-bold text-sm text-white">Schot, Bout &amp; Bol van Lodijke</div>
-      <input id="drawerMenuFilterInput" type="text" placeholder="Filter hoofdstuk..." oninput="filterSlidingMenu(this.value)" class="w-full px-2.5 py-1 bg-white text-black rounded text-xs placeholder-gray-500" />
+      <div class="flex gap-1.5">
+        <input id="drawerMenuFilterInput" type="text" placeholder="Filter alle menu's &amp; sub-tabs..." oninput="filterSlidingMenu(this.value)" class="w-full px-2.5 py-1 bg-white text-black rounded text-xs placeholder-gray-500" />
+      </div>
     </div>
 
     <div id="drawerMenuList" class="flex-1 overflow-y-auto p-3 space-y-4 bg-zeeuws-sand text-xs">
+
+      <!-- HOOFDMENU GROEP I IN SLIDING DRAWER -->
       <div class="space-y-1.5">
-        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">1. Genealogie &amp; Dossiers</div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1" data-keywords="stamboom genealogie kwartierstaat avg schot bout">
+        <div class="flex items-center justify-between bg-meekrab-900 text-white px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-wider">
+          <span>Hoofdmenu I • Familie &amp; Historie</span>
+          <span>01–05</span>
+        </div>
+
+        <!-- 01. Stamboom & AVG -->
+        <div id="drawerCard-tabGenealogie" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5 drawer-active-card" data-keywords="01 stamboom genealogie kwartierstaat avg schot bout bolier kegge">
           <div class="flex items-center justify-between">
-            <button onclick="switchTab('tabGenealogie')" class="font-bold text-zinc-900 hover:text-meekrab-700">01. Stamboom &amp; AVG</button>
-            <button onclick="openInSecondaryViewport('stamboom')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+            <button onclick="switchTab('tabGenealogie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">01. Stamboom &amp; AVG</button>
+            <button onclick="openInSecondaryViewport('stamboom')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
           </div>
           <div class="grid grid-cols-2 gap-1 text-[11px]">
-            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenBoom');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1A. Boom</button>
-            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenTakken');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1B. 13 Kinderen</button>
-            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenKwartier');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1C. Kwartierstaat</button>
-            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenPrivacy');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1D. AVG-Schild</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenBoom');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">1A. Voorouderboom</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenTakken');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">1B. 13 Kinderen</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenKwartier');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">1C. Kwartierstaat</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenPrivacy');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">1D. AVG-Schild</button>
           </div>
         </div>
 
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1" data-keywords="fotoalbum uploads beeldbank fotos camera solid pod">
+        <!-- 02. Fotoalbum & Uploads -->
+        <div id="drawerCard-tabFotos" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="02 fotoalbum uploads beeldbank fotos camera solid pod json">
           <div class="flex items-center justify-between">
-            <button onclick="switchTab('tabFotos')" class="font-bold text-zinc-900 hover:text-meekrab-700">02. Fotoalbum &amp; Uploads</button>
-            <button onclick="openInSecondaryViewport('fotos')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+            <button onclick="switchTab('tabFotos')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">02. Fotoalbum &amp; Uploads</button>
+            <button onclick="openInSecondaryViewport('fotos')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
           </div>
           <div class="grid grid-cols-2 gap-1 text-[11px]">
-            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosOverzicht');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2A. Galerij</button>
-            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosUpload');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2B. Uploaden</button>
-            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosFilter');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2C. Filter</button>
-            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosBackup');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2D. JSON POD</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosOverzicht');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">2A. Fotogalerij</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosUpload');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">2B. Uploaden</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosFilter');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">2C. Categorieën</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosBackup');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">2D. Solid POD JSON</button>
           </div>
         </div>
 
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1" data-keywords="documenten dossiers bw schot regenten hofsteden kruittoren watersnood 1906">
+        <!-- 03. Dossier B.W. Schot -->
+        <div id="drawerCard-tabDocumenten" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="03 documenten dossiers bw schot regenten hofsteden kruittoren watersnood 1906 zierikzee">
           <div class="flex items-center justify-between">
-            <button onclick="switchTab('tabDocumenten')" class="font-bold text-zinc-900 hover:text-meekrab-700">03. Dossier B.W. Schot</button>
-            <button onclick="openInSecondaryViewport('dossier')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+            <button onclick="switchTab('tabDocumenten')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">03. Dossier B.W. Schot</button>
+            <button onclick="openInSecondaryViewport('dossier')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
           </div>
           <div class="grid grid-cols-2 gap-1 text-[11px]">
-            <button onclick="switchTab('tabDocumenten'); switchDocTab('docA');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">B.W. Schot (6)</button>
-            <button onclick="switchTab('tabDocumenten'); switchDocTab('docB');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">Regenten</button>
-            <button onclick="switchTab('tabDocumenten'); switchDocTab('docC');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">Akten 1901/13</button>
-            <button onclick="switchTab('tabDocumenten'); switchDocTab('docNew');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">+ Nieuw</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docA');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">3A. B.W. Schot (6)</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docB');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">3B. Regenten</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docC');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">3C. Akten 1901/13</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docNew');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">3D. + Nieuw Dossier</button>
+          </div>
+        </div>
+
+        <!-- 04. Zeekaart Perceel 369 -->
+        <div id="drawerCard-tabKaarten" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="04 zeekaart bol van lodijke perceel 369 oosterschelde kadaster kaart">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabKaarten')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">04. Zeekaart Perceel 369</button>
+            <button onclick="openInSecondaryViewport('zeekaart')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabKaarten'); switchSubTab('tabKaarten','subKaartZeekaart');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">4A. Zeekaart 369</button>
+            <button onclick="switchTab('tabKaarten'); switchSubTab('tabKaarten','subKaartKadaster');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">4B. Kadaster Tholen</button>
+            <button onclick="switchTab('tabKaarten'); switchSubTab('tabKaarten','subKaartLegenda');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left col-span-2">4C. Coördinaten &amp; Legenda</button>
+          </div>
+        </div>
+
+        <!-- 05. Hoogaars TH 2 & Sluis -->
+        <div id="drawerCard-tabPlattegronden" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="05 plattegronden hoogaars th 2 eben haezer klepduiker sluis">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabPlattegronden')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">05. Hoogaars TH 2 &amp; Sluis</button>
+            <button onclick="openInSecondaryViewport('plattegronden')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabPlattegronden'); switchSubTab('tabPlattegronden','subPlatHoogaars');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">5A. Hoogaars TH 2</button>
+            <button onclick="switchTab('tabPlattegronden'); switchSubTab('tabPlattegronden','subPlatKlepduiker');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">5B. Klepduiker 1:5</button>
+            <button onclick="switchTab('tabPlattegronden'); switchSubTab('tabPlattegronden','subPlatRegister');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left col-span-2">5C. Bouwregister 1901–1913</button>
           </div>
         </div>
       </div>
 
+      <!-- HOOFDMENU GROEP II IN SLIDING DRAWER -->
       <div class="space-y-1.5">
-        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">2. Kaarten &amp; Scheepsbouw</div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="zeekaart bol van lodijke perceel 369 oosterschelde">
-          <button onclick="switchTab('tabKaarten')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">04. Zeekaart Perceel 369</button>
-          <button onclick="openInSecondaryViewport('zeekaart')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        <div class="flex items-center justify-between bg-zinc-800 text-white px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-wider">
+          <span>Hoofdmenu II • Registers &amp; Rust CMS</span>
+          <span>06–11</span>
         </div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="plattegronden hoogaars th 2 eben haezer klepduiker">
-          <button onclick="switchTab('tabPlattegronden')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">05. Hoogaars TH 2 &amp; Sluis</button>
-          <button onclick="openInSecondaryViewport('plattegronden')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
-        </div>
-      </div>
 
-      <div class="space-y-1.5">
-        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">3. Onderzoeksregisters (DB)</div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="archeologie vondsten kasteel lodijke reimerswaal">
-          <button onclick="switchTab('tabArcheologie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">06. Archeologie Lodijke</button>
-          <button onclick="openInSecondaryViewport('archeologie')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        <!-- 06. Archeologie DB -->
+        <div id="drawerCard-tabArcheologie" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="06 archeologie vondsten kasteel lodijke reimerswaal nap">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabArcheologie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">06. Archeologie Lodijke</button>
+            <button onclick="openInSecondaryViewport('archeologie')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabArcheologie'); switchSubTab('tabArcheologie','subArcRegister');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">6A. Vondstenregister</button>
+            <button onclick="switchTab('tabArcheologie'); switchSubTab('tabArcheologie','subArcNieuw');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">6B. + Vondst</button>
+          </div>
         </div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="geologie boorprofielen bodem klei veen">
-          <button onclick="switchTab('tabGeologie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">07. Geologie &amp; Boringen</button>
-          <button onclick="openInSecondaryViewport('geologie')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
-        </div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="percelen kadaster historie gortzak kandia gemeten">
-          <button onclick="switchTab('tabKadaster')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">08. Percelen &amp; Gemeten</button>
-          <button onclick="openInSecondaryViewport('kadaster')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
-        </div>
-      </div>
 
-      <div class="space-y-1.5">
-        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">4. Bestuursrecht &amp; Rust CMS</div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="woo besluiten commissies rechters awb">
-          <button onclick="switchTab('tabWoo')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">09. Woo &amp; Rechtbank</button>
-          <button onclick="openInSecondaryViewport('woo')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        <!-- 07. Geologie DB -->
+        <div id="drawerCard-tabGeologie" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="07 geologie boorprofielen bodem klei veen walcheren naaldwijk">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabGeologie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">07. Geologie &amp; Boringen</button>
+            <button onclick="openInSecondaryViewport('geologie')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabGeologie'); switchSubTab('tabGeologie','subGeoBoringen');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">7A. Boorstaten</button>
+            <button onclick="switchTab('tabGeologie'); switchSubTab('tabGeologie','subGeoNieuw');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">7B. + Boorprofiel</button>
+          </div>
         </div>
-        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="google sites viewport generator nieuw tabblad">
-          <button onclick="switchTab('tabUitbreiding')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">10. Eigen Tabs &amp; Embed</button>
+
+        <!-- 08. Kadaster & Gemeten -->
+        <div id="drawerCard-tabKadaster" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="08 percelen kadaster historie gortzak kandia gemeten calculator">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabKadaster')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">08. Percelen &amp; Gemeten</button>
+            <button onclick="openInSecondaryViewport('kadaster')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabKadaster'); switchSubTab('tabKadaster','subKadRegister');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">8A. Register</button>
+            <button onclick="switchTab('tabKadaster'); switchSubTab('tabKadaster','subKadCalculator');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">8B. Calculator</button>
+            <button onclick="switchTab('tabKadaster'); switchSubTab('tabKadaster','subKadNieuw');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left col-span-2">8C. + Nieuw Perceel</button>
+          </div>
         </div>
-        <div class="drawer-item bg-meekrab-50 border border-meekrab-700 rounded-md p-2 flex items-center justify-between" data-keywords="rust axum cms api backend server solid pod">
-          <button onclick="switchTab('tabRustCms')" class="font-bold text-meekrab-800 text-left">11. Rust Axum CMS</button>
-          <button onclick="openInSecondaryViewport('rustcms')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+
+        <!-- 09. Woo & Rechtbank -->
+        <div id="drawerCard-tabWoo" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="09 woo besluiten commissies rechters awb rechtbank">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabWoo')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">09. Woo &amp; Rechtbank</button>
+            <button onclick="openInSecondaryViewport('woo')" class="px-1.5 py-0.5 bg-meekrab-50 text-meekrab-800 border border-meekrab-200 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabWoo'); switchSubTab('tabWoo','subWooKeten');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">9A. Keten Awb/Woo</button>
+            <button onclick="switchTab('tabWoo'); switchSubTab('tabWoo','subWooRegister');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">9B. Zaakregister</button>
+            <button onclick="switchTab('tabWoo'); switchSubTab('tabWoo','subWooNieuw');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left col-span-2">9C. + Nieuw Besluit</button>
+          </div>
+        </div>
+
+        <!-- 10. Eigen Tabs & Embed -->
+        <div id="drawerCard-tabUitbreiding" class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1.5" data-keywords="10 google sites viewport generator nieuw tabblad embed">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabUitbreiding')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">10. Eigen Tabs &amp; Embed</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabUitbreiding'); switchSubTab('tabUitbreiding','subUitNieuwTab');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">10A. + Nieuw Tab</button>
+            <button onclick="switchTab('tabUitbreiding'); switchSubTab('tabUitbreiding','subUitViewportCode');" class="px-1.5 py-0.5 bg-zeeuws-sand hover:bg-meekrab-50 rounded text-left">10B. Embed-Code</button>
+          </div>
+        </div>
+
+        <!-- 11. Rust Axum CMS & Routes (/api/cms, /author, /post, /edit) -->
+        <div id="drawerCard-tabRustCms" class="drawer-item bg-meekrab-50 border border-meekrab-700 rounded-md p-2 space-y-1.5" data-keywords="11 rust axum cms api backend server solid pod author post edit routes">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabRustCms')" class="font-bold text-meekrab-800 text-left">11. Rust Axum CMS &amp; Routes</button>
+            <button onclick="openInSecondaryViewport('rustcms')" class="px-1.5 py-0.5 bg-white text-meekrab-800 border border-meekrab-300 rounded text-[10px] font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabRustCms'); switchSubTab('tabRustCms','subRustEditor');" class="px-1.5 py-0.5 bg-white hover:bg-zeeuws-sand rounded text-left">11A. CMS Editor</button>
+            <button onclick="switchTab('tabRustCms'); switchSubTab('tabRustCms','subRustStatus');" class="px-1.5 py-0.5 bg-white hover:bg-zeeuws-sand rounded text-left">11B. Alle Routes (17)</button>
+          </div>
         </div>
       </div>
 
@@ -318,13 +421,17 @@
     </div>
   </aside>
 
-  <!-- HOOFDSCHIL -->
+  <!-- ========================================================================= -->
+  <!-- HOOFDSCHIL MET SLECHTS 2 HOOFDMENU'S BOVENIN VOOR LOGISCH OVERZICHT       -->
+  <!-- ========================================================================= -->
   <div class="app-shell-content flex-1 flex flex-col transition-all duration-200">
 
     <header class="bg-meekrab-800 text-white border-b border-meekrab-950 sticky top-0 z-40">
       <div class="max-w-[1520px] mx-auto px-4 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
         <div class="flex items-center gap-2.5">
-          <button onclick="toggleLeftDrawer()" class="ui-btn bg-white text-meekrab-900 hover:bg-meekrab-50">Menu</button>
+          <button onclick="toggleLeftDrawer()" class="ui-btn bg-white text-meekrab-900 hover:bg-meekrab-50 font-bold" title="Open of sluit het volledige sliding menu">
+            &#9776; Sliding Menu (Alle 11)
+          </button>
           <div>
             <h1 class="font-serif font-bold text-base sm:text-lg text-white leading-tight">Archief Familie Schot, Bout &amp; Van Vrijberghe — Tholen &amp; Bol van Lodijke</h1>
             <p class="text-xs text-meekrab-100">Dossier B.W. Schot (1840–1935) • Perceel No. 369 (12,5 ha) • Hoogaarzen TH 2, TH 12 &amp; TH 90 • Rust Axum CMS</p>
@@ -338,24 +445,66 @@
             <button onclick="setFontSize(19, 'btnFontAPlus')" id="btnFontAPlus" class="px-2.5 py-1 rounded text-xs font-bold bg-white text-meekrab-950 shadow-sm">A+</button>
             <button onclick="setFontSize(22, 'btnFontAPlusPlus')" id="btnFontAPlusPlus" class="px-2 py-1 rounded text-xs font-semibold text-white">A++</button>
           </div>
-          <button onclick="switchTab('tabRustCms')" class="ui-btn bg-white/15 hover:bg-white/25 text-white border border-white/25 text-xs">Rust CMS</button>
         </div>
       </div>
     </header>
 
-    <section class="bg-white border-b border-zeeuws-border px-4 py-1.5">
-      <div class="max-w-[1520px] mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 bg-zinc-800 text-white font-mono rounded text-[11px]">AVG-Waarborg</span>
-          <span class="text-zinc-700">Namen van mijzelf, broer, vader en moeder zijn afgeschermd.</span>
+    <!-- DE 2 HOOFDMENU'S BOVENIN (LOGISCH OVERZICHT) -->
+    <nav class="bg-zeeuws-sand border-b border-zeeuws-border sticky top-[58px] z-30 shadow-sm" aria-label="Twee Hoofdmenu's">
+      <div class="max-w-[1520px] mx-auto px-3 sm:px-4 py-2.5 space-y-2">
+
+        <!-- Rij 1: Exact 2 Hoofdmenu Knoppen -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <button onclick="selectTopMainMenu(1, true)" id="topMainMenuBtn1" class="top-pillar-btn top-pillar-active">
+            <div>
+              <div class="font-serif font-bold text-sm sm:text-base">I. Familiearchief, Dossiers &amp; Kaarten</div>
+              <div class="pillar-sub text-xs text-zinc-600">Stamboom (AVG) • Fotoalbum • B.W. Schot • Zeekaart 369 • Hoogaars TH 2</div>
+            </div>
+            <span class="pillar-badge px-2.5 py-0.5 rounded font-mono text-xs font-bold bg-meekrab-100 text-meekrab-900">01 – 05</span>
+          </button>
+
+          <button onclick="selectTopMainMenu(2, true)" id="topMainMenuBtn2" class="top-pillar-btn">
+            <div>
+              <div class="font-serif font-bold text-sm sm:text-base">II. Onderzoeksregisters, Bestuursrecht &amp; Rust CMS</div>
+              <div class="pillar-sub text-xs text-zinc-600">Archeologie • Geologie • Kadaster &amp; Gemeten • Woo &amp; Rechtbank • Axum API</div>
+            </div>
+            <span class="pillar-badge px-2.5 py-0.5 rounded font-mono text-xs font-bold bg-zinc-200 text-zinc-800">06 – 11</span>
+          </button>
         </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="setViewportLayout('single')" id="btnVpSingle" class="px-2.5 py-1 rounded bg-meekrab-700 text-white font-semibold">1 Viewport</button>
-          <button onclick="setViewportLayout('split')" id="btnVpSplit" class="px-2.5 py-1 rounded bg-zeeuws-sand text-zinc-800 border border-zeeuws-border font-semibold">2 Viewports naast elkaar</button>
-          <button onclick="setViewportLayout('stacked')" id="btnVpStacked" class="px-2.5 py-1 rounded bg-zeeuws-sand text-zinc-800 border border-zeeuws-border font-semibold">Gestapeld</button>
+
+        <!-- Rij 2: Contextuele Balk (Toont alleen de items van het actieve Hoofdmenu + Viewport knoppen) -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zeeuws-border text-xs">
+          <!-- Sub-items van Hoofdmenu I -->
+          <div id="topContextGroup1" class="flex flex-wrap items-center gap-1.5">
+            <span class="font-mono text-[11px] font-bold text-meekrab-800 mr-1">Menu I:</span>
+            <button onclick="switchTab('tabGenealogie')" id="btn-tabGenealogie" class="context-chip-btn context-chip-active">01. Stamboom &amp; AVG</button>
+            <button onclick="switchTab('tabFotos')" id="btn-tabFotos" class="context-chip-btn">02. Fotoalbum &amp; Uploads</button>
+            <button onclick="switchTab('tabDocumenten')" id="btn-tabDocumenten" class="context-chip-btn">03. Dossier B.W. Schot</button>
+            <button onclick="switchTab('tabKaarten')" id="btn-tabKaarten" class="context-chip-btn">04. Zeekaart Perceel 369</button>
+            <button onclick="switchTab('tabPlattegronden')" id="btn-tabPlattegronden" class="context-chip-btn">05. Hoogaars TH 2 &amp; Sluis</button>
+          </div>
+
+          <!-- Sub-items van Hoofdmenu II -->
+          <div id="topContextGroup2" class="hidden flex flex-wrap items-center gap-1.5">
+            <span class="font-mono text-[11px] font-bold text-meekrab-800 mr-1">Menu II:</span>
+            <button onclick="switchTab('tabArcheologie')" id="btn-tabArcheologie" class="context-chip-btn">06. Archeologie DB</button>
+            <button onclick="switchTab('tabGeologie')" id="btn-tabGeologie" class="context-chip-btn">07. Geologie DB</button>
+            <button onclick="switchTab('tabKadaster')" id="btn-tabKadaster" class="context-chip-btn">08. Percelen &amp; Gemeten</button>
+            <button onclick="switchTab('tabWoo')" id="btn-tabWoo" class="context-chip-btn">09. Woo &amp; Rechtbank</button>
+            <button onclick="switchTab('tabUitbreiding')" id="btn-tabUitbreiding" class="context-chip-btn">10. Eigen Tabs &amp; Embed</button>
+            <button onclick="switchTab('tabRustCms')" id="btn-tabRustCms" class="context-chip-btn">11. Rust Axum CMS</button>
+          </div>
+
+          <!-- Rechts: AVG & Viewport Layout -->
+          <div class="flex items-center gap-1.5 ml-auto">
+            <span class="hidden sm:inline-block px-2 py-0.5 bg-zinc-800 text-white font-mono rounded text-[11px]">AVG-Schild Actief</span>
+            <button onclick="setViewportLayout('single')" id="btnVpSingle" class="px-2 py-0.5 rounded bg-meekrab-700 text-white font-semibold">1 VP</button>
+            <button onclick="setViewportLayout('split')" id="btnVpSplit" class="px-2 py-0.5 rounded bg-white text-zinc-800 border border-zeeuws-border font-semibold">2 VP Split</button>
+            <button onclick="setViewportLayout('stacked')" id="btnVpStacked" class="px-2 py-0.5 rounded bg-white text-zinc-800 border border-zeeuws-border font-semibold">Gestapeld</button>
+          </div>
         </div>
       </div>
-    </section>
+    </nav>
 
     <section id="globalSearchResultsBox" class="hidden bg-meekrab-50 border-b border-meekrab-200 px-4 py-2">
       <div class="max-w-[1520px] mx-auto flex items-center justify-between text-xs">
@@ -364,40 +513,21 @@
       </div>
     </section>
 
-    <nav class="bg-zeeuws-sand border-b border-zeeuws-border sticky top-[56px] z-30" aria-label="Hoofdtabbladen">
-      <div class="max-w-[1520px] mx-auto px-2 sm:px-4 flex items-center gap-1.5">
-        <button onclick="scrollTabStrip('mainSlidingTabStrip', -280)" class="px-2 py-1 bg-white border border-zeeuws-border rounded text-xs font-mono font-bold">&lsaquo;</button>
-        <div id="mainSlidingTabStrip" class="sliding-tab-strip flex-1">
-          <button onclick="switchTab('tabGenealogie')" id="btn-tabGenealogie" class="folder-tab-btn folder-tab-active">01. Stamboom &amp; AVG</button>
-          <button onclick="switchTab('tabFotos')" id="btn-tabFotos" class="folder-tab-btn">02. Fotoalbum &amp; Uploads</button>
-          <button onclick="switchTab('tabDocumenten')" id="btn-tabDocumenten" class="folder-tab-btn">03. Dossier B.W. Schot</button>
-          <button onclick="switchTab('tabKaarten')" id="btn-tabKaarten" class="folder-tab-btn">04. Zeekaart Perceel 369</button>
-          <button onclick="switchTab('tabPlattegronden')" id="btn-tabPlattegronden" class="folder-tab-btn">05. Hoogaars TH 2 &amp; Sluis</button>
-          <button onclick="switchTab('tabArcheologie')" id="btn-tabArcheologie" class="folder-tab-btn">06. Archeologie DB</button>
-          <button onclick="switchTab('tabGeologie')" id="btn-tabGeologie" class="folder-tab-btn">07. Geologie DB</button>
-          <button onclick="switchTab('tabKadaster')" id="btn-tabKadaster" class="folder-tab-btn">08. Percelen &amp; Gemeten</button>
-          <button onclick="switchTab('tabWoo')" id="btn-tabWoo" class="folder-tab-btn">09. Woo &amp; Rechtbank</button>
-          <button onclick="switchTab('tabUitbreiding')" id="btn-tabUitbreiding" class="folder-tab-btn">10. Eigen Tabs &amp; Embed</button>
-          <button onclick="switchTab('tabRustCms')" id="btn-tabRustCms" class="folder-tab-btn">11. Rust Axum CMS</button>
-        </div>
-        <button onclick="scrollTabStrip('mainSlidingTabStrip', 280)" class="px-2 py-1 bg-white border border-zeeuws-border rounded text-xs font-mono font-bold">&rsaquo;</button>
-      </div>
-    </nav>
-
     <main class="flex-1 max-w-[1520px] w-full mx-auto p-3 sm:p-5">
       <div id="multiViewportWrapper" class="viewport-grid-single">
 
         <!-- VIEWPORT 1 -->
         <section id="primaryViewportContainer" class="bg-white border border-zeeuws-border rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
 
-          <div class="flex items-center justify-between pb-2.5 border-b border-zeeuws-border">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-zeeuws-border">
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 bg-meekrab-700 text-white font-mono text-xs rounded">Viewport 1</span>
+              <span id="breadcrumbPillarBadge" class="px-2 py-0.5 bg-zeeuws-sand border border-zeeuws-border font-mono text-xs rounded text-meekrab-800">Hoofdmenu I</span>
               <h2 id="breadcrumbCurrentTab" class="font-serif font-bold text-base sm:text-lg text-zinc-900">01. Stamboom &amp; Kwartierstaat (AVG-Afgeschermd)</h2>
             </div>
           </div>
 
-          <!-- TAB 01 -->
+          <!-- TAB 01: GENEALOGIE -->
           <div id="tabGenealogie" class="tab-pane space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabGenealogie', 'subGenBoom')" id="subbtn-tabGenealogie-subGenBoom" class="sub-tab-btn sub-tab-active">1A. Voorouderboom (AVG)</button>
@@ -507,7 +637,7 @@
             </div>
           </div>
 
-          <!-- TAB 02 -->
+          <!-- TAB 02: FOTOALBUM -->
           <div id="tabFotos" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <div class="flex flex-wrap gap-1.5">
@@ -574,7 +704,7 @@
             </div>
           </div>
 
-          <!-- TAB 03 -->
+          <!-- TAB 03: DOCUMENTEN -->
           <div id="tabDocumenten" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border" id="docMainTabsBar">
               <button onclick="switchDocTab('docA')" id="btn-docA" class="sub-tab-btn sub-tab-active">Doc A: Dossier B.W. Schot (1840–1935)</button>
@@ -633,7 +763,7 @@
             <div id="customDocPanesContainer" class="space-y-3"></div>
           </div>
 
-          <!-- TAB 04 -->
+          <!-- TAB 04: KAARTEN -->
           <div id="tabKaarten" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <div class="flex flex-wrap gap-1.5">
@@ -730,7 +860,7 @@
             </div>
           </div>
 
-          <!-- TAB 05 -->
+          <!-- TAB 05: PLATTEGRONDEN -->
           <div id="tabPlattegronden" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabPlattegronden', 'subPlatHoogaars')" id="subbtn-tabPlattegronden-subPlatHoogaars" class="sub-tab-btn sub-tab-active">5A. Lijnenplan Hoogaars TH 2 (1902)</button>
@@ -758,7 +888,7 @@
             </div>
           </div>
 
-          <!-- TAB 06 -->
+          <!-- TAB 06: ARCHEOLOGIE -->
           <div id="tabArcheologie" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabArcheologie', 'subArcRegister')" id="subbtn-tabArcheologie-subArcRegister" class="sub-tab-btn sub-tab-active">6A. Vondstenregister</button>
@@ -786,7 +916,7 @@
             </div>
           </div>
 
-          <!-- TAB 07 -->
+          <!-- TAB 07: GEOLOGIE -->
           <div id="tabGeologie" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabGeologie', 'subGeoBoringen')" id="subbtn-tabGeologie-subGeoBoringen" class="sub-tab-btn sub-tab-active">7A. Boorstaten</button>
@@ -807,7 +937,7 @@
             </div>
           </div>
 
-          <!-- TAB 08 -->
+          <!-- TAB 08: KADASTER -->
           <div id="tabKadaster" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabKadaster', 'subKadRegister')" id="subbtn-tabKadaster-subKadRegister" class="sub-tab-btn sub-tab-active">8A. Kadastraal Register</button>
@@ -843,7 +973,7 @@
             </div>
           </div>
 
-          <!-- TAB 09 -->
+          <!-- TAB 09: WOO -->
           <div id="tabWoo" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabWoo', 'subWooKeten')" id="subbtn-tabWoo-subWooKeten" class="sub-tab-btn sub-tab-active">9A. Bestuursrechtelijke Keten</button>
@@ -877,19 +1007,23 @@
             </div>
           </div>
 
-          <!-- TAB 10 -->
+          <!-- TAB 10: UITBREIDING -->
           <div id="tabUitbreiding" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <button onclick="switchSubTab('tabUitbreiding', 'subUitNieuwTab')" id="subbtn-tabUitbreiding-subUitNieuwTab" class="sub-tab-btn sub-tab-active">10A. + Nieuw Hoofdtabblad</button>
               <button onclick="switchSubTab('tabUitbreiding', 'subUitViewportCode')" id="subbtn-tabUitbreiding-subUitViewportCode" class="sub-tab-btn">10B. Google Sites Embed-Code</button>
             </div>
             <div id="subUitNieuwTab" class="subtab-pane-tabUitbreiding p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
                 <input id="customTabNameInput" type="text" placeholder="Naam nieuw tabblad" class="ui-input" />
+                <select id="customTabPillarInput" class="ui-input">
+                  <option value="1">Onderbrengen in Hoofdmenu I (Familie &amp; Historie)</option>
+                  <option value="2">Onderbrengen in Hoofdmenu II (Registers &amp; CMS)</option>
+                </select>
                 <select id="customTabTypeInput" class="ui-input"><option value="DOSSIER">Onderzoeksdossier</option><option value="ARCHIEFTABEL">Archieftabel</option></select>
-                <textarea id="customTabFirstEntry" rows="3" placeholder="Inhoud..." class="ui-input md:col-span-2"></textarea>
+                <textarea id="customTabFirstEntry" rows="3" placeholder="Inhoud..." class="ui-input md:col-span-3"></textarea>
               </div>
-              <button onclick="createCustomTab()" class="ui-btn bg-meekrab-700 text-white">Tabblad Aanmaken</button>
+              <button onclick="createCustomTab()" class="ui-btn bg-meekrab-700 text-white">Tabblad Aanmaken in Bovenmenu &amp; Sliding Menu</button>
             </div>
             <div id="subUitViewportCode" class="subtab-pane-tabUitbreiding hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
               <textarea id="viewportCodeSnippet" rows="6" readonly class="w-full p-2.5 font-mono text-xs bg-white border border-zeeuws-border rounded"></textarea>
@@ -897,12 +1031,12 @@
             </div>
           </div>
 
-          <!-- TAB 11: RUST AXUM CMS -->
+          <!-- TAB 11: RUST AXUM CMS & ALLE ROUTES -->
           <div id="tabRustCms" class="tab-pane hidden space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
               <div class="flex flex-wrap gap-1.5">
                 <button onclick="switchSubTab('tabRustCms', 'subRustEditor')" id="subbtn-tabRustCms-subRustEditor" class="sub-tab-btn sub-tab-active">11A. Rust CMS Dossier-Editor</button>
-                <button onclick="switchSubTab('tabRustCms', 'subRustStatus')" id="subbtn-tabRustCms-subRustStatus" class="sub-tab-btn">11B. API Endpoints</button>
+                <button onclick="switchSubTab('tabRustCms', 'subRustStatus')" id="subbtn-tabRustCms-subRustStatus" class="sub-tab-btn">11B. Alle Rust Axum Routes (/cms, /author, /post, /edit)</button>
               </div>
               <span id="rustApiStatusBadge" class="px-2.5 py-0.5 bg-meekrab-700 text-white font-mono text-xs rounded">Solid POD + Rust API</span>
             </div>
@@ -932,9 +1066,22 @@
               <div id="rustCmsRecordsContainer" class="space-y-2.5"></div>
             </div>
 
-            <div id="subRustStatus" class="subtab-pane-tabRustCms hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-xs font-mono space-y-1.5">
-              <div>GET  http://127.0.0.1:8082/api/cms — Haalt alle archiefrecords op uit data/cms_records.json</div>
-              <div>POST http://127.0.0.1:8082/api/cms — Slaat een nieuw archiefstuk atomair op in Rust Axum</div>
+            <div id="subRustStatus" class="subtab-pane-tabRustCms hidden overflow-x-auto border border-zeeuws-border rounded-lg">
+              <table class="w-full text-left border-collapse text-xs font-mono">
+                <thead class="bg-meekrab-800 text-white">
+                  <tr><th class="p-2.5">Methode</th><th class="p-2.5">Axum Route</th><th class="p-2.5">Handler</th><th class="p-2.5">Middleware</th></tr>
+                </thead>
+                <tbody class="divide-y divide-zeeuws-border bg-white">
+                  <tr><td class="p-2 font-bold text-green-800">GET / POST</td><td class="p-2">/api/cms</td><td class="p-2">handler_cms_list / create</td><td class="p-2">Openbaar (Solid POD)</td></tr>
+                  <tr><td class="p-2 font-bold text-red-800">DELETE</td><td class="p-2">/api/cms/:id</td><td class="p-2">handler_cms_delete</td><td class="p-2">Openbaar (Solid POD)</td></tr>
+                  <tr><td class="p-2 font-bold text-green-800">GET</td><td class="p-2">/author &amp; /author/:id</td><td class="p-2">handler_author_list / get</td><td class="p-2">Openbaar</td></tr>
+                  <tr><td class="p-2 font-bold text-green-800">GET</td><td class="p-2">/post &amp; /post/:id</td><td class="p-2">handler_post_list / get</td><td class="p-2">Openbaar</td></tr>
+                  <tr><td class="p-2 font-bold text-amber-800">POST / PATCH / DELETE</td><td class="p-2">/post &amp; /post/:id</td><td class="p-2">handler_post_create / update / delete</td><td class="p-2">mw_ctx_require</td></tr>
+                  <tr><td class="p-2 font-bold text-amber-800">GET / POST / PATCH / DELETE</td><td class="p-2">/edit &amp; /edit/:id</td><td class="p-2">handler_edit_*</td><td class="p-2">mw_ctx_require</td></tr>
+                  <tr><td class="p-2 font-bold text-amber-800">POST</td><td class="p-2">/edit/accept/:id &amp; /edit/reject/:id</td><td class="p-2">handler_edit_accept / reject</td><td class="p-2">mw_ctx_require</td></tr>
+                  <tr><td class="p-2 font-bold text-amber-800">GET</td><td class="p-2">/edit/outgoing &amp; /edit/incoming</td><td class="p-2">handler_edit_list_outgoing / incoming</td><td class="p-2">mw_ctx_require</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -967,7 +1114,7 @@
     <footer class="bg-zinc-900 text-zinc-300 py-4 px-4 mt-8 text-xs">
       <div class="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
         <div>Archiefplatform Familie Schot &amp; Bout — Tholen, Scherpenisse &amp; Bol van Lodijke (1684–1935)</div>
-        <div class="font-mono text-zinc-400">Standaard A+ (19px) • Rust Axum CMS • Solid POD • AVG-Compliant</div>
+        <div class="font-mono text-zinc-400">2 Top Hoofdmenu's • Volledig Sliding Menu • Rust Axum CMS • AVG-Compliant</div>
       </div>
     </footer>
   </div>
@@ -1003,6 +1150,21 @@
     let currentAlbumLayout = 'cards';
     let pendingUploadFiles = [];
     let isLeftDrawerPinned = true;
+
+    // Mapping van elk tabblad naar Hoofdmenu 1 of Hoofdmenu 2
+    const TAB_TO_PILLAR = {
+      tabGenealogie: 1,
+      tabFotos: 1,
+      tabDocumenten: 1,
+      tabKaarten: 1,
+      tabPlattegronden: 1,
+      tabArcheologie: 2,
+      tabGeologie: 2,
+      tabKadaster: 2,
+      tabWoo: 2,
+      tabUitbreiding: 2,
+      tabRustCms: 2
+    };
 
     function makeHistoricalSvgPlate(code, title, subtitle, drawingType) {
       let inner = '';
@@ -1049,8 +1211,33 @@
       syncWithRustBackend(true);
     });
 
-    function openModal(id) { const m = document.getElementById(id); if (m) m.classList.remove('hidden'); }
-    function closeModal(id) { const m = document.getElementById(id); if (m) m.classList.add('hidden'); }
+    function openModal(id) { document.getElementById(id)?.classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+    // Wissel tussen de 2 Hoofdmenu's bovenin
+    function selectTopMainMenu(pillarNum, autoSwitchFirstTab = false) {
+      const btn1 = document.getElementById('topMainMenuBtn1');
+      const btn2 = document.getElementById('topMainMenuBtn2');
+      const grp1 = document.getElementById('topContextGroup1');
+      const grp2 = document.getElementById('topContextGroup2');
+      const badge = document.getElementById('breadcrumbPillarBadge');
+
+      if (pillarNum === 1) {
+        btn1?.classList.add('top-pillar-active');
+        btn2?.classList.remove('top-pillar-active');
+        grp1?.classList.remove('hidden');
+        grp2?.classList.add('hidden');
+        if (badge) badge.innerText = 'Hoofdmenu I • Familie & Historie';
+        if (autoSwitchFirstTab) switchTab('tabGenealogie');
+      } else {
+        btn2?.classList.add('top-pillar-active');
+        btn1?.classList.remove('top-pillar-active');
+        grp2?.classList.remove('hidden');
+        grp1?.classList.add('hidden');
+        if (badge) badge.innerText = 'Hoofdmenu II • Registers & Rust CMS';
+        if (autoSwitchFirstTab) switchTab('tabArcheologie');
+      }
+    }
 
     function toggleLeftDrawer(forceState) {
       const drawer = document.getElementById('leftSlidingDrawer');
@@ -1122,10 +1309,6 @@
       showToast('Onderdeel geopend in Viewport 2.');
     }
 
-    function scrollTabStrip(stripId, deltaX) {
-      document.getElementById(stripId)?.scrollBy({ left: deltaX, behavior: 'smooth' });
-    }
-
     function switchSubTab(parentTabId, subPaneId) {
       document.querySelectorAll(`.subtab-pane-${parentTabId}`).forEach(el => el.classList.add('hidden'));
       document.getElementById(subPaneId)?.classList.remove('hidden');
@@ -1163,8 +1346,8 @@
       const bSingle = document.getElementById('btnVpSingle');
       const bSplit = document.getElementById('btnVpSplit');
       const bStacked = document.getElementById('btnVpStacked');
-      const act = 'px-2.5 py-1 rounded bg-meekrab-700 text-white font-semibold';
-      const inact = 'px-2.5 py-1 rounded bg-zeeuws-sand text-zinc-800 border border-zeeuws-border font-semibold';
+      const act = 'px-2 py-0.5 rounded bg-meekrab-700 text-white font-semibold';
+      const inact = 'px-2 py-0.5 rounded bg-white text-zinc-800 border border-zeeuws-border font-semibold';
       bSingle.className = mode === 'single' ? act : inact;
       bSplit.className = mode === 'split' ? act : inact;
       bStacked.className = mode === 'stacked' ? act : inact;
@@ -1199,12 +1382,19 @@
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
       document.getElementById(tabId)?.classList.remove('hidden');
-      document.querySelectorAll('#mainSlidingTabStrip .folder-tab-btn').forEach(btn => btn.classList.remove('folder-tab-active'));
-      const activeBtn = document.getElementById('btn-' + tabId);
-      if (activeBtn) {
-        activeBtn.classList.add('folder-tab-active');
-        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      }
+
+      // Synchroniseer met het juiste Hoofdmenu (1 of 2) bovenin
+      const pillar = TAB_TO_PILLAR[tabId] || 1;
+      selectTopMainMenu(pillar, false);
+
+      // Update actieve chip in de top-contextbalk
+      document.querySelectorAll('.context-chip-btn').forEach(btn => btn.classList.remove('context-chip-active'));
+      document.getElementById('btn-' + tabId)?.classList.add('context-chip-active');
+
+      // Update actieve kaart in de linker sliding drawer
+      document.querySelectorAll('#drawerMenuList .drawer-item').forEach(card => card.classList.remove('drawer-active-card'));
+      document.getElementById('drawerCard-' + tabId)?.classList.add('drawer-active-card');
+
       const titles = {
         tabGenealogie: '01. Stamboom & Kwartierstaat (AVG-Afgeschermd)',
         tabFotos: '02. Solid POD Fotoalbum & Uploads',
@@ -1524,23 +1714,39 @@
 
     function createCustomTab() {
       const name = document.getElementById('customTabNameInput').value.trim();
+      const pillar = parseInt(document.getElementById('customTabPillarInput').value, 10) || 2;
       const type = document.getElementById('customTabTypeInput').value;
       const content = document.getElementById('customTabFirstEntry').value.trim();
       if (!name) return;
+
       const tid = 'tabCustom_' + Date.now();
+      TAB_TO_PILLAR[tid] = pillar;
+
+      // 1. Voeg toe aan het gekozen Hoofdmenu bovenin
       const btn = document.createElement('button');
       btn.id = 'btn-' + tid;
-      btn.className = 'folder-tab-btn';
+      btn.className = 'context-chip-btn';
       btn.innerText = name;
       btn.onclick = () => switchTab(tid);
-      document.getElementById('mainSlidingTabStrip').appendChild(btn);
+      document.getElementById(pillar === 1 ? 'topContextGroup1' : 'topContextGroup2')?.appendChild(btn);
 
+      // 2. Voeg ook direct toe aan het linker Sliding Menu
+      const drawerCard = document.createElement('div');
+      drawerCard.id = 'drawerCard-' + tid;
+      drawerCard.className = 'drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between';
+      drawerCard.setAttribute('data-keywords', name.toLowerCase() + ' ' + type.toLowerCase());
+      drawerCard.innerHTML = `<button onclick="switchTab('${tid}')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">${name}</button><span class="font-mono text-[10px] text-meekrab-700">Menu ${pillar === 1 ? 'I' : 'II'}</span>`;
+      document.getElementById('drawerCustomMenuList')?.appendChild(drawerCard);
+
+      // 3. Maak content-pane aan
       const pane = document.createElement('div');
       pane.id = tid;
       pane.className = 'tab-pane hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2';
       pane.innerHTML = `<div class="font-serif font-bold text-base text-meekrab-800">${name} (${type})</div><p class="text-sm whitespace-pre-line">${content}</p>`;
       document.getElementById('dynamicMainTabsPanes').appendChild(pane);
+
       switchTab(tid);
+      showToast(`Tabblad "${name}" toegevoegd aan Hoofdmenu ${pillar === 1 ? 'I' : 'II'} en Sliding Menu.`);
     }
 
     function generateViewportSnippet() {
@@ -1561,7 +1767,7 @@
       const pHits = photoDatabase.filter(p => p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
       const cHits = cmsDatabase.filter(c => c.title.toLowerCase().includes(q) || c.body.toLowerCase().includes(q));
       box?.classList.remove('hidden');
-      if (sum) sum.innerHTML = `Zoekterm <strong>"${q}"</strong>: <button onclick="switchTab('tabFotos')" class="underline font-bold mx-1">${pHits.length} foto's</button> | <button onclick="switchTab('tabRustCms')" class="underline font-bold mx-1">${cHits.length} CMS-records</button>`;
+      if (sum) sum.innerHTML = `Zoekterm <strong>"${q}"</strong>: <button onclick="switchTab('tabFotos')" class="underline font-bold mx-1">${pHits.length} foto's (Menu I)</button> | <button onclick="switchTab('tabRustCms')" class="underline font-bold mx-1">${cHits.length} CMS-records (Menu II)</button>`;
     }
 
     function clearGlobalSearch() {
@@ -1620,6 +1826,9 @@
       cmsDatabase = cmsDatabase.filter(c => c.id !== id);
       saveCmsDatabase();
       renderRustCmsRecords();
+      try {
+        fetch(`${RUST_API_URL}/${id}`, { method: 'DELETE' });
+      } catch (e) {}
     }
 
     function renderRustCmsRecords() {

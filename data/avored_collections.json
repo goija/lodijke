@@ -1,0 +1,41 @@
+[
+  {
+    "identifier": "dossiers_schot_bout",
+    "name": "Dossiers Familie Schot & Bout (AVG-Protected)",
+    "fields": [
+      { "name": "title", "field_type": "TEXT", "required": true },
+      { "name": "gramps_id", "field_type": "TEXT", "required": false },
+      { "name": "avg_shield", "field_type": "SWITCH", "required": true },
+      { "name": "body", "field_type": "RICH_TEXT", "required": true }
+    ]
+  },
+  {
+    "identifier": "geojson_kadastrale_percelen",
+    "name": "GeoJSON Percelen (RD EPSG:28992 & WGS84 EPSG:4326)",
+    "fields": [
+      { "name": "cadastral_code", "field_type": "TEXT", "required": true },
+      { "name": "area_hectares", "field_type": "NUMBER", "required": true },
+      { "name": "area_gemeten", "field_type": "NUMBER", "required": true },
+      { "name": "rd_centroid", "field_type": "COORDINATES_RD_28992", "required": true },
+      { "name": "wgs84_polygon", "field_type": "GEOJSON_POLYGON_4326", "required": true }
+    ]
+  },
+  {
+    "identifier": "oesterpercelen",
+    "name": "Oesterpercelen Bol van Lodijke & Zierikzee",
+    "fields": [
+      { "name": "perceel_nr", "field_type": "TEXT", "required": true },
+      { "name": "oppervlakte_ha", "field_type": "NUMBER", "required": true },
+      { "name": "vloot_schepen", "field_type": "SELECT", "required": true }
+    ]
+  },
+  {
+    "identifier": "woo_bestuursrecht",
+    "name": "Woo-Besluiten & Rechtbank Zeeland-West-Brabant",
+    "fields": [
+      { "name": "zaaknummer", "field_type": "TEXT", "required": true },
+      { "name": "wetsartikel", "field_type": "TEXT", "required": true },
+      { "name": "uitkomst", "field_type": "TEXTAREA", "required": true }
+    ]
+  }
+]

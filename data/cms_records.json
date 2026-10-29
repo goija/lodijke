@@ -1,29 +1,32 @@
 [
   {
-    "id": "CMS-SCHOT-1840",
-    "category": "GENEALOGIE",
-    "title": "Benjamin Willem Schot (26 sep 1840 - 17 nov 1935)",
-    "period": "1840-1935",
-    "location": "Kruittoren 23 (Wijk A 107), Tholen",
-    "summary": "Zoon van Jan Schot (1814-1882) en Elisabeth Josina van Dijk (1812-1895). 1e huwelijk (1863) met Maria Mathea Bolier (13 kinderen); 2e huwelijk (1 okt 1915) met Dina Pieternella Kegge (1868-1944).",
-    "avg_shield": true
+    "id": "post-369",
+    "title": "Concessie Perceel No. 369 Bol van Lodijke (12,5 Hectare)",
+    "category": "LODIJKE_369",
+    "collection": "oesterpercelen",
+    "date": "1892 / 1915",
+    "author_id": "I0103",
+    "avg_shield": true,
+    "body": "Exploitatie van oesterperceel No. 369 op de Bol van Lodijke door Benjamin Willem Schot met de houten hoogaarzen TH 2 Eben Haëzer en TH 90 Vijf Gebroeders."
   },
   {
-    "id": "CMS-PERCEEL-369",
-    "category": "KADASTER_ZEEKAART",
-    "title": "Oesterperceel No. 369 op de Bol van Lodijke (12,5 ha)",
-    "period": "1873-1935",
-    "location": "Bol van Lodijke, Oosterschelde",
-    "summary": "Geëxploiteerd door B.W. Schot met de houten hoogaarzen TH 2 Eben Haëzer (1902, werf Van Duivendijk), TH 12 Niets zonder Gods zegen (reddingsboot watersnood 12-13 mrt 1906) en TH 90 Vijf Gebroeders.",
-    "avg_shield": true
+    "id": "cms-02",
+    "title": "Reddingsoperatie Watersnood Oud-Vossemeer (TH 12)",
+    "category": "VLOOT_HOOGAARS",
+    "collection": "maritiem_register",
+    "date": "12-13 maart 1906",
+    "author_id": "I0103",
+    "avg_shield": true,
+    "body": "Inzet van de roeiboot van hoogaars TH 12 'Niets zonder Gods zegen' door Thoolse vissers bij de evacuatie van Oud-Vossemeer."
   },
   {
-    "id": "CMS-ZIERIKZEE-1912",
-    "category": "EXPANSIE_LOODS",
-    "title": "Expansie Flauwers (1912) & Oesterloods Contr'Escarpe (1913)",
-    "period": "1901-1918",
-    "location": "Tholen & Flauwers onder Zierikzee",
-    "summary": "Aanvraag 3 woningen Oud-Vossemeersepoort (jan 1901 door Jan, Jacob en Cathalina Schot), pacht Flauwers van mr. Fokker (1912 door Kees, Jacob en Willem Schot) en vergroting oesterloods Contr'Escarpe (juli 1913 door C.J. Schot en J. Kegge).",
-    "avg_shield": true
+    "id": "cms-03",
+    "title": "Uitbreiding Oesterloods Contr'Escarpe (Schot & Kegge)",
+    "category": "DOSSIER_SCHOT",
+    "collection": "bouwakten_tholen",
+    "date": "Juli 1913",
+    "author_id": "I0103",
+    "avg_shield": true,
+    "body": "Verzoek van maatschapsleden Cornelis Jan Schot en Jacob Kegge aan B&W van Tholen tot vergroting van de oesterloods aan de Contr'Escarpe."
   }
 ]
