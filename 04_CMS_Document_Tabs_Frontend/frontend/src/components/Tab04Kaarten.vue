@@ -5,10 +5,16 @@
       <div class="header-titles">
         <h2>📍 GIS & Geodetische Kaartweergave</h2>
         <p class="subtitle">
-          RD (EPSG:28992) & WGS84 Coördinatennetwerk | Perceel 369 & Geopark Schelde Delta
+          RD (EPSG:28992) & WGS84 Coördinatennetwerk | Perceel 369, Geopark & Historische Zeekaart 1892
         </p>
       </div>
       <div class="layer-controls">
+        <button 
+          :class="['btn-filter', { active: layers.zeekaart1892 }]" 
+          @click="toggleLayer('zeekaart1892')"
+        >
+          📜 Historische Zeekaart (1892)
+        </button>
         <button 
           :class="['btn-filter', { active: layers.perceel369 }]" 
           @click="toggleLayer('perceel369')"
@@ -36,10 +42,24 @@
       </div>
     </header>
 
-    <!-- Main Content Area: Map + Sidebar -->
-    <div class="gis-workspace">
-      <!-- Leaflet Map Canvas -->
-      <div id="leaflet-map" class="map-canvas"></div>
+    <!-- Transparantie schuifregelaar voor 1892 Zeekaart -->
+    <div class="opacity-bar" v-if="layers.zeekaart1892">
+      <label for="opacityRange">🔍 Transparantie Historische Zeekaart (1892): <strong>{{ Math.round(opacity * 100) }}%</strong></label>
+      <input 
+        id="opacityRange" 
+        type="range" 
+        min="0.1" 
+        max="1.0" 
+        step="0.05" 
+        v-model="opacity" 
+        @input="updateOpacity" 
+      />
+    </div>
+
+    <!-- Workspace: Map + Sidebar -->
+    <div class="gis-workspace" ref="workspaceRef">
+      <!-- Leaflet Map Canvas Container -->
+      <div id="leaflet-map-canvas" class="map-canvas" ref="mapContainerRef"></div>
 
       <!-- Detail Sidebar -->
       <aside class="gis-sidebar" v-if="selectedFeature">
@@ -80,32 +100,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 
 const selectedFeature = ref(null);
-let map = null;
+const opacity = ref(0.70);
+const mapContainerRef = ref(null);
+const workspaceRef = ref(null);
+
+// Plain non-reactive variables to prevent Vue reactivity proxy bugs with Leaflet
+let mapInstance = null;
 let layerGroups = {};
+let historicalTileLayer = null;
+let resizeObserver = null;
 
 const layers = ref({
+  zeekaart1892: true,
   perceel369: true,
   kasteel: true,
   molenplaat: true,
   geosites: true
 });
 
-// Geodata Punten & Percelen
 const gisFeatures = [
   {
     id: 'p369',
     layerKey: 'perceel369',
-    category: 'OESTERCONCESSIE',
+    category: 'OESTERCONCESSIE 1892-1935',
     title: 'Oesterperceel No. 369 (Bol van Lodijke)',
     lat: 51.47833,
     lng: 4.13750,
     rdX: 68120,
     rdY: 388050,
     depth: '-2.10m NAP',
-    description: '12,5 hectare oesterkweekgronden gepacht door Reder Benjamin Willem Schot (1840–1935).',
+    description: '12,5 hectare oesterkweekgronden gepacht door Reder Benjamin Willem Schot (1840–1935). Overeenkomstig de pachtveiling Middelburg 1892.',
     history: 'Vloot hoogaarzen: TH 2 "Eben Haëzer", TH 12 "Niets zonder Gods zegen", TH 90 "Vijf Gebroeders".',
     wooCase: 'Zaak 1456324 (Molenplaat / Visserijrechten B&W Tholen)',
     color: '#a6e3a1'
@@ -173,23 +200,34 @@ const gisFeatures = [
 ];
 
 onMounted(() => {
-  // Dynamisch Leaflet CSS inladen
+  const cdnBase = 'https://' + '[suspicious link removed]';
+  
   if (!document.getElementById('leaflet-css')) {
     const link = document.createElement('link');
     link.id = 'leaflet-css';
     link.rel = 'stylesheet';
-    link.href = '[suspicious link removed]';
+    link.href = cdnBase + 'leaflet.css';
     document.head.appendChild(link);
   }
 
-  // Dynamisch Leaflet JS inladen en kaart initieëren
   if (window.L) {
-    initMap();
+    nextTick(() => initMap());
   } else {
     const script = document.createElement('script');
-    script.src = '[suspicious link removed]';
-    script.onload = () => initMap();
+    script.id = 'leaflet-js';
+    script.src = cdnBase + 'leaflet.js';
+    script.onload = () => nextTick(() => initMap());
     document.head.appendChild(script);
+  }
+
+  // ResizeObserver om container-wijzigingen op te vangen
+  if (window.ResizeObserver && workspaceRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      if (mapInstance) {
+        setTimeout(() => mapInstance.invalidateSize(), 150);
+      }
+    });
+    resizeObserver.observe(workspaceRef.value);
   }
 });
 
@@ -197,21 +235,51 @@ function initMap() {
   const L = window.L;
   if (!L) return;
 
-  // Kaart centreren op de Bol van Lodijke / Oosterschelde (51.478°N, 4.137°E)
-  map = L.map('leaflet-map').setView([51.4720, 4.1450], 12);
+  const container = document.getElementById('leaflet-map-canvas');
+  if (!container) return;
 
-  // Donkere / Topografische Kaartlaag (CartoDB Dark Matter)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap &copy; CARTO &copy; Lodijke GIS Core',
-    maxZoom: 18
-  }).addTo(map);
+  // FIX BUG 1: Opruimen van oude instantie
+  if (mapInstance) {
+    mapInstance.remove();
+    mapInstance = null;
+  }
+  if (container._leaflet_id) {
+    container._leaflet_id = null;
+  }
 
-  // Laag-groepen initialiseren
-  ['perceel369', 'kasteel', 'molenplaat', 'geosites'].forEach(key => {
-    layerGroups[key] = L.layerGroup().addTo(map);
+  // Initialiseren op Bol van Lodijke (51.472°N, 4.145°E)
+  mapInstance = L.map('leaflet-map-canvas', {
+    center: [51.4720, 4.1450],
+    zoom: 12,
+    zoomControl: true,
+    attributionControl: true
   });
 
-  // Punten & Polygonen toevoegen
+  const cartoUrl = 'https://{s}.' + 'basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  L.tileLayer(cartoUrl, {
+    attribution: '&copy; OpenStreetMap &copy; CARTO &copy; Lodijke GIS Core',
+    maxZoom: 18,
+    subdomains: 'abcd'
+  }).addTo(mapInstance);
+
+  const pdokUrl = 'https://' + 'service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/official/EPSG:3857/{z}/{x}/{y}.png';
+  historicalTileLayer = L.tileLayer(
+    pdokUrl,
+    {
+      attribution: 'PDOK Topotijdreis 1892 & Bestuur der Visserijen Middelburg 1892',
+      opacity: opacity.value,
+      maxZoom: 18
+    }
+  );
+
+  if (layers.value.zeekaart1892) {
+    historicalTileLayer.addTo(mapInstance);
+  }
+
+  ['perceel369', 'kasteel', 'molenplaat', 'geosites'].forEach(key => {
+    layerGroups[key] = L.layerGroup().addTo(mapInstance);
+  });
+
   gisFeatures.forEach(feat => {
     const marker = L.circleMarker([feat.lat, feat.lng], {
       radius: feat.id === 'p369' ? 12 : 9,
@@ -219,7 +287,7 @@ function initMap() {
       color: '#11111b',
       weight: 2,
       opacity: 1,
-      fillOpacity: 0.85
+      fillOpacity: 0.90
     });
 
     marker.on('click', () => {
@@ -233,17 +301,15 @@ function initMap() {
     }
   });
 
-  // Cirkel-polygoon voor Perceel No. 369 (12,5 ha op de Bol van Lodijke)
   const perceel369Poly = L.circle([51.47833, 4.13750], {
     color: '#a6e3a1',
     fillColor: '#a6e3a1',
-    fillOpacity: 0.25,
+    fillOpacity: 0.30,
     radius: 200
   });
-  perceel369Poly.bindTooltip("Oesterperceel No. 369 (12,5 ha)");
+  perceel369Poly.bindTooltip("Oesterperceel No. 369 (12,5 ha - Pacht 1892)");
   layerGroups.perceel369.addLayer(perceel369Poly);
 
-  // Polygoon voor Molenplaat (150 ha)
   const molenplaatPoly = L.polygon([
     [51.468, 4.142],
     [51.471, 4.158],
@@ -252,26 +318,53 @@ function initMap() {
   ], {
     color: '#fab387',
     fillColor: '#fab387',
-    fillOpacity: 0.20,
+    fillOpacity: 0.25,
     weight: 2
   });
   molenplaatPoly.bindTooltip("Molenplaat Visserijpercelen (150 ha)");
   layerGroups.molenplaat.addLayer(molenplaatPoly);
+
+  // FIX BUG 2: Herberekenen afmetingen
+  setTimeout(() => {
+    if (mapInstance) {
+      mapInstance.invalidateSize();
+    }
+  }, 200);
+}
+
+function updateOpacity() {
+  if (historicalTileLayer) {
+    historicalTileLayer.setOpacity(parseFloat(opacity.value));
+  }
 }
 
 function toggleLayer(key) {
   layers.value[key] = !layers.value[key];
-  if (map && layerGroups[key]) {
-    if (layers.value[key]) {
-      map.addLayer(layerGroups[key]);
+  if (!mapInstance) return;
+
+  if (key === 'zeekaart1892') {
+    if (layers.value.zeekaart1892) {
+      if (historicalTileLayer) historicalTileLayer.addTo(mapInstance);
     } else {
-      map.removeLayer(layerGroups[key]);
+      if (historicalTileLayer) mapInstance.removeLayer(historicalTileLayer);
+    }
+  } else if (layerGroups[key]) {
+    if (layers.value[key]) {
+      mapInstance.addLayer(layerGroups[key]);
+    } else {
+      mapInstance.removeLayer(layerGroups[key]);
     }
   }
 }
 
 onUnmounted(() => {
-  if (map) map.remove();
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+  if (mapInstance) {
+    mapInstance.remove();
+    mapInstance = null;
+  }
 });
 </script>
 
@@ -279,13 +372,13 @@ onUnmounted(() => {
 .gis-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   background: #1e1e2e;
   color: #cdd6f4;
 }
 .gis-header {
   background: #181825;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid #313244;
   display: flex;
   justify-content: space-between;
@@ -293,17 +386,17 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 1rem;
 }
-.gis-header h2 { margin: 0; color: #f38ba8; font-size: 1.5rem; }
-.subtitle { margin: 0.25rem 0 0 0; color: #a6adc8; font-size: 0.88rem; }
-.layer-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.gis-header h2 { margin: 0; color: #f38ba8; font-size: 1.3rem; }
+.subtitle { margin: 0.25rem 0 0 0; color: #a6adc8; font-size: 0.85rem; }
+.layer-controls { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .btn-filter {
   background: #313244;
   color: #cdd6f4;
   border: 1px solid #45475a;
-  padding: 0.45rem 0.85rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -313,20 +406,39 @@ onUnmounted(() => {
   border-color: #89b4fa;
 }
 
+.opacity-bar {
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #f9e2af;
+}
+.opacity-bar input[type="range"] {
+  width: 200px;
+  accent-color: #f9e2af;
+  cursor: pointer;
+}
+
 .gis-workspace {
   flex: 1;
   display: flex;
   position: relative;
   overflow: hidden;
+  min-height: 0;
 }
 .map-canvas {
   flex: 1;
   height: 100%;
+  min-height: 300px;
   z-index: 1;
+  background: #11111b;
 }
 
 .gis-sidebar {
-  width: 360px;
+  width: 320px;
   background: #181825;
   border-left: 1px solid #313244;
   display: flex;
@@ -336,50 +448,50 @@ onUnmounted(() => {
   box-shadow: -4px 0 16px rgba(0,0,0,0.4);
 }
 .sidebar-header {
-  padding: 1.25rem;
+  padding: 1rem;
   border-bottom: 1px solid #313244;
   position: relative;
 }
 .badge {
   background: #89b4fa;
   color: #11111b;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: bold;
-  padding: 0.15rem 0.5rem;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
 }
-.sidebar-header h3 { margin: 0.5rem 0 0 0; color: #a6e3a1; font-size: 1.2rem; }
+.sidebar-header h3 { margin: 0.4rem 0 0 0; color: #a6e3a1; font-size: 1.1rem; }
 .btn-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0.8rem;
+  right: 0.8rem;
   background: transparent;
   border: none;
   color: #a6adc8;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
 }
-.sidebar-body { padding: 1.25rem; }
-.feature-desc { color: #bac2de; font-size: 0.9rem; line-height: 1.4; margin-bottom: 1.25rem; }
+.sidebar-body { padding: 1rem; }
+.feature-desc { color: #bac2de; font-size: 0.88rem; line-height: 1.4; margin-bottom: 1rem; }
 .info-block {
   background: #1e1e2e;
   border: 1px solid #313244;
   border-radius: 8px;
-  padding: 0.85rem;
-  margin-bottom: 1rem;
+  padding: 0.75rem;
+  margin-bottom: 0.85rem;
 }
-.info-block h4 { margin: 0 0 0.5rem 0; color: #f9e2af; font-size: 0.85rem; text-transform: uppercase; }
-.info-block ul { margin: 0; padding-left: 1.1rem; color: #cdd6f4; font-size: 0.85rem; }
-.info-block p { margin: 0; color: #cdd6f4; font-size: 0.85rem; line-height: 1.4; }
+.info-block h4 { margin: 0 0 0.4rem 0; color: #f9e2af; font-size: 0.8rem; text-transform: uppercase; }
+.info-block ul { margin: 0; padding-left: 1rem; color: #cdd6f4; font-size: 0.82rem; }
+.info-block p { margin: 0; color: #cdd6f4; font-size: 0.82rem; line-height: 1.4; }
 .btn-woo {
   display: inline-block;
-  margin-top: 0.6rem;
+  margin-top: 0.5rem;
   background: #a6e3a1;
   color: #11111b;
-  padding: 0.45rem 0.8rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 </style>
