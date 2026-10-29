@@ -30,6 +30,7 @@
       <button @click="activeTab = 'cms'" :class="tabClass('cms')">Offline CMS Editor</button>
       <button @click="activeTab = 'photos'" :class="tabClass('photos')">Fotoalbum ({{ photos.length }})</button>
       <button @click="activeTab = 'gramps'" :class="tabClass('gramps')">GRAMPS API ({{ gramps.people.length }})</button>
+      <button @click="activeTab = 'planimeter'" :class="tabClass('planimeter')">RD-Planimeter & Kaart</button>
       <button @click="activeTab = 'solid'" :class="tabClass('solid')">Solid POD</button>
     </nav>
   </header>
@@ -194,7 +195,172 @@
       </div>
     </section>
 
-    <!-- 5. SOLID POD BEHEER (FOTO-VRIJ) -->
+    <!-- 5. RD-PLANIMETER & GEODETISCHE KAART (LODIJKE / REIMERSWAAL / SCHERPENISSE) -->
+    <section v-if="activeTab === 'planimeter'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white">RD-Planimeter (EPSG:28992) & A. Ott Nr. 573 Integrator</h2>
+            <p class="text-xs text-slate-400">
+              Klik op het RD-kaartvlak of voer Rijksdriehoekscoördinaten (X, Y) in om exacte oppervlakte in m², Hectare, Zeeuwse Gemeten en A. Ott trommel-eenheden te berekenen.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button @click="loadPresetParcel('lodijke')" class="px-3 py-1.5 rounded bg-blue-900 text-blue-200 text-xs font-semibold hover:bg-blue-800">
+              Preset: Bol van Lodijke (Visrecht)
+            </button>
+            <button @click="loadPresetParcel('reimerswaal')" class="px-3 py-1.5 rounded bg-emerald-900 text-emerald-200 text-xs font-semibold hover:bg-emerald-800">
+              Preset: Verdronken Land Reimerswaal
+            </button>
+            <button @click="loadPresetParcel('scherpenisse')" class="px-3 py-1.5 rounded bg-amber-900 text-amber-200 text-xs font-semibold hover:bg-amber-800">
+              Preset: Scherpenisse Sectie E
+            </button>
+            <button @click="clearPlanimeter" class="btn-danger">Wis Hoekpunten</button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Interactief Offline SVG RD-Kaartvlak -->
+          <div class="md:col-span-2 space-y-2">
+            <div class="flex justify-between text-xs text-slate-400 font-mono">
+              <span>RD-Venster: X [{{ rdViewBox.minX }} .. {{ rdViewBox.maxX }}] | Y [{{ rdViewBox.minY }} .. {{ rdViewBox.maxY }}]</span>
+              <span>Klik in het vlak om een RD-hoekpunt te plaatsen</span>
+            </div>
+            <svg
+              @click="addPointFromSvgClick"
+              viewBox="0 0 600 400"
+              class="w-full h-96 bg-slate-950 border border-slate-800 rounded cursor-crosshair select-none"
+            >
+              <!-- RD Gridlijnen -->
+              <g stroke="#1e293b" stroke-width="1">
+                <line v-for="gx in [100,200,300,400,500]" :key="'gx'+gx" :x1="gx" y1="0" :x2="gx" y2="400" />
+                <line v-for="gy in [80,160,240,320]" :key="'gy'+gy" x1="0" :y1="gy" x2="600" :y2="gy" />
+              </g>
+
+              <!-- GRAMPS Places uit Database -->
+              <g v-for="pl in gramps.places" :key="pl.handle">
+                <circle
+                  :cx="rdToSvgX(pl.rd_x)"
+                  :cy="rdToSvgY(pl.rd_y)"
+                  r="5"
+                  fill="#38bdf8"
+                />
+                <text
+                  :x="rdToSvgX(pl.rd_x) + 8"
+                  :y="rdToSvgY(pl.rd_y) + 4"
+                  fill="#bae6fd"
+                  font-size="11"
+                  font-family="monospace"
+                >{{ pl.title }} ({{ pl.rd_x }}, {{ pl.rd_y }})</text>
+              </g>
+
+              <!-- Getekend Planimeter Polygoon -->
+              <polygon
+                v-if="planimeterVertices.length >= 3"
+                :points="svgPolygonPoints"
+                fill="rgba(37, 99, 235, 0.28)"
+                stroke="#60a5fa"
+                stroke-width="2"
+              />
+              <polyline
+                v-else-if="planimeterVertices.length === 2"
+                :points="svgPolygonPoints"
+                fill="none"
+                stroke="#60a5fa"
+                stroke-width="2"
+              />
+
+              <!-- Hoekpunten -->
+              <g v-for="(pt, idx) in planimeterVertices" :key="'pt'+idx">
+                <circle :cx="rdToSvgX(pt.x)" :cy="rdToSvgY(pt.y)" r="4.5" fill="#f59e0b" />
+                <text
+                  :x="rdToSvgX(pt.x) + 6"
+                  :y="rdToSvgY(pt.y) - 6"
+                  fill="#fde68a"
+                  font-size="10"
+                  font-family="monospace"
+                >#{{ idx + 1 }}</text>
+              </g>
+
+              <!-- Zwaartepunt (Centroid) -->
+              <g v-if="planimeterStats.vertex_count >= 3">
+                <circle
+                  :cx="rdToSvgX(planimeterStats.centroid_rd.x)"
+                  :cy="rdToSvgY(planimeterStats.centroid_rd.y)"
+                  r="5"
+                  fill="#10b981"
+                />
+              </g>
+            </svg>
+          </div>
+
+          <!-- Numerieke RD-Planimeter Uitlezing -->
+          <div class="space-y-4">
+            <div class="p-4 rounded bg-slate-900 border border-slate-800 space-y-2 font-mono text-xs">
+              <div class="text-slate-400 font-sans font-bold text-sm border-b border-slate-800 pb-1">
+                Planimetrische Uitkomst
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Hoekpunten (N):</span>
+                <span class="text-white font-bold">{{ planimeterStats.vertex_count }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Oppervlakte (m²):</span>
+                <span class="text-emerald-400 font-bold">{{ planimeterStats.area_m2.toFixed(2) }} m²</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Hectare (ha):</span>
+                <span class="text-emerald-300 font-bold">{{ planimeterStats.area_hectares.toFixed(4) }} ha</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Zeeuwse Gemeten:</span>
+                <span class="text-amber-300 font-bold">{{ planimeterStats.area_zeeuwse_gemeten.toFixed(4) }} gemet</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Zeeuwse Roeden:</span>
+                <span class="text-amber-200">{{ planimeterStats.area_zeeuwse_roeden.toFixed(2) }} roeden</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Omtrek (Perimeter):</span>
+                <span class="text-sky-300">{{ planimeterStats.perimeter_m.toFixed(2) }} m</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">RD Centroid (X, Y):</span>
+                <span class="text-slate-200">{{ planimeterStats.centroid_rd.x.toFixed(1) }}, {{ planimeterStats.centroid_rd.y.toFixed(1) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">A. Ott Nr. 573 (ΔN @ 1:{{ planimeterScale }}):</span>
+                <span class="text-purple-300 font-bold">{{ planimeterStats.ott_573_drum_delta.toFixed(1) }} eenh.</span>
+              </div>
+            </div>
+
+            <!-- Handmatig RD-punt toevoegen -->
+            <div class="p-4 rounded bg-slate-900 border border-slate-800 space-y-2">
+              <div class="text-xs font-semibold text-white">Handmatig RD-punt (X, Y) invoeren</div>
+              <div class="grid grid-cols-2 gap-2">
+                <input v-model.number="manualRdPoint.x" type="number" step="any" placeholder="RD X (bijv. 71460)" class="input-dark text-xs" />
+                <input v-model.number="manualRdPoint.y" type="number" step="any" placeholder="RD Y (bijv. 385700)" class="input-dark text-xs" />
+              </div>
+              <button @click="addManualRdPoint" class="btn-primary w-full text-xs">Voeg RD-Punt Toe</button>
+            </div>
+
+            <!-- Hoekpuntenlijst -->
+            <div class="max-h-40 overflow-y-auto space-y-1 text-xs font-mono">
+              <div
+                v-for="(pt, idx) in planimeterVertices"
+                :key="'list'+idx"
+                class="flex justify-between items-center px-2.5 py-1 bg-slate-950 rounded border border-slate-800"
+              >
+                <span>#{{ idx + 1 }}: X={{ pt.x.toFixed(1) }}, Y={{ pt.y.toFixed(1) }}</span>
+                <button @click="removePlanimeterPoint(idx)" class="text-red-400 hover:text-red-300">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SOLID POD BEHEER (FOTO-VRIJ) -->
     <section v-if="activeTab === 'solid'" class="space-y-6">
       <div class="card p-6 space-y-4">
         <h2 class="text-xl font-bold text-white">Solid POD Kluis (`01_Solid_POD_Vault`)</h2>
@@ -228,6 +394,32 @@ createApp({
       newPerson: { first_name: '', surname: 'Visser', title: '', gender: 'M', note: '' },
       solidStatus: null
     };
+  },
+  computed: {
+    rdViewBox() {
+      const pts = [...this.planimeterVertices];
+      for (const pl of (this.gramps.places || [])) {
+        if (pl.rd_x && pl.rd_y) pts.push({ x: pl.rd_x, y: pl.rd_y });
+      }
+      if (!pts.length) {
+        return { minX: 68500, maxX: 72500, minY: 384500, maxY: 387500 };
+      }
+      const xs = pts.map(p => p.x);
+      const ys = pts.map(p => p.y);
+      const padX = Math.max(250, (Math.max(...xs) - Math.min(...xs)) * 0.25);
+      const padY = Math.max(250, (Math.max(...ys) - Math.min(...ys)) * 0.25);
+      return {
+        minX: Math.floor(Math.min(...xs) - padX),
+        maxX: Math.ceil(Math.max(...xs) + padX),
+        minY: Math.floor(Math.min(...ys) - padY),
+        maxY: Math.ceil(Math.max(...ys) + padY)
+      };
+    },
+    svgPolygonPoints() {
+      return this.planimeterVertices
+        .map(p => `${this.rdToSvgX(p.x)},${this.rdToSvgY(p.y)}`)
+        .join(' ');
+    }
   },
   methods: {
     tabClass(tab) {
@@ -410,6 +602,123 @@ createApp({
       } catch (e) {
         this.solidStatus = { status: 'Offline uitgevoerd via bash-script' };
       }
+    },
+    rdToSvgX(x) {
+      const vb = this.rdViewBox;
+      const span = Math.max(1, vb.maxX - vb.minX);
+      return ((x - vb.minX) / span) * 600;
+    },
+    rdToSvgY(y) {
+      const vb = this.rdViewBox;
+      const span = Math.max(1, vb.maxY - vb.minY);
+      return 400 - ((y - vb.minY) / span) * 400;
+    },
+    addPointFromSvgClick(ev) {
+      const rect = ev.currentTarget.getBoundingClientRect();
+      const sx = ((ev.clientX - rect.left) / rect.width) * 600;
+      const sy = ((ev.clientY - rect.top) / rect.height) * 400;
+      const vb = this.rdViewBox;
+      const rx = vb.minX + (sx / 600) * (vb.maxX - vb.minX);
+      const ry = vb.minY + ((400 - sy) / 400) * (vb.maxY - vb.minY);
+      this.planimeterVertices.push({ x: Math.round(rx * 10) / 10, y: Math.round(ry * 10) / 10 });
+      this.recalculatePlanimeter();
+    },
+    addManualRdPoint() {
+      if (typeof this.manualRdPoint.x === 'number' && typeof this.manualRdPoint.y === 'number') {
+        this.planimeterVertices.push({ x: this.manualRdPoint.x, y: this.manualRdPoint.y });
+        this.recalculatePlanimeter();
+      }
+    },
+    removePlanimeterPoint(idx) {
+      this.planimeterVertices.splice(idx, 1);
+      this.recalculatePlanimeter();
+    },
+    clearPlanimeter() {
+      this.planimeterVertices = [];
+      this.recalculatePlanimeter();
+    },
+    loadPresetParcel(preset) {
+      if (preset === 'lodijke') {
+        this.planimeterVertices = [
+          { x: 71350.0, y: 385600.0 },
+          { x: 71620.0, y: 385600.0 },
+          { x: 71620.0, y: 385840.0 },
+          { x: 71350.0, y: 385840.0 }
+        ];
+      } else if (preset === 'reimerswaal') {
+        this.planimeterVertices = [
+          { x: 69050.0, y: 386500.0 },
+          { x: 69520.0, y: 386500.0 },
+          { x: 69580.0, y: 386920.0 },
+          { x: 69010.0, y: 386890.0 }
+        ];
+      } else if (preset === 'scherpenisse') {
+        this.planimeterVertices = [
+          { x: 65910.0, y: 395720.0 },
+          { x: 65965.0, y: 395720.0 },
+          { x: 65965.0, y: 395785.0 },
+          { x: 65910.0, y: 395785.0 }
+        ];
+      }
+      this.recalculatePlanimeter();
+    },
+    async recalculatePlanimeter() {
+      // 1. Directe lokale (offline) Shoelace berekening
+      const pts = this.planimeterVertices;
+      const n = pts.length;
+      if (n < 3) {
+        this.planimeterStats = {
+          vertex_count: n,
+          area_m2: 0,
+          area_hectares: 0,
+          area_zeeuwse_gemeten: 0,
+          area_zeeuwse_roeden: 0,
+          perimeter_m: 0,
+          centroid_rd: pts[0] || { x: 71460, y: 385700 },
+          ott_573_drum_delta: 0
+        };
+        return;
+      }
+      let signed2A = 0, perim = 0, cx = 0, cy = 0;
+      for (let i = 0; i < n; i++) {
+        const p0 = pts[i], p1 = pts[(i + 1) % n];
+        const cross = p0.x * p1.y - p1.x * p0.y;
+        signed2A += cross;
+        cx += (p0.x + p1.x) * cross;
+        cy += (p0.y + p1.y) * cross;
+        perim += Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      }
+      const area_m2 = 0.5 * Math.abs(signed2A);
+      const m2PerCm2 = Math.pow(this.planimeterScale / 100.0, 2);
+      this.planimeterStats = {
+        vertex_count: n,
+        area_m2,
+        area_hectares: area_m2 / 10000.0,
+        area_zeeuwse_gemeten: area_m2 / 4091.58,
+        area_zeeuwse_roeden: area_m2 / 13.6386,
+        perimeter_m: perim,
+        centroid_rd: {
+          x: Math.abs(signed2A) > 1e-9 ? cx / (3 * signed2A) : pts[0].x,
+          y: Math.abs(signed2A) > 1e-9 ? cy / (3 * signed2A) : pts[0].y
+        },
+        ott_573_drum_delta: (area_m2 / m2PerCm2) * 10.0
+      };
+
+      // 2. Synchroniseer met de Rust-backend indien online
+      try {
+        const res = await fetch('/api/planimeter/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Visser Dossier Perceel',
+            scale_denominator: this.planimeterScale,
+            vertices: this.planimeterVertices
+          })
+        });
+        if (res.ok) {
+          this.planimeterStats = await res.json();
+        }
+      } catch (_) {}
     },
     exportBackup() {
       const bundle = {

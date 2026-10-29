@@ -1,3 +1,5 @@
+mod planimeter;
+use planimeter::{compute_rd_planimeter, PlanimeterRequest};
 use axum::{
     body::Bytes,
     extract::{Multipart, Path as AxumPath, Query, State},
@@ -1086,6 +1088,14 @@ async fn export_geojson(State(state): State<AppState>) -> impl IntoResponse {
     }))
 }
 
+
+async fn calculate_planimeter_handler(
+    Json(req): Json<PlanimeterRequest>,
+) -> impl IntoResponse {
+    let result = compute_rd_planimeter(&req);
+    Json(result)
+}
+
 #[tokio::main]
 async fn main() {
     let base_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -1121,6 +1131,7 @@ async fn main() {
         // Solid POD & GeoJSON
         .route("/api/solid/purge-photos", delete(purge_solid_photos_handler))
         .route("/api/geojson", get(export_geojson))
+        .route("/api/planimeter/calculate", post(calculate_planimeter_handler))
         .nest_service("/uploads", ServeDir::new(state.upload_dir.clone()))
         .layer(cors)
         .with_state(state);
