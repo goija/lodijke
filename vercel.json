@@ -1,8 +1,5 @@
 {
-  "version": 2,
-  "name": "lodijke-master-platform",
-  "cleanUrls": true,
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
