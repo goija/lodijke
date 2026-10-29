@@ -249,3 +249,4 @@ nohup: invoer wordt genegeerd
       at Parser.parseMaybeUnary (/home/ontwerp/lodijke/04_CMS_Document_Tabs_Frontend/frontend/node_modules/@babel/parser/lib/index.js:7950:23)
 21:57:47 [vite] hmr update /src/components/TabMappenbomen.vue
 22:34:49 [vite] hmr update /src/components/TabMappenbomen.vue, /src/components/TabMappenbomen.vue?vue&type=style&index=0&scoped=ed44f7a4&lang.css, /src/components/TabMappenbomen.vue?vue&type=style&index=1&lang.css
+22:57:12 [vite] page reload index.html
