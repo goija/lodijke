@@ -7,7 +7,7 @@
       </div>
       <div class="header-actions">
         <a href="http://127.0.0.1:8082" target="_blank" class="btn btn-primary">
-          ⚡ GraphQL Studio (:8082)
+          ⚡ Axum GraphQL Studio (:8082)
         </a>
         <a href="https://lodijke.vercel.app/" target="_blank" class="btn btn-secondary">
           🌐 Vercel Live App
@@ -16,7 +16,7 @@
     </header>
 
     <!-- Highlight Banner: Perceel 369 -->
-    <section class="highlight-card">
+    <section class="highlight-card" id="architectuur">
       <div class="card-badge">📍 Geodetische Kaartweergave & Perceel No. 369</div>
       <h2>Oesterperceel No. 369 op de Bol van Lodijke (12,5 ha)</h2>
       <p class="card-desc">
@@ -48,22 +48,22 @@
         <p>Gramps Web API & SQLite database. Herbergt stamvader B.W. Schot (I0103), zijn 13 kinderen, 2e echtgenote D.P. Kegge en GEDCOM 5.5.1 exports.</p>
       </div>
 
-      <!-- Module 03 (MET LOKAAL + VERCEL + GITHUB LINKS) -->
+      <!-- Module 03 (Axum Rust & GraphQL API) -->
       <div class="module-card active-api-card">
         <div class="module-num">03</div>
         <h4>Axum Rust & GraphQL API</h4>
         <p>Hoge-performance Rust backend op poort 8082 met Async-GraphQL.</p>
         <div class="api-link-box">
-          <div class="status-tag">● LIVE (Lokaal & Vercel)</div>
+          <div class="status-tag">● LIVE ENDPOINTS</div>
           <div class="link-stack">
             <a href="http://127.0.0.1:8082" target="_blank" class="api-url-link">
-              <code>http://127.0.0.1:8082</code> 🔗
+              <code>http://127.0.0.1:8082</code> 🔗 (Lokaal)
             </a>
             <a href="https://lodijke.vercel.app/" target="_blank" class="api-url-link vercel-color">
-              <code>https://lodijke.vercel.app/</code> 🚀
+              <code>https://lodijke.vercel.app/</code> 🚀 (Vercel)
             </a>
-            <a href="[suspicious link removed]" target="_blank" class="api-url-link github-color">
-              <code>github.com/goija/lodijke</code> 📦
+            <a href="https://github.com/goija/lodijke" target="_blank" class="api-url-link github-color">
+              <code>github.com/goija/lodijke</code> 📦 (GitHub)
             </a>
           </div>
         </div>
