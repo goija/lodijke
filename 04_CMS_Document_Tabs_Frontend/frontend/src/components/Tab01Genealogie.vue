@@ -1,219 +1,119 @@
 <template>
-  <div class="gramps-comparator-container">
-    <!-- Header / Navigatie Modus -->
-    <header class="module-header">
+  <div class="gramps-full-container">
+    <header class="gramps-header">
       <div class="header-titles">
-        <h2>🌳 GRAMPS Genealogy Core & 🔍 Bronvergelijker</h2>
-        <p class="subtitle">
-          Geïntegreerde Stambomen (Schot, Bout, Kerpel, Quaak) & Veld-voor-Veld Bronnenanalyse
-        </p>
+        <h2>🌳 GRAMPS Web API Full Core</h2>
+        <p class="subtitle">Complete Genealogische Datakern & Stamboomweergaven</p>
       </div>
-
-      <div class="mode-switch-bar">
-        <button 
-          :class="['btn-mode', { active: currentMode === 'trees' }]" 
-          @click="currentMode = 'trees'"
-        >
-          🌳 Alle Stambomen (GRAMPS Web API)
-        </button>
-        <button 
-          :class="['btn-mode', { active: currentMode === 'comparator' }]" 
-          @click="currentMode = 'comparator'"
-        >
-          ⚖️ Bronvergelijker & Matrix
+      <div class="gramps-tabs-bar">
+        <button v-for="tab in grampsTabs" :key="tab.id" :class="['btn-gramps-tab', { active: activeGrampsTab === tab.id }]" @click="activeGrampsTab = tab.id">
+          {{ tab.icon }} {{ tab.label }}
         </button>
       </div>
     </header>
 
-    <!-- MODUS 1: ALLE STAMBOMEN (GRAMPS CORE) -->
-    <div class="trees-view" v-if="currentMode === 'trees'">
-      <div class="branch-selector-bar">
-        <button 
-          v-for="(branch, key) in familyBranches" 
-          :key="key"
-          :class="['btn-branch', { active: activeBranchKey === key }]"
-          @click="activeBranchKey = key"
-        >
-          {{ branch.icon }} {{ branch.title }}
-        </button>
-      </div>
-
-      <div class="branch-content-grid">
-        <div class="main-person-card">
-          <div class="card-badge">{{ activeBranch.grampsId }}</div>
-          <h3>{{ activeBranch.primaryPerson }}</h3>
-          <p class="lifespan">🗓️ {{ activeBranch.lifespan }}</p>
-          <p class="location">📍 {{ activeBranch.location }}</p>
-
-          <div class="info-box">
-            <h4>📜 Historische Rol & Concessies</h4>
-            <p>{{ activeBranch.role }}</p>
-          </div>
-
-          <div class="info-box" v-if="activeBranch.fleet">
-            <h4>⛵ Schepen & Vloot</h4>
-            <ul>
-              <li v-for="(vessel, i) in activeBranch.fleet" :key="i">{{ vessel }}</li>
-            </ul>
-          </div>
-
-          <div class="actions-bar">
-            <button class="btn-action" @click="downloadBranchGedcom(activeBranchKey)">
-              📥 Download GEDCOM 5.5.1 ({{ activeBranch.title }})
-            </button>
-          </div>
-        </div>
-
-        <div class="relations-panel">
-          <h3>👨‍👩‍👧‍👦 Relaties & Nageslacht ({{ activeBranch.members.length }} Personen)</h3>
-          
-          <div class="members-list">
-            <div 
-              v-for="member in activeBranch.members" 
-              :key="member.id"
-              class="member-card"
-            >
-              <div class="member-header">
-                <span class="member-id">{{ member.id }}</span>
-                <strong>{{ member.name }}</strong>
-                <span class="member-relation">{{ member.relation }}</span>
-              </div>
-              <p class="member-details">{{ member.details }}</p>
-              <div class="member-note" v-if="member.note">
-                💡 {{ member.note }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODUS 2: BRONVERGELIJKER & MATRIX -->
-    <div class="comparator-view" v-if="currentMode === 'comparator'">
-      <div class="comparator-controls">
-        <div class="selector-group">
-          <label>📜 Selecteer Bron A:</label>
-          <select v-model="selectedSourceAId" class="select-source">
-            <option v-for="src in sourcesCatalog" :key="src.id" :value="src.id">
-              {{ src.icon }} [{{ src.category }}] {{ src.title }}
-            </option>
+    <div class="gramps-workspace">
+      <!-- TREE VIEW -->
+      <div class="view-panel" v-if="activeGrampsTab === 'tree'">
+        <div class="tree-controls">
+          <label>Selecteer Tak:</label>
+          <select v-model="selectedBranchKey" class="select-branch">
+            <option value="schot">🦪 Tak Schot (Rederij B.W. Schot 1840-1935)</option>
+            <option value="bout">⚓ Tak Bout & Reimerswaalse Erfgenamen (W. Bout 1966)</option>
+            <option value="kerpel">🐟 Tak Kerpel / Carper (Veermannen 1543-1869)</option>
+            <option value="quaak">🏛️ Tak Quaak & Regenten van Tholen</option>
           </select>
-        </div>
-
-        <div class="swap-icon" @click="swapSources" title="Wissel Bron A en B">🔄</div>
-
-        <div class="selector-group">
-          <label>📑 Selecteer Bron B:</label>
-          <select v-model="selectedSourceBId" class="select-source">
-            <option v-for="src in sourcesCatalog" :key="src.id" :value="src.id">
-              {{ src.icon }} [{{ src.category }}] {{ src.title }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <div class="comparison-matrix-grid">
-        <div class="source-panel panel-a">
-          <div class="panel-header">
-            <span class="src-tag">BRON A</span>
-            <h3>{{ sourceA.title }}</h3>
-            <span class="type-badge">{{ sourceA.type }}</span>
-          </div>
-          <div class="panel-body">
-            <div class="field-item">
-              <label>📆 Datum / Tijdstip:</label>
-              <div class="field-value">{{ sourceA.date }}</div>
-            </div>
-            <div class="field-item">
-              <label>🏛️ Instantie / Auteur:</label>
-              <div class="field-value">{{ sourceA.author }}</div>
-            </div>
-            <div class="field-item">
-              <label>👥 Betrokken Personen:</label>
-              <div class="field-value">{{ sourceA.people }}</div>
-            </div>
-            <div class="field-item">
-              <label>📍 Locatie & Kadaster:</label>
-              <div class="field-value">{{ sourceA.location }}</div>
-            </div>
-            <div class="field-item">
-              <label>⚖️ Juridische Status / Woo-Spoor:</label>
-              <div class="field-value woo-tag">{{ sourceA.wooCase }}</div>
-            </div>
-            <div class="field-item">
-              <label>📝 Inhoud & Citaten:</label>
-              <div class="field-value text-quote">{{ sourceA.content }}</div>
-            </div>
+          <div class="zoom-controls">
+            <button @click="treeScale += 0.1" class="btn-sm">🔍 +</button>
+            <button @click="treeScale = 1.0" class="btn-sm">100%</button>
+            <button @click="treeScale = Math.max(0.5, treeScale - 0.1)" class="btn-sm">🔍 -</button>
           </div>
         </div>
 
-        <div class="analysis-panel">
-          <div class="analysis-header">
-            📊 Vergelijkingsanalyse & Conflictdetectie
-          </div>
-          <div class="analysis-body">
-            <div class="status-box" :class="comparisonResult.matchClass">
-              <strong>{{ comparisonResult.matchTitle }}</strong>
-              <p>{{ comparisonResult.matchSummary }}</p>
-            </div>
-
-            <div class="diff-table">
-              <h4>🔍 Veld-voor-Veld Verschillen:</h4>
-              <ul>
-                <li v-for="(diff, idx) in comparisonResult.differences" :key="idx">
-                  <strong>{{ diff.field }}:</strong>
-                  <div class="diff-details">
-                    <span class="diff-a">A: {{ diff.valA }}</span> ➔ 
-                    <span class="diff-b">B: {{ diff.valB }}</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            <div class="reliability-score">
-              <span>Betrouwbaarheidsscore:</span>
-              <div class="score-bar">
-                <div class="score-fill" :style="{ width: comparisonResult.score + '%' }"></div>
+        <div class="pedigree-viewport" :style="{ transform: `scale(${treeScale})` }">
+          <div class="pedigree-tree-root">
+            <div class="tree-level gen-1">
+              <div class="tree-node active-node" @click="inspectedPerson = activeBranch.primary">
+                <span class="node-id">{{ activeBranch.primary.id }}</span>
+                <strong>{{ activeBranch.primary.name }}</strong>
+                <span class="node-dates">{{ activeBranch.primary.dates }}</span>
+                <span class="node-role">{{ activeBranch.primary.role }}</span>
               </div>
-              <span class="score-num">{{ comparisonResult.score }}%</span>
             </div>
-          </div>
-        </div>
-
-        <div class="source-panel panel-b">
-          <div class="panel-header">
-            <span class="src-tag">BRON B</span>
-            <h3>{{ sourceB.title }}</h3>
-            <span class="type-badge">{{ sourceB.type }}</span>
-          </div>
-          <div class="panel-body">
-            <div class="field-item">
-              <label>📆 Datum / Tijdstip:</label>
-              <div class="field-value">{{ sourceB.date }}</div>
+            <div class="tree-level gen-2">
+              <div v-for="p in activeBranch.partners" :key="p.id" class="tree-node partner-node" @click="inspectedPerson = p">
+                <span class="node-id">{{ p.id }}</span>
+                <strong>{{ p.name }}</strong>
+                <span class="node-dates">{{ p.dates }}</span>
+                <span class="node-role">{{ p.relation }}</span>
+              </div>
             </div>
-            <div class="field-item">
-              <label>🏛️ Instantie / Auteur:</label>
-              <div class="field-value">{{ sourceB.author }}</div>
-            </div>
-            <div class="field-item">
-              <label>👥 Betrokken Personen:</label>
-              <div class="field-value">{{ sourceB.people }}</div>
-            </div>
-            <div class="field-item">
-              <label>📍 Locatie & Kadaster:</label>
-              <div class="field-value">{{ sourceB.location }}</div>
-            </div>
-            <div class="field-item">
-              <label>⚖️ Juridische Status / Woo-Spoor:</label>
-              <div class="field-value woo-tag">{{ sourceB.wooCase }}</div>
-            </div>
-            <div class="field-item">
-              <label>📝 Inhoud & Citaten:</label>
-              <div class="field-value text-quote">{{ sourceB.content }}</div>
+            <div class="tree-level gen-3">
+              <div v-for="child in activeBranch.children" :key="child.id" class="tree-node child-node" @click="inspectedPerson = child">
+                <span class="node-id">{{ child.id }}</span>
+                <strong>{{ child.name }}</strong>
+                <span class="node-dates">{{ child.dates }}</span>
+                <span class="node-note">{{ child.note }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- EVENTS VIEW -->
+      <div class="view-panel" v-if="activeGrampsTab === 'events'">
+        <div class="events-timeline">
+          <h3>⏱️ Chronologisch Gebeurtenissenregister (GRAMPS Event Bus)</h3>
+          <div class="timeline-list">
+            <div v-for="evt in grampsEvents" :key="evt.id" class="timeline-item">
+              <div class="time-badge">{{ evt.date }}</div>
+              <div class="event-card">
+                <span class="evt-type">{{ evt.type }}</span>
+                <h4>{{ evt.title }}</h4>
+                <p>{{ evt.description }}</p>
+                <div class="evt-participants"><strong>👥 Betrokkenen:</strong> {{ evt.participants.join(', ') }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEDIA VIEW -->
+      <div class="view-panel" v-if="activeGrampsTab === 'media'">
+        <div class="media-grid">
+          <div v-for="m in grampsMedia" :key="m.id" class="media-card">
+            <div class="media-thumb">{{ m.icon }}</div>
+            <div class="media-info">
+              <span class="media-type">{{ m.type }}</span>
+              <h4>{{ m.title }}</h4>
+              <p>{{ m.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GEDCOM VIEW -->
+      <div class="view-panel" v-if="activeGrampsTab === 'gedcom'">
+        <div class="gedcom-box">
+          <h3>📥 / 📤 W3C GEDCOM 5.5.1 Uitwisseling</h3>
+          <button class="btn-gedcom-dl" @click="downloadGedcom">💾 Exporteer GEDCOM 5.5.1 (.ged)</button>
+          <pre><code>{{ gedcomPreviewText }}</code></pre>
+        </div>
+      </div>
+
+      <!-- INSPECTOR SIDEBAR -->
+      <aside class="person-inspector" v-if="inspectedPerson">
+        <div class="inspector-header">
+          <span class="gramps-id">{{ inspectedPerson.id }}</span>
+          <h3>{{ inspectedPerson.name }}</h3>
+          <button class="btn-close" @click="inspectedPerson = null">✕</button>
+        </div>
+        <div class="inspector-body">
+          <p><strong>Levensloop:</strong> {{ inspectedPerson.dates || 'Onbekend' }}</p>
+          <p><strong>Rol:</strong> {{ inspectedPerson.role || inspectedPerson.relation || 'Familielid' }}</p>
+          <span class="badge-avg">Openbaar Archiefstuk</span>
+        </div>
+      </aside>
     </div>
   </div>
 </template>
@@ -221,287 +121,135 @@
 <script setup>
 import { ref, computed } from 'vue';
 
-const currentMode = ref('trees');
-const activeBranchKey = ref('schot');
+const activeGrampsTab = ref('tree');
+const selectedBranchKey = ref('schot');
+const treeScale = ref(1.0);
+const inspectedPerson = ref(null);
 
-const familyBranches = {
+const grampsTabs = [
+  { id: 'tree', label: 'Stamboom (Pedigree View)', icon: '🌳' },
+  { id: 'events', label: 'Gebeurtenissen (Events)', icon: '⏱️' },
+  { id: 'media', label: 'Media & Bronnen', icon: '📸' },
+  { id: 'gedcom', label: 'GEDCOM 5.5.1 Export', icon: '💾' }
+];
+
+const branchesData = {
   schot: {
-    icon: '🦪',
-    title: 'Tak Schot (Rederij & Oesters)',
-    grampsId: 'I0103',
-    primaryPerson: 'Benjamin Willem Schot (1840–1935)',
-    lifespan: '26 september 1840 – 17 november 1935 (95 jr)',
-    location: 'Kruittoren 23 (Tholen) | Bol van Lodijke',
-    role: 'Pachter Oesterperceel No. 369 (12,5 ha) & Reder van de Thoolse vloot hoogaarzen.',
-    fleet: ['TH 2 Eben Haëzer (1902/1918)', 'TH 12 Niets zonder Gods zegen (1906)', 'TH 90 Vijf Gebroeders (1917)'],
-    members: [
-      { id: 'I0104', name: 'Maria Mathea Bolier', relation: '1e Echtgenote (1863)', details: '1840–1909 | Moeder van 13 kinderen.' },
-      { id: 'I0105', name: 'Dina Pieternella Kegge', relation: '2e Echtgenote (1915)', details: '1868–1944 | Oesterkoopvrouw & Maatschap Schot & Kegge (Contr\'Escarpe).' },
-      { id: 'I0106', name: 'Jan Schot B.W.zn.', relation: 'Zoon (1863)', details: 'Bouwaanvraag Oud-Vossemeersepoort 1901.' },
-      { id: 'I0107', name: 'Cornelia Adriana Schot', relation: 'Dochter (1867)', details: 'Gehuwd met Jacob Bout | Tak Reimerswaalse Erfgenamen.' },
-      { id: 'I0108', name: 'Kees, Jacob & Willem Schot', relation: 'Zonen (Flauwers)', details: 'Expansie Oesterpacht Flauwers Zierikzee 1912 (Firma W.K. Schot).' }
+    primary: { id: 'I0103', name: 'Benjamin Willem Schot', dates: '1840–1935 (95 jr)', role: 'Stamvader & Reder Perceel 369' },
+    partners: [
+      { id: 'I0104', name: 'Maria Mathea Bolier', dates: '1840–1909', relation: '1e Echtgenote (13 kinderen)' },
+      { id: 'I0105', name: 'Dina Pieternella Kegge', dates: '1868–1944', relation: '2e Echtgenote (Oesterkoopvrouw)' }
+    ],
+    children: [
+      { id: 'I0106', name: 'Jan Schot B.W.zn.', dates: 'geb. 1863', note: 'Aanvraag Oud-Vossemeersepoort 1901' },
+      { id: 'I0107', name: 'Cornelia Adriana Schot', dates: 'geb. 1867', note: 'Gehuwd met Jacob Bout' },
+      { id: 'I0108', name: 'Cornelis Jan Schot', dates: 'geb. 1869', note: 'Loods Contr\'Escarpe 1913' },
+      { id: 'I0109', name: 'Willem Karel Schot', dates: 'geb. 1874', note: 'Schipper op TH 90' },
+      { id: 'I0110', name: 'Kees, Jacob & Willem Schot', dates: '1912 Flauwers', note: 'Expansie Zierikzee (ZZ 4, ZZ 7)' }
     ]
   },
   bout: {
-    icon: '⚓',
-    title: 'Tak Bout & Reimerswaal',
-    grampsId: 'I0120',
-    primaryPerson: 'Willem Bout (W. Bout, *1966)',
-    lifespan: 'Geboren 1966 te Scherpenisse / Tholen',
-    location: 'Scherpenisse / Platteweg E108',
-    role: 'Mede-erfgenaam bij plaatsvervulling van C.M. Guiljam (1921–2021) in de nalatenschap van H.G. Quaak (1933–2024).',
-    members: [
-      { id: 'I0121', name: 'C.M. Guiljam', relation: 'Moeder', details: '1921–2021 | Dochter van Pieter Bout x Lijdia de Laater.' },
-      { id: 'I0122', name: 'Mw. M.J.M.M. Goijarts-Bout', relation: 'Zuster', details: 'Beneficiair erfgenaam & Woo-verzoeker Visserijrechten Reimerswaal.' },
-      { id: 'I0123', name: 'Pieter Bout', relation: 'Grootvader', details: '1884–1931 x Lijdia de Laater (1887–1956).' },
-      { id: 'I0124', name: 'Jacob Bout', relation: 'Overgrootvader', details: '1856–1945 x Cornelia Adriana Schot (geb. 1867).' }
+    primary: { id: 'I0120', name: 'Willem Bout (W. Bout)', dates: 'geb. 1966', role: 'Mede-erfgenaam Plaatsvervulling' },
+    partners: [
+      { id: 'I0121', name: 'C.M. Guiljam', dates: '1921–2021', relation: 'Moeder' },
+      { id: 'I0122', name: 'Mw. M.J.M.M. Goijarts-Bout', dates: 'geb. Tholen', relation: 'Zuster / Woo-Verzoeker' }
+    ],
+    children: [
+      { id: 'I0123', name: 'Pieter Bout x Lijdia de Laater', dates: '1884–1931', note: 'Grootouders' },
+      { id: 'I0124', name: 'Jacob Bout x Cornelia Schot', dates: '1856–1945', note: 'Overgrootouders' }
     ]
   },
   kerpel: {
-    icon: '🐟',
-    title: 'Tak Kerpel / Carper (1543–1869)',
-    grampsId: 'I0130',
-    primaryPerson: 'Cornelis Janszn de Karper (ca. 1543)',
-    lifespan: '16e - 17e Eeuw te Reimerswaal & Tholen',
-    location: 'Reimerswaal (Venusdam) ➔ Tholen (1630)',
-    role: 'Schippers en veermannen tussen Reimerswaal, Tholen en Zuid-Beveland.',
-    members: [
-      { id: 'I0131', name: 'Job Cornelissen Carper', relation: 'Stamvader Tholen', details: 'Overleden 1629 te Reimerswaal | Schipper.' },
-      { id: 'I0132', name: 'Huijbrecht Jobsen Carper', relation: 'Schippersgilde', details: 'Vissersgilde Tholen 1632 | Meestoof nering.' },
-      { id: 'I0133', name: 'Maria Kerpel', relation: 'Laatste Tak (1796–1869)', details: 'Gehuwd met Jan Marinus Schot (Grootouders van B.W. Schot).' }
+    primary: { id: 'I0130', name: 'Cornelis Janszn de Karper', dates: 'ca. 1543', role: 'Veerman Venusdam Reimerswaal' },
+    partners: [{ id: 'I0131', name: 'Job Cornelissen Carper', dates: 'overl. 1629', relation: 'Schipper Reimerswaal' }],
+    children: [
+      { id: 'I0132', name: 'Huijbrecht Jobsen Carper', dates: '1632 Tholen', note: 'Vissersgilde Tholen' },
+      { id: 'I0133', name: 'Maria Kerpel', dates: '1796–1869', note: 'Gehuwd met Jan Marinus Schot' }
     ]
   },
   quaak: {
-    icon: '🏛️',
-    title: 'Tak Regenten, Quaak & Guiljam',
-    grampsId: 'I0140',
-    primaryPerson: 'Hendrik Gerard Quaak (1933–2024)',
-    lifespan: '1933 – 2024 te Scherpenisse / Tholen',
-    location: 'Scherpenisse / Tholen',
-    role: 'Erflater nalatenschap landbouw- en visserijpercelen Tholen.',
-    members: [
-      { id: 'I0141', name: 'Adriaen van Vrijberghe', relation: 'Rekenmeester (1684)', details: 'Rekenmeester van Zeeland & Heer van Lodijke.' },
-      { id: 'I0142', name: 'Francoise Dellafaille de Leverghem', relation: 'Grondeigenaar', details: '53 hectare Polder Schakerloo (Hofstede De Gortzak).' },
-      { id: 'I0143', name: 'Elisabeth Machelina Sels-van der Wulp', relation: 'Mede-erfgenaam', details: 'Tak Sels-Guiljam.' }
-    ]
+    primary: { id: 'I0140', name: 'Hendrik Gerard Quaak', dates: '1933–2024', role: 'Erflater Scherpenisse' },
+    partners: [{ id: 'I0141', name: 'Adriaen van Vrijberghe', dates: '1684–1719', relation: 'Rekenmeester van Zeeland' }],
+    children: [{ id: 'I0142', name: 'Francoise Dellafaille', dates: '53 ha Schakerloo', note: 'Hofstede De Gortzak' }]
   }
 };
 
-const activeBranch = computed(() => familyBranches[activeBranchKey.value]);
+const activeBranch = computed(() => branchesData[selectedBranchKey.value] || branchesData.schot);
 
-const sourcesCatalog = [
-  {
-    id: 'src-369-pacht',
-    icon: '📕',
-    category: 'PACHTVEILING 1892',
-    type: 'Officieel Archiefstuk (Bestuur Visserijen)',
-    title: 'Veilingcatalogus 203 Percelen Middelburg (1892)',
-    date: '22–24 november 1892',
-    author: 'Bestuur der Visserijen op de Zeeuwsche Stromen',
-    people: 'B.W. Schot (Koper Perceel 369), J. Zuurdeeg',
-    location: 'Bol van Lodijke | Perceel No. 369 (12,5 ha)',
-    wooCase: 'Spoor D: Zaak 1456324',
-    content: 'Openbare verpachting van perceel 369 voor 18 jaar op de Bol van Lodijke voor oestercultuur op -2.10m NAP.'
-  },
-  {
-    id: 'src-concessie-369',
-    icon: '⚙️',
-    category: 'CONCESSIEREGISTER',
-    type: 'Pachtovereenkomst (Gemeente Tholen)',
-    title: 'Concessieakte Perceel 369 B.W. Schot (1892–1915)',
-    date: '1 december 1892',
-    author: 'Notaris Knook & Schot Tholen',
-    people: 'Benjamin Willem Schot, Maria Mathea Bolier',
-    location: 'Tholen / Bol van Lodijke (RD X:68120 Y:388050)',
-    wooCase: 'Spoor D: Zaak 1456324 / Dossier-Zuurdeeg',
-    content: 'Toewijzing van 12,5 ha oesterbank aan B.W. Schot. Exploitatiereductie bij stormschade ingevolge art. 14.'
-  },
-  {
-    id: 'src-brp-2017',
-    icon: '📊',
-    category: 'BRP AUDITLOG 2017',
-    type: 'Systeembevraging (GBA-V / Makelaarsuite)',
-    title: 'BRP Auditlog GBA-V Bevraging 11-01-2017',
-    date: '11 januari 2017 om 10:43:12 UTC',
-    author: 'Gemeente Tholen / FG J.H. Theunisse',
-    people: 'Verzoeker / Mw. M.J.M.M. Goijarts-Bout',
-    location: 'Makelaarsuite Tholen / BRP Server',
-    wooCase: 'Spoor C: BRP Auditlogs / FG Zaak 1463739',
-    content: 'Registratie van persoonsbevraging in BRP. Tijdstempel verschilt 5 minuten met centrale GBA-V log.'
-  },
-  {
-    id: 'src-brp-2024',
-    icon: '⚖️',
-    category: 'MAKELAARSUITE LOG 2024',
-    type: 'Systeembevraging (Discrepantie)',
-    title: 'Makelaarsuite Auditlog 11-03-2024 (5-Minuten Gap)',
-    date: '11 maart 2024 om 10:48:15 UTC',
-    author: 'Functionaris Gegevensbescherming Tholen',
-    people: 'Verzoeker & Erfgenamen Bout',
-    location: 'Makelaarsuite Brandmuur / BRP',
-    wooCase: 'Spoor C: BRP Auditlogs Firewall',
-    content: 'Anomalie in tijdsstempel logboeken. Discrepantie van 5 minuten vastgesteld tussen Makelaarsuite en landelijke GBA-V.'
-  },
-  {
-    id: 'src-uitspraak-zwb',
-    icon: '🏛️',
-    category: 'RECHTERLIJKE UITSPRAAK',
-    type: 'Rechtbank Uitspraak (Awb Art. 8:55)',
-    title: 'Uitspraak Rechtbank ZWB (ECLI:NL:RBZWB:2025:6823)',
-    date: '9 oktober 2025',
-    author: 'Rechtbank Zeeland-West-Brabant (Bestuursrechter)',
-    people: 'Eiser Mw. M.J.M.M. Goijarts-Bout vs. College B&W Tholen',
-    location: 'Rechtbank Breda / Gemeente Tholen',
-    wooCase: 'Spoor B: Zaak BRE 24/5455 WOO',
-    content: 'Beroep niet tijdig beslissen gegrond verklaard. Gemeente Tholen opgedragen alsnog te beslissen op Woo-hoofdzaak 1456324.'
-  }
+const grampsEvents = [
+  { id: 'e1', date: '26 SEP 1840', type: 'GEBOORTE', title: 'Geboorte Benjamin Willem Schot', description: 'Geboren te Tholen.', participants: ['B.W. Schot'] },
+  { id: 'e2', date: '22 NOV 1892', type: 'PACHTVEILING', title: 'Toewijzing Oesterperceel No. 369', description: 'Pachtveiling Bestuur der Visserijen te Middelburg.', participants: ['B.W. Schot'] },
+  { id: 'e3', date: '12 MRT 1906', type: 'STORMVLOED', title: 'Reddingsoperatie TH 12 Oud-Vossemeer', description: 'Inzet van bijboot TH 12 tijdens stormvloed.', participants: ['B.W. Schot'] }
 ];
 
-const selectedSourceAId = ref('src-369-pacht');
-const selectedSourceBId = ref('src-concessie-369');
+const grampsMedia = [
+  { id: 'm1', icon: '⛵', type: 'Scheepsplan', title: 'TH 2 "Eben Haëzer" Bouwtekening', description: 'Hoogaars gebouwd in 1902 op werf Van Duivendijk.' },
+  { id: 'm2', icon: '🗺️', type: 'Pachtkaart', title: 'Oesterperceel No. 369 Bol van Lodijke', description: 'Kadastrale Pachtkaart 1892 (12,5 ha).' }
+];
 
-const sourceA = computed(() => sourcesCatalog.find(s => s.id === selectedSourceAId.value) || sourcesCatalog[0]);
-const sourceB = computed(() => sourcesCatalog.find(s => s.id === selectedSourceBId.value) || sourcesCatalog[1]);
+const gedcomPreviewText = `0 HEAD\n1 SOUR GRAMPS_WEB_CORE\n2 VERS 5.1.5\n1 GEDC\n2 VERS 5.5.1\n1 CHAR UTF-8\n0 @I0103@ INDI\n1 NAME Benjamin Willem /Schot/\n1 SEX M\n1 BIRT\n2 DATE 26 SEP 1840\n2 PLAC Tholen\n0 @I0120@ INDI\n1 NAME Willem /Bout/\n1 SEX M\n1 BIRT\n2 DATE 1966\n0 TLR`;
 
-function swapSources() {
-  const temp = selectedSourceAId.value;
-  selectedSourceAId.value = selectedSourceBId.value;
-  selectedSourceBId.value = temp;
-}
-
-const comparisonResult = computed(() => {
-  const a = sourceA.value;
-  const b = sourceB.value;
-
-  const differences = [];
-  let score = 100;
-
-  if (a.date !== b.date) {
-    differences.push({ field: 'Datum & Tijdstempel', valA: a.date, valB: b.date });
-    score -= 20;
-  }
-  if (a.author !== b.author) {
-    differences.push({ field: 'Instantie / Auteur', valA: a.author, valB: b.author });
-    score -= 15;
-  }
-  if (a.location !== b.location) {
-    differences.push({ field: 'Locatie & Coördinaten', valA: a.location, valB: b.location });
-    score -= 15;
-  }
-
-  let matchTitle = '✅ Hoge Overeenstemming & Synchronisatie';
-  let matchSummary = 'Beide bronnen bevestigen dezelfde historische en juridische feiten zonder tegenstrijdigheden.';
-  let matchClass = 'match-high';
-
-  if (score < 80 && score >= 50) {
-    matchTitle = '⚠️ Lichte Afwijking / Tijdsverschil';
-    matchSummary = 'Er zijn chronologische of instantie-verschillen geconstateerd tussen de twee archiefstukken.';
-    matchClass = 'match-medium';
-  } else if (score < 50) {
-    matchTitle = '🚨 Ernstige Discrepantie / Conflicterende Data';
-    matchSummary = 'Let op: Er is sprake van een duidelijke systeem- of datumanomalie (bijv. BRP 5-minuten loggap).';
-    matchClass = 'match-low';
-  }
-
-  return {
-    matchTitle,
-    matchSummary,
-    matchClass,
-    differences,
-    score: Math.max(score, 10)
-  };
-});
-
-function downloadBranchGedcom(branchKey) {
-  const branch = familyBranches[branchKey];
-  const content = `0 HEAD
-1 SOUR GRAMPS_WEB_CORE
-2 VERS 5.1.5
-1 GEDC
-2 VERS 5.5.1
-1 CHAR UTF-8
-0 @${branch.grampsId}@ INDI
-1 NAME ${branch.primaryPerson}
-1 NOTE ${branch.role}
-0 TLR`;
-
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+function downloadGedcom() {
+  const blob = new Blob([gedcomPreviewText], { type: 'text/plain;charset=utf-8' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `stamboom_${branchKey}_gedcom551.ged`;
+  link.download = 'stamboom_lodijke_gramps_full.ged';
   link.click();
 }
 </script>
 
 <style scoped>
-.gramps-comparator-container { padding: 1.25rem; background: #1e1e2e; color: #cdd6f4; min-height: 100%; display: flex; flex-direction: column; }
-.module-header { border-bottom: 1px solid #313244; padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.module-header h2 { margin: 0; color: #f38ba8; font-size: 1.4rem; }
-.subtitle { margin: 0.25rem 0 0 0; color: #a6adc8; font-size: 0.88rem; }
+.gramps-full-container { display: flex; flex-direction: column; height: 100%; background: #1e1e2e; color: #cdd6f4; }
+.gramps-header { background: #181825; padding: 1rem 1.25rem; border-bottom: 1px solid #313244; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.gramps-header h2 { margin: 0; color: #f38ba8; font-size: 1.3rem; }
+.subtitle { margin: 0.2rem 0 0 0; color: #a6adc8; font-size: 0.85rem; }
+.gramps-tabs-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.btn-gramps-tab { background: #313244; color: #cdd6f4; border: 1px solid #45475a; padding: 0.45rem 0.8rem; border-radius: 6px; font-weight: bold; font-size: 0.82rem; cursor: pointer; }
+.btn-gramps-tab.active { background: #89b4fa; color: #11111b; border-color: #89b4fa; }
 
-.mode-switch-bar { display: flex; gap: 0.5rem; }
-.btn-mode { background: #313244; color: #cdd6f4; border: 1px solid #45475a; padding: 0.5rem 1rem; border-radius: 8px; font-weight: bold; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
-.btn-mode.active { background: #89b4fa; color: #11111b; border-color: #89b4fa; }
+.gramps-workspace { flex: 1; display: flex; overflow: hidden; position: relative; min-height: 0; }
+.view-panel { flex: 1; padding: 1.25rem; overflow-y: auto; display: flex; flex-direction: column; }
 
-.branch-selector-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
-.btn-branch { background: #181825; color: #cdd6f4; border: 1px solid #313244; padding: 0.45rem 0.85rem; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
-.btn-branch.active { background: #a6e3a1; color: #11111b; }
+.tree-controls { display: flex; align-items: center; gap: 1rem; background: #181825; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid #313244; margin-bottom: 1rem; }
+.select-branch { background: #1e1e2e; color: #a6e3a1; border: 1px solid #313244; padding: 0.45rem; border-radius: 6px; font-size: 0.85rem; outline: none; }
+.zoom-controls { margin-left: auto; display: flex; gap: 0.3rem; }
+.btn-sm { background: #313244; color: #cdd6f4; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; }
 
-.branch-content-grid { display: grid; grid-template-columns: 360px 1fr; gap: 1.25rem; }
-.main-person-card { background: #181825; border: 1px solid #89b4fa; border-radius: 12px; padding: 1.25rem; position: relative; }
-.card-badge { position: absolute; top: 1rem; right: 1rem; background: #89b4fa; color: #11111b; font-weight: bold; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; }
-.main-person-card h3 { margin: 0 0 0.5rem 0; color: #89b4fa; font-size: 1.25rem; }
-.lifespan, .location { margin: 0.25rem 0; font-size: 0.88rem; color: #bac2de; }
-.info-box { background: #1e1e2e; padding: 0.75rem; border-radius: 8px; margin-top: 0.85rem; font-size: 0.85rem; }
-.info-box h4 { margin: 0 0 0.3rem 0; color: #f9e2af; font-size: 0.8rem; text-transform: uppercase; }
-.info-box ul { margin: 0; padding-left: 1.1rem; }
-.btn-action { width: 100%; margin-top: 1rem; background: #a6e3a1; color: #11111b; border: none; padding: 0.6rem; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.pedigree-viewport { flex: 1; transition: transform 0.2s ease; transform-origin: top left; }
+.pedigree-tree-root { display: flex; flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+.tree-level { display: flex; gap: 1rem; flex-wrap: wrap; }
+.tree-node { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 0.75rem 1rem; min-width: 220px; cursor: pointer; transition: all 0.2s; }
+.tree-node:hover { border-color: #89b4fa; background: #262638; }
+.active-node { border-color: #a6e3a1; background: #18251e; }
+.node-id { font-size: 0.68rem; background: #313244; color: #f5e0dc; padding: 0.1rem 0.35rem; border-radius: 3px; font-family: monospace; display: inline-block; margin-bottom: 0.2rem; }
+.tree-node strong { display: block; color: #cdd6f4; font-size: 0.95rem; }
+.node-dates { display: block; font-size: 0.78rem; color: #a6adc8; }
+.node-role { display: block; font-size: 0.78rem; color: #a6e3a1; margin-top: 0.2rem; }
+.node-note { display: block; font-size: 0.75rem; color: #f9e2af; margin-top: 0.2rem; }
 
-.relations-panel { background: #181825; border: 1px solid #313244; border-radius: 12px; padding: 1.25rem; }
-.relations-panel h3 { margin: 0 0 1rem 0; color: #cba6f7; font-size: 1.1rem; }
-.members-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.member-card { background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; padding: 0.75rem; }
-.member-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
-.member-id { font-size: 0.7rem; background: #313244; color: #f5e0dc; padding: 0.1rem 0.35rem; border-radius: 3px; font-family: monospace; }
-.member-relation { margin-left: auto; font-size: 0.75rem; color: #a6e3a1; font-weight: bold; }
-.member-details { margin: 0; font-size: 0.85rem; color: #bac2de; }
-.member-note { margin-top: 0.4rem; font-size: 0.8rem; color: #f9e2af; background: #181825; padding: 0.4rem; border-radius: 4px; }
+.events-timeline h3 { color: #f38ba8; margin-top: 0; }
+.timeline-list { display: flex; flex-direction: column; gap: 1rem; }
+.timeline-item { display: flex; gap: 1rem; align-items: flex-start; }
+.time-badge { background: #89b4fa; color: #11111b; font-weight: bold; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-family: monospace; }
+.event-card { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 0.85rem; flex: 1; }
+.evt-type { font-size: 0.7rem; background: #313244; color: #fab387; padding: 0.1rem 0.4rem; border-radius: 3px; font-weight: bold; }
+.event-card h4 { margin: 0.3rem 0; color: #cdd6f4; }
+.event-card p { margin: 0 0 0.4rem 0; font-size: 0.88rem; color: #bac2de; }
 
-.comparator-controls { display: flex; align-items: center; gap: 1rem; background: #181825; padding: 0.85rem 1.25rem; border-radius: 10px; border: 1px solid #313244; margin-bottom: 1.25rem; }
-.selector-group { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
-.selector-group label { font-size: 0.78rem; font-weight: bold; color: #f9e2af; }
-.select-source { background: #1e1e2e; color: #a6e3a1; border: 1px solid #313244; padding: 0.5rem; border-radius: 6px; font-size: 0.88rem; outline: none; }
-.swap-icon { font-size: 1.4rem; cursor: pointer; padding: 0.5rem; background: #313244; border-radius: 50%; user-select: none; }
+.media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.media-card { background: #181825; border: 1px solid #313244; border-radius: 10px; padding: 1rem; display: flex; gap: 1rem; }
+.media-thumb { font-size: 2.2rem; display: flex; align-items: center; }
+.media-info h4 { margin: 0.2rem 0; color: #89b4fa; font-size: 0.95rem; }
+.media-info p { margin: 0 0 0.4rem 0; font-size: 0.82rem; color: #bac2de; }
 
-.comparison-matrix-grid { display: grid; grid-template-columns: 1fr 300px 1fr; gap: 1rem; }
-.source-panel { background: #181825; border: 1px solid #313244; border-radius: 10px; padding: 1rem; }
-.panel-a { border-color: #89b4fa; }
-.panel-b { border-color: #f38ba8; }
-.panel-header { border-bottom: 1px solid #313244; padding-bottom: 0.6rem; margin-bottom: 0.85rem; }
-.src-tag { font-size: 0.7rem; font-weight: bold; background: #313244; color: #f5e0dc; padding: 0.1rem 0.4rem; border-radius: 4px; }
-.panel-header h3 { margin: 0.3rem 0; font-size: 1.05rem; color: #89b4fa; }
-.type-badge { font-size: 0.75rem; color: #a6adc8; }
+.gedcom-box { background: #181825; border: 1px solid #313244; border-radius: 10px; padding: 1.25rem; }
+.btn-gedcom-dl { background: #a6e3a1; color: #11111b; border: none; padding: 0.65rem 1.1rem; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.gedcom-preview pre { background: #11111b; padding: 1rem; border-radius: 8px; color: #a6e3a1; font-family: monospace; font-size: 0.82rem; }
 
-.field-item { margin-bottom: 0.75rem; }
-.field-item label { display: block; font-size: 0.72rem; font-weight: bold; color: #6c7086; text-transform: uppercase; margin-bottom: 0.15rem; }
-.field-value { font-size: 0.85rem; color: #cdd6f4; }
-.text-quote { background: #11111b; padding: 0.6rem; border-radius: 6px; font-family: serif; line-height: 1.4; border-left: 3px solid #89b4fa; }
-
-.analysis-panel { background: #181825; border: 1px solid #fab387; border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; }
-.analysis-header { font-weight: bold; color: #fab387; font-size: 0.9rem; border-bottom: 1px solid #313244; padding-bottom: 0.5rem; margin-bottom: 0.85rem; }
-.status-box { padding: 0.75rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1rem; }
-.match-high { background: rgba(166, 227, 161, 0.15); border: 1px solid #a6e3a1; color: #a6e3a1; }
-.match-medium { background: rgba(249, 226, 175, 0.15); border: 1px solid #f9e2af; color: #f9e2af; }
-.match-low { background: rgba(243, 139, 168, 0.15); border: 1px solid #f38ba8; color: #f38ba8; }
-
-.diff-table h4 { margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #bac2de; }
-.diff-table ul { margin: 0; padding-left: 1rem; font-size: 0.8rem; color: #cdd6f4; }
-.diff-details { margin-top: 0.15rem; font-family: monospace; font-size: 0.75rem; }
-.diff-a { color: #89b4fa; }
-.diff-b { color: #f38ba8; }
-
-.reliability-score { margin-top: auto; padding-top: 0.85rem; border-top: 1px dashed #313244; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
-.score-bar { flex: 1; height: 8px; background: #313244; border-radius: 4px; overflow: hidden; }
-.score-fill { height: 100%; background: #a6e3a1; transition: width 0.3s; }
-.score-num { font-weight: bold; color: #a6e3a1; }
+.person-inspector { width: 300px; background: #181825; border-left: 1px solid #313244; padding: 1.25rem; display: flex; flex-direction: column; overflow-y: auto; }
+.inspector-header { display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid #313244; padding-bottom: 0.6rem; margin-bottom: 0.85rem; }
+.gramps-id { background: #89b4fa; color: #11111b; font-weight: bold; font-size: 0.72rem; padding: 0.15rem 0.4rem; border-radius: 3px; }
+.inspector-header h3 { margin: 0; font-size: 1.05rem; color: #a6e3a1; }
+.btn-close { margin-left: auto; background: transparent; border: none; color: #a6adc8; cursor: pointer; font-size: 1.1rem; }
+.badge-avg { background: #a6e3a1; color: #11111b; font-size: 0.72rem; font-weight: bold; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-block; margin-top: 0.4rem; }
 </style>

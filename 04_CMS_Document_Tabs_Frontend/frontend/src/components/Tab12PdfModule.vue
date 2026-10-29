@@ -1,6 +1,5 @@
 <template>
   <div class="pdf-module-container">
-    <!-- Header Toolbar -->
     <header class="pdf-header">
       <div class="header-title">
         <h2>📕 PDF Dossiers - Lezen, Markeren & Bewerken</h2>
@@ -8,18 +7,13 @@
       </div>
 
       <div class="pdf-toolbar-actions">
-        <!-- PDF Selectie Dropdown -->
-        <select v-model="selectedPdfId" @change="loadPdf" class="select-pdf">
+        <select v-model="selectedPdfId" @change="currentPage = 1" class="select-pdf">
           <option v-for="pdf in pdfCatalog" :key="pdf.id" :value="pdf.id">
             📄 [{{ pdf.category }}] {{ pdf.title }}
           </option>
         </select>
 
-        <!-- Editor Modus Toggle -->
-        <button 
-          :class="['btn-mode-toggle', { active: isEditMode }]" 
-          @click="isEditMode = !isEditMode"
-        >
+        <button :class="['btn-mode-toggle', { active: isEditMode }]" @click="isEditMode = !isEditMode">
           {{ isEditMode ? '✏️ Bewerken Actief' : '📖 Leesmodus' }}
         </button>
 
@@ -29,77 +23,44 @@
       </div>
     </header>
 
-    <!-- WORKSPACE: DOCUMENT VIEWER + EDITOR PANEL -->
     <div class="pdf-workspace">
-      
-      <!-- LEFT: PDF ANNOTATION & EDITING TOOLBAR (In edit mode) -->
       <aside class="pdf-edit-sidebar" v-if="isEditMode">
         <h3>🎨 Bewerkingstools</h3>
 
         <div class="tool-section">
           <label>Tekst & Markering:</label>
           <div class="tool-buttons">
-            <button 
-              :class="['btn-tool', { active: activeTool === 'highlight' }]" 
-              @click="activeTool = 'highlight'" 
-              title="Gele Markeerstift"
-            >
-              🖍️ Markeren
-            </button>
-            <button 
-              :class="['btn-tool', { active: activeTool === 'text' }]" 
-              @click="activeTool = 'text'" 
-              title="Tekst Overlay Toevoegen"
-            >
-              🔤 Tekstvak
-            </button>
-            <button 
-              :class="['btn-tool', { active: activeTool === 'note' }]" 
-              @click="activeTool = 'note'" 
-              title="Plaknotitie / Opmerking"
-            >
-              📌 Notitie
-            </button>
+            <button :class="['btn-tool', { active: activeTool === 'highlight' }]" @click="activeTool = 'highlight'">🖍️ Markeren</button>
+            <button :class="['btn-tool', { active: activeTool === 'text' }]" @click="activeTool = 'text'">🔤 Tekstvak</button>
           </div>
         </div>
 
         <div class="tool-section">
           <label>Stempels & Status:</label>
           <div class="stamp-buttons">
-            <button class="btn-stamp stamp-confidential" @click="addStamp('VERTROUWELIJK')">
-              🔒 VERTROUWELIJK
-            </button>
-            <button class="btn-stamp stamp-approved" @click="addStamp('WOO-VRIJGEGEVEN')">
-              ✅ WOO-VRIJGEGEVEN
-            </button>
+            <button class="btn-stamp stamp-confidential" @click="addStamp('VERTROUWELIJK')">🔒 VERTROUWELIJK</button>
+            <button class="btn-stamp stamp-approved" @click="addStamp('WOO-VRIJGEGEVEN')">✅ WOO-VRIJGEGEVEN</button>
           </div>
         </div>
 
         <div class="tool-section">
           <label>Pagina Manipulatie:</label>
           <div class="page-manip-buttons">
-            <button class="btn-tool" @click="rotatePdf(90)" title="90° Rechtsom Roteren">
-              🔄 90° Roteren
-            </button>
-            <button class="btn-tool" @click="splitPdf" title="Pagina's Opsplitsen">
-              ✂️ Opsplitsen
-            </button>
+            <button class="btn-tool" @click="rotatePdf(90)">🔄 90° Roteren</button>
           </div>
         </div>
 
-        <!-- Annotation List -->
         <div class="annotations-list">
           <h4>📝 Geplaatste Aantekeningen ({{ annotations.length }}):</h4>
           <ul>
             <li v-for="(ann, idx) in annotations" :key="idx" class="ann-item">
-              <span>{{ ann.type }} - p.{{ ann.page }}</span>
-              <button class="btn-del-ann" @click="removeAnnotation(idx)">✕</button>
+              <span>{{ ann.text }} (p.{{ ann.page }})</span>
+              <button class="btn-del-ann" @click="annotations.splice(idx, 1)">✕</button>
             </li>
           </ul>
         </div>
       </aside>
 
-      <!-- CENTER: PDF CANVAS / DOCUMENT VIEWER -->
       <main class="pdf-viewer-canvas">
         <div class="canvas-top-bar" v-if="activePdf">
           <div class="page-nav">
@@ -115,7 +76,6 @@
           </div>
         </div>
 
-        <!-- Simulated PDF Document Display -->
         <div class="pdf-document-paper" :style="{ transform: `scale(${pdfZoom}) rotate(${pdfRotation}deg)` }">
           <div class="paper-header">
             <span class="doc-watermark">{{ activePdf ? activePdf.category : 'DOCUMENT' }}</span>
@@ -124,17 +84,9 @@
           </div>
 
           <div class="paper-content">
-            <p class="pdf-text-paragraph" v-for="(para, i) in activePdfPages" :key="i">
-              {{ para }}
-            </p>
+            <p class="pdf-text-paragraph" v-for="(para, i) in activePdfPages" :key="i">{{ para }}</p>
 
-            <!-- Rendered Stempels & Annotations Overlay -->
-            <div 
-              v-for="(ann, idx) in currentPageAnnotations" 
-              :key="idx" 
-              :class="['annotation-overlay', ann.typeClass]"
-              :style="{ top: ann.y + 'px', left: ann.x + 'px' }"
-            >
+            <div v-for="(ann, idx) in currentPageAnnotations" :key="idx" :class="['annotation-overlay', ann.typeClass]" :style="{ top: ann.y + 'px', left: ann.x + 'px' }">
               {{ ann.text }}
             </div>
           </div>
@@ -144,13 +96,12 @@
           </div>
         </div>
       </main>
-
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 
 const selectedPdfId = ref('pdf-bre-24-5455');
 const isEditMode = ref(false);
@@ -169,7 +120,7 @@ const pdfCatalog = [
     totalPages: 4,
     pages: [
       "RECHTBANK ZEELAND-WEST-BRABANT - ZITTINGSHOUDING BREDA. Uitspraak in het geding tussen Mw. M.J.M.M. Goijarts-Bout (Eiser) en het College van B&W van de Gemeente Tholen (Verweerder).",
-      "PROCESVERLOOP: Eiser heeft op 13 januari 2026 hernieuwd verzoek ingediend ingevolge de Wet open overheid (Woo) inzake visserijpachtrechten Molenplaat en Dossier-Zuurdeeg.",
+      "PROCESVERLOOK: Eiser heeft op 13 januari 2026 hernieuwd verzoek ingediend ingevolge de Wet open overheid (Woo) inzake visserijpachtrechten Molenplaat en Dossier-Zuurdeeg.",
       "OVERWEGINGEN: Verweerder heeft de wettelijke beslistermijn overschreden. Het beroep wegens niet tijdig beslissen is gegrond. Verweerder dient binnen 2 weken alsnog te beslissen.",
       "BESLISSING: Verklaart het beroep gegrond. Draagt verweerder op het besluit bekend te maken. Veroordeelt verweerder in de proceskosten."
     ]
@@ -200,28 +151,10 @@ const pdfCatalog = [
 ];
 
 const activePdf = computed(() => pdfCatalog.find(p => p.id === selectedPdfId.value));
+const activePdfPages = computed(() => activePdf.value ? [activePdf.value.pages[currentPage.value - 1] || "Pagina geladen."] : []);
+const currentPageAnnotations = computed(() => annotations.value.filter(a => a.pdfId === selectedPdfId.value && a.page === currentPage.value));
 
-const activePdfPages = computed(() => {
-  if (!activePdf.value) return [];
-  return [activePdf.value.pages[currentPage.value - 1] || "Pagina-inhoud geladen."];
-});
-
-const currentPageAnnotations = computed(() => {
-  return annotations.value.filter(a => a.pdfId === selectedPdfId.value && a.page === currentPage.value);
-});
-
-function loadPdf() {
-  currentPage.value = 1;
-}
-
-function rotatePdf(deg) {
-  pdfRotation.value = (pdfRotation.value + deg) % 360;
-}
-
-function splitPdf() {
-  alert(`✂️ Pagina ${currentPage.value} afgesplitst als nieuw PDF-document!`);
-}
-
+function rotatePdf(deg) { pdfRotation.value = (pdfRotation.value + deg) % 360; }
 function addStamp(stampText) {
   annotations.value.push({
     pdfId: selectedPdfId.value,
@@ -233,14 +166,7 @@ function addStamp(stampText) {
     y: 80
   });
 }
-
-function removeAnnotation(idx) {
-  annotations.value.splice(idx, 1);
-}
-
-function savePdfAnnotations() {
-  alert(`💾 Aantekeningen en PDF-status voor "${activePdf.value.title}" opgeslagen!`);
-}
+function savePdfAnnotations() { alert(`💾 Aantekeningen voor "${activePdf.value.title}" opgeslagen!`); }
 </script>
 
 <style scoped>
@@ -248,7 +174,6 @@ function savePdfAnnotations() {
 .pdf-header { background: #181825; padding: 0.85rem 1.25rem; border-bottom: 1px solid #313244; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .pdf-header h2 { margin: 0; color: #f38ba8; font-size: 1.25rem; }
 .pdf-badge { background: #89b4fa; color: #11111b; font-weight: bold; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; }
-
 .pdf-toolbar-actions { display: flex; align-items: center; gap: 0.6rem; }
 .select-pdf { background: #1e1e2e; color: #a6e3a1; border: 1px solid #313244; padding: 0.45rem; border-radius: 6px; font-size: 0.85rem; outline: none; }
 .btn-mode-toggle { background: #313244; color: #cdd6f4; border: 1px solid #45475a; padding: 0.45rem 0.85rem; border-radius: 6px; font-weight: bold; font-size: 0.82rem; cursor: pointer; }
@@ -256,7 +181,6 @@ function savePdfAnnotations() {
 .btn-save-pdf { background: #a6e3a1; color: #11111b; border: none; padding: 0.45rem 0.85rem; border-radius: 6px; font-weight: bold; font-size: 0.82rem; cursor: pointer; }
 
 .pdf-workspace { flex: 1; display: flex; overflow: hidden; position: relative; min-height: 0; }
-
 .pdf-edit-sidebar { width: 260px; background: #181825; border-right: 1px solid #313244; padding: 1rem; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
 .pdf-edit-sidebar h3 { margin: 0 0 1rem 0; color: #f9e2af; font-size: 1rem; border-bottom: 1px solid #313244; padding-bottom: 0.5rem; }
 .tool-section { margin-bottom: 1.25rem; }
