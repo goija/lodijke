@@ -1,0 +1,660 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd ~/lodijke
+
+echo "=== [1/2] Bouwen van de volledige Vue.js interface (Wit met Meekrab-Rood) ==="
+
+cat << 'HTML' > index.html
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visser Dossier — Archief & Geodiscovery</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #fafaf9; color: #1c1917; font-family: system-ui, -apple-system, sans-serif; }
+    .card { background: #ffffff; border: 1px solid #e7e5e4; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+    .input-dark { background: #ffffff; border: 1px solid #d6d3d1; color: #1c1917; border-radius: 0.375rem; padding: 0.5rem 0.75rem; width: 100%; }
+    .input-dark:focus { outline: none; border-color: #8b1e1e; ring: 2px solid #8b1e1e; }
+    .btn-meekrab { background: #8b1e1e; color: #ffffff; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; transition: background 0.2s; }
+    .btn-meekrab:hover { background: #721818; }
+    .btn-danger { background: #991b1b; color: #ffffff; padding: 0.35rem 0.75rem; border-radius: 0.375rem; font-size: 0.85rem; }
+    .btn-danger:hover { background: #7f1d1d; }
+  </style>
+</head>
+<body>
+<div id="app" class="min-h-screen flex flex-col">
+  <!-- Topbalk: Perkament/Wit met Meekrab-Rood accenten -->
+  <header class="border-b border-stone-200 bg-white/95 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50 shadow-sm">
+    <div class="flex items-center gap-4">
+      <h1 class="text-2xl font-extrabold tracking-tight text-[#8b1e1e]">{{ cms.hero_title }}</h1>
+      <span class="text-xs px-2.5 py-1 rounded-full bg-red-50 text-[#8b1e1e] border border-red-200 font-medium">
+        {{ isOnline ? 'Axum API Verbonden' : 'Offline Lokaal Beheer (LocalStorage)' }}
+      </span>
+    </div>
+    <nav class="flex flex-wrap gap-1.5">
+      <button @click="activeTab = 'home'" :class="tabClass('home')">Hoofdpagina</button>
+      <button @click="activeTab = 'cms'" :class="tabClass('cms')">Offline CMS Editor</button>
+      <button @click="activeTab = 'photos'" :class="tabClass('photos')">Fotoalbum ({{ photos.length }})</button>
+      <button @click="activeTab = 'gramps'" :class="tabClass('gramps')">GRAMPS API & XML ({{ gramps.people.length }})</button>
+      <button @click="activeTab = 'planimeter'" :class="tabClass('planimeter')">RD-Planimeter & Kaart</button>
+      <button @click="activeTab = 'solid'" :class="tabClass('solid')">Solid POD</button>
+    </nav>
+  </header>
+
+  <!-- Hoofdinhoud -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-6">
+    <!-- 1. HOOFDPAGINA: UITSLUITEND VISSER DOSSIER -->
+    <section v-if="activeTab === 'home'" class="space-y-8">
+      <div class="py-16 text-center border-b border-stone-200">
+        <h2 class="text-5xl font-black tracking-tight text-[#8b1e1e]">{{ cms.hero_title }}</h2>
+        <p class="text-stone-600 mt-2 max-w-2xl mx-auto">Officiële archief- en geodata-omgeving voor historische visrechten en genealogische grondslagen.</p>
+      </div>
+
+      <div class="grid gap-6">
+        <article v-for="sec in cms.sections" :key="sec.id" class="card p-6 space-y-3">
+          <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+            <h3 class="text-xl font-bold text-stone-900">{{ sec.title }}</h3>
+            <span class="text-xs px-2 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">{{ sec.category }}</span>
+          </div>
+          <p class="text-stone-700 whitespace-pre-line leading-relaxed">{{ sec.content }}</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. OFFLINE CMS & FRONTEND WIJZIGINGEN -->
+    <section v-if="activeTab === 'cms'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-stone-900">Frontend & Offline CMS Beheer</h2>
+          <div class="flex gap-2">
+            <button @click="saveCms" class="btn-meekrab">Wijzigingen Opslaan</button>
+            <button @click="exportBackup" class="px-3 py-2 rounded bg-stone-100 text-stone-700 text-sm font-semibold hover:bg-stone-200">JSON Backup</button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-600 mb-1">Hoofdtitel op voorpagina</label>
+          <input v-model="cms.hero_title" class="input-dark" />
+        </div>
+      </div>
+
+      <div class="card p-6 space-y-4">
+        <h3 class="text-lg font-bold text-stone-900">Nieuw Dossier-onderdeel toevoegen</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+          <input v-model="newSection.title" placeholder="Titel (bijv. Akte 1530 Reimerswaal)" class="input-dark" />
+          <input v-model="newSection.category" placeholder="Categorie (Visser Dossier)" class="input-dark" />
+        </div>
+        <textarea v-model="newSection.content" rows="4" placeholder="Inhoud..." class="input-dark"></textarea>
+        <button @click="addSection" class="btn-meekrab">Onderdeel Toevoegen</button>
+      </div>
+
+      <div class="space-y-4">
+        <div v-for="sec in cms.sections" :key="sec.id" class="card p-5 space-y-3">
+          <div class="flex justify-between items-center gap-4">
+            <input v-model="sec.title" class="input-dark font-bold" />
+            <button @click="removeSection(sec.id)" class="btn-danger">Verwijder</button>
+          </div>
+          <textarea v-model="sec.content" rows="3" class="input-dark"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. FOTOALBUM BEHEER -->
+    <section v-if="activeTab === 'photos'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <h2 class="text-xl font-bold text-stone-900">Fotoalbum Beheer (Gekoppeld aan GRAMPS & RD)</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <input v-model="photoForm.title" placeholder="Titel foto / charter" class="input-dark" />
+          <input v-model="photoForm.album" placeholder="Album (Visser Dossier)" class="input-dark" />
+          <input v-model="photoForm.gramps_handle" placeholder="GRAMPS Handle (p_visser_0001)" class="input-dark" />
+          <input v-model="photoForm.rd_x" type="number" step="any" placeholder="RD X (69250)" class="input-dark" />
+          <input v-model="photoForm.rd_y" type="number" step="any" placeholder="RD Y (386700)" class="input-dark" />
+          <input type="file" ref="fileInput" class="input-dark text-xs py-2" />
+        </div>
+        <textarea v-model="photoForm.description" rows="2" placeholder="Omschrijving / transcriptie..." class="input-dark"></textarea>
+        <button @click="uploadPhoto" class="btn-meekrab">Foto Uploaden naar Album</button>
+      </div>
+
+      <div class="flex gap-3">
+        <input v-model="photoSearch" @input="fetchPhotos" placeholder="Zoek op titel, tag of transcriptie..." class="input-dark" />
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div v-for="p in photos" :key="p.id" class="card p-4 flex flex-col justify-between space-y-3">
+          <div>
+            <div class="h-44 bg-stone-100 rounded mb-3 flex items-center justify-center overflow-hidden border border-stone-200">
+              <img v-if="p.filename !== 'placeholder.jpg'" :src="'/uploads/' + p.filename" class="object-cover w-full h-full" />
+              <span v-else class="text-xs text-stone-500 font-medium">Archiefstuk ({{ p.album }})</span>
+            </div>
+            <input v-model="p.title" class="input-dark text-sm font-bold mb-2" />
+            <textarea v-model="p.description" rows="2" class="input-dark text-xs mb-2"></textarea>
+            <div class="text-xs text-stone-600 space-y-1">
+              <div>Album: <strong class="text-stone-900">{{ p.album }}</strong></div>
+              <div v-if="p.gramps_handle">GRAMPS: <code class="text-[#8b1e1e] font-bold">{{ p.gramps_handle }}</code></div>
+              <div v-if="p.rd_x && p.rd_y">RD: {{ p.rd_x }}, {{ p.rd_y }}</div>
+            </div>
+          </div>
+          <div class="flex justify-between pt-2 border-t border-stone-100">
+            <button @click="savePhotoMeta(p)" class="text-xs px-3 py-1.5 rounded bg-stone-100 hover:bg-stone-200 font-semibold text-stone-700">Bewaar Meta</button>
+            <button @click="deletePhoto(p.id)" class="btn-danger">Verwijder</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. GRAMPS DEVELOPER API & XML MODULE -->
+    <section v-if="activeTab === 'gramps'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-stone-900">GRAMPS Developer API & XML (DTD 1.7.1)</h2>
+            <p class="text-xs text-stone-600">Beheer genealogische stamboomobjecten en importeer/exporteer `.gramps` archieven.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="/api/gramps/xml" download="visser_dossier.gramps" class="btn-meekrab text-sm inline-block">Download .gramps XML</a>
+            <label class="px-3 py-2 rounded bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold cursor-pointer">
+              Importeer .gramps
+              <input type="file" accept=".gramps,.xml,.gz" @change="uploadGrampsXml" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-3 pt-2">
+          <input v-model="newPerson.first_name" placeholder="Voornaam" class="input-dark" />
+          <input v-model="newPerson.surname" placeholder="Achternaam (Visser)" class="input-dark" />
+          <input v-model="newPerson.title" placeholder="Titel / Beroep" class="input-dark" />
+          <select v-model="newPerson.gender" class="input-dark">
+            <option value="M">Man (M)</option>
+            <option value="F">Vrouw (F)</option>
+            <option value="U">Onbekend (U)</option>
+          </select>
+        </div>
+        <input v-model="newPerson.note" placeholder="Notitie / Charterverwijzing Visser Dossier" class="input-dark" />
+        <button @click="addGrampsPerson" class="btn-meekrab">Persoon Toevoegen aan GRAMPS Database</button>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card p-5 space-y-3">
+          <h3 class="font-bold text-stone-900">Geregistreerde Personen</h3>
+          <div v-for="person in gramps.people" :key="person.handle" class="p-3 rounded bg-stone-50 border border-stone-200 flex justify-between items-start">
+            <div>
+              <div class="font-bold text-stone-900">
+                [{{ person.gramps_id }}] {{ person.primary_name.first_name }} {{ person.primary_name.surname }}
+              </div>
+              <div class="text-xs text-stone-500">
+                Handle: <code>{{ person.handle }}</code> | Titel: {{ person.primary_name.title }}
+              </div>
+              <div v-if="person.note_list.length" class="text-xs text-[#8b1e1e] font-medium mt-1">{{ person.note_list[0] }}</div>
+            </div>
+            <button @click="deleteGrampsPerson(person.handle)" class="btn-danger">Wis</button>
+          </div>
+        </div>
+
+        <div class="card p-5 space-y-3">
+          <h3 class="font-bold text-stone-900">GRAMPS Events & Kadastrale Plaatsen (RD)</h3>
+          <div v-for="ev in gramps.events" :key="ev.handle" class="p-3 rounded bg-stone-50 border border-stone-200 text-sm">
+            <span class="font-bold text-[#8b1e1e]">[{{ ev.gramps_id }}] {{ ev.event_type }}</span> — {{ ev.date }}
+            <div class="text-xs text-stone-600">{{ ev.description }}</div>
+          </div>
+          <hr class="border-stone-200" />
+          <div v-for="pl in gramps.places" :key="pl.handle" class="p-3 rounded bg-stone-50 border border-stone-200 text-sm">
+            <span class="font-bold text-stone-900">[{{ pl.gramps_id }}] {{ pl.title }}</span>
+            <div class="text-xs text-stone-500">RD: ({{ pl.rd_x }}, {{ pl.rd_y }}) — WGS84: ({{ pl.lat }}, {{ pl.lon }})</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. RD-PLANIMETER & GEODETISCHE KAART -->
+    <section v-if="activeTab === 'planimeter'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-stone-900">RD-Planimeter (EPSG:28992) & A. Ott Nr. 573 Integrator</h2>
+            <p class="text-xs text-stone-600">Klik op het kaartvlak of voer RD-coördinaten in om oppervlakte in m², hectare, Zeeuwse Gemeten en planimeter-eenheden te berekenen.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button @click="loadPresetParcel('lodijke')" class="px-3 py-1.5 rounded bg-red-50 text-[#8b1e1e] border border-red-200 text-xs font-bold hover:bg-red-100">
+              Preset: Bol van Lodijke
+            </button>
+            <button @click="loadPresetParcel('reimerswaal')" class="px-3 py-1.5 rounded bg-stone-100 text-stone-800 text-xs font-bold hover:bg-stone-200">
+              Preset: Reimerswaal
+            </button>
+            <button @click="loadPresetParcel('scherpenisse')" class="px-3 py-1.5 rounded bg-stone-100 text-stone-800 text-xs font-bold hover:bg-stone-200">
+              Preset: Scherpenisse
+            </button>
+            <button @click="clearPlanimeter" class="btn-danger">Wis Hoekpunten</button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="md:col-span-2 space-y-2">
+            <div class="flex justify-between text-xs text-stone-500 font-mono">
+              <span>RD-Venster: X [{{ rdViewBox.minX }} .. {{ rdViewBox.maxX }}] | Y [{{ rdViewBox.minY }} .. {{ rdViewBox.maxY }}]</span>
+              <span>Klik om RD-hoekpunt toe te voegen</span>
+            </div>
+            <svg
+              @click="addPointFromSvgClick"
+              viewBox="0 0 600 400"
+              class="w-full h-96 bg-stone-950 border border-stone-300 rounded cursor-crosshair select-none shadow-inner"
+            >
+              <g stroke="#292524" stroke-width="1">
+                <line v-for="gx in [100,200,300,400,500]" :key="'gx'+gx" :x1="gx" y1="0" :x2="gx" y2="400" />
+                <line v-for="gy in [80,160,240,320]" :key="'gy'+gy" x1="0" :y1="gy" x2="600" :y2="gy" />
+              </g>
+
+              <g v-for="pl in gramps.places" :key="pl.handle">
+                <circle :cx="rdToSvgX(pl.rd_x)" :cy="rdToSvgY(pl.rd_y)" r="5" fill="#38bdf8" />
+                <text :x="rdToSvgX(pl.rd_x) + 8" :y="rdToSvgY(pl.rd_y) + 4" fill="#e0f2fe" font-size="11" font-family="monospace">{{ pl.title }}</text>
+              </g>
+
+              <polygon v-if="planimeterVertices.length >= 3" :points="svgPolygonPoints" fill="rgba(139, 30, 30, 0.25)" stroke="#8b1e1e" stroke-width="2.5" />
+              <polyline v-else-if="planimeterVertices.length === 2" :points="svgPolygonPoints" fill="none" stroke="#8b1e1e" stroke-width="2.5" />
+
+              <g v-for="(pt, idx) in planimeterVertices" :key="'pt'+idx">
+                <circle :cx="rdToSvgX(pt.x)" :cy="rdToSvgY(pt.y)" r="5" fill="#f59e0b" />
+                <text :x="rdToSvgX(pt.x) + 6" :y="rdToSvgY(pt.y) - 6" fill="#fef3c7" font-size="10" font-family="monospace">#{{ idx + 1 }}</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="space-y-4">
+            <div class="p-4 rounded bg-stone-50 border border-stone-200 space-y-2 font-mono text-xs shadow-sm">
+              <div class="text-stone-900 font-sans font-bold text-sm border-b border-stone-200 pb-1">
+                Planimetrische Uitkomst
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">Hoekpunten (N):</span>
+                <span class="text-stone-900 font-bold">{{ planimeterStats.vertex_count }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">Oppervlakte (m²):</span>
+                <span class="text-[#8b1e1e] font-bold">{{ planimeterStats.area_m2.toFixed(2) }} m²</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">Hectare (ha):</span>
+                <span class="text-stone-900 font-bold">{{ planimeterStats.area_hectares.toFixed(4) }} ha</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">Zeeuwse Gemeten:</span>
+                <span class="text-amber-700 font-bold">{{ planimeterStats.area_zeeuwse_gemeten.toFixed(4) }} gemet</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">Zeeuwse Roeden:</span>
+                <span class="text-stone-800">{{ planimeterStats.area_zeeuwse_roeden.toFixed(2) }} roeden</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">Omtrek:</span>
+                <span class="text-stone-800">{{ planimeterStats.perimeter_m.toFixed(2) }} m</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-stone-500">A. Ott 573 (ΔN):</span>
+                <span class="text-purple-700 font-bold">{{ planimeterStats.ott_573_drum_delta.toFixed(1) }} eenh.</span>
+              </div>
+            </div>
+
+            <div class="p-4 rounded bg-stone-50 border border-stone-200 space-y-2">
+              <div class="text-xs font-bold text-stone-900">Handmatig RD-punt (X, Y)</div>
+              <div class="grid grid-cols-2 gap-2">
+                <input v-model.number="manualRdPoint.x" type="number" step="any" placeholder="RD X" class="input-dark text-xs" />
+                <input v-model.number="manualRdPoint.y" type="number" step="any" placeholder="RD Y" class="input-dark text-xs" />
+              </div>
+              <button @click="addManualRdPoint" class="btn-meekrab w-full text-xs">Voeg Punt Toe</button>
+            </div>
+
+            <div class="max-h-36 overflow-y-auto space-y-1 text-xs font-mono">
+              <div v-for="(pt, idx) in planimeterVertices" :key="'list'+idx" class="flex justify-between items-center px-2.5 py-1 bg-white rounded border border-stone-200">
+                <span>#{{ idx + 1 }}: X={{ pt.x.toFixed(1) }}, Y={{ pt.y.toFixed(1) }}</span>
+                <button @click="removePlanimeterPoint(idx)" class="text-red-600 hover:text-red-800 font-bold">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SOLID POD BEHEER -->
+    <section v-if="activeTab === 'solid'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <h2 class="text-xl font-bold text-stone-900">Solid POD Kluis (`01_Solid_POD_Vault`)</h2>
+        <p class="text-sm text-stone-700">
+          Conform beleid zijn alle foto's verwijderd uit de Solid POD. De kluis bevat uitsluitend de gelinkte RDF/Turtle metadata voor het <strong>Visser Dossier</strong>.
+        </p>
+        <button @click="purgeSolidPod" class="btn-danger">Forceer Foto-opschoning in Solid POD</button>
+        <pre v-if="solidStatus" class="p-4 bg-stone-900 rounded text-xs text-emerald-400 font-mono border border-stone-800">{{ solidStatus }}</pre>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      activeTab: 'home',
+      isOnline: true,
+      cms: { hero_title: 'Visser Dossier', sections: [] },
+      newSection: { title: '', category: 'Visser Dossier', content: '' },
+      photos: [],
+      photoSearch: '',
+      photoForm: { title: '', album: 'Visser Dossier', gramps_handle: '', rd_x: '', rd_y: '', description: '' },
+      gramps: { people: [], families: [], events: [], places: [], sources: [], citations: [] },
+      newPerson: { first_name: '', surname: 'Visser', title: '', gender: 'M', note: '' },
+      solidStatus: null,
+      planimeterScale: 2500,
+      manualRdPoint: { x: 71460, y: 385700 },
+      planimeterVertices: [
+        { x: 71350.0, y: 385600.0 },
+        { x: 71620.0, y: 385600.0 },
+        { x: 71620.0, y: 385840.0 },
+        { x: 71350.0, y: 385840.0 }
+      ],
+      planimeterStats: {
+        vertex_count: 4,
+        area_m2: 64800.0,
+        area_hectares: 6.48,
+        area_zeeuwse_gemeten: 15.8374,
+        area_zeeuwse_roeden: 4751.22,
+        perimeter_m: 1020.0,
+        centroid_rd: { x: 71485.0, y: 385720.0 },
+        ott_573_drum_delta: 1036.8
+      }
+    };
+  },
+  computed: {
+    rdViewBox() {
+      const pts = [...this.planimeterVertices];
+      for (const pl of (this.gramps.places || [])) {
+        if (pl.rd_x && pl.rd_y) pts.push({ x: pl.rd_x, y: pl.rd_y });
+      }
+      if (!pts.length) return { minX: 68500, maxX: 72500, minY: 384500, maxY: 387500 };
+      const xs = pts.map(p => p.x);
+      const ys = pts.map(p => p.y);
+      const padX = Math.max(250, (Math.max(...xs) - Math.min(...xs)) * 0.25);
+      const padY = Math.max(250, (Math.max(...ys) - Math.min(...ys)) * 0.25);
+      return {
+        minX: Math.floor(Math.min(...xs) - padX),
+        maxX: Math.ceil(Math.max(...xs) + padX),
+        minY: Math.floor(Math.min(...ys) - padY),
+        maxY: Math.ceil(Math.max(...ys) + padY)
+      };
+    },
+    svgPolygonPoints() {
+      return this.planimeterVertices.map(p => `${this.rdToSvgX(p.x)},${this.rdToSvgY(p.y)}`).join(' ');
+    }
+  },
+  methods: {
+    tabClass(tab) {
+      return [
+        'px-3 py-1.5 rounded text-sm font-semibold transition',
+        this.activeTab === tab ? 'bg-[#8b1e1e] text-white shadow-sm' : 'text-stone-700 hover:bg-stone-100'
+      ];
+    },
+    async loadAll() {
+      try {
+        const [cmsRes, photosRes, grampsRes] = await Promise.all([
+          fetch('/api/cms'),
+          fetch('/api/photos'),
+          fetch('/api/gramps/tree')
+        ]);
+        if (cmsRes.ok) {
+          this.cms = await cmsRes.json();
+          localStorage.setItem('visser_cms_offline', JSON.stringify(this.cms));
+        }
+        if (photosRes.ok) {
+          const pData = await photosRes.json();
+          this.photos = pData.results || [];
+          localStorage.setItem('visser_photos_offline', JSON.stringify(this.photos));
+        }
+        if (grampsRes.ok) {
+          this.gramps = await grampsRes.json();
+          localStorage.setItem('visser_gramps_offline', JSON.stringify(this.gramps));
+        }
+        this.isOnline = true;
+      } catch (e) {
+        this.isOnline = false;
+        const cachedCms = localStorage.getItem('visser_cms_offline');
+        const cachedPhotos = localStorage.getItem('visser_photos_offline');
+        const cachedGramps = localStorage.getItem('visser_gramps_offline');
+        if (cachedCms) this.cms = JSON.parse(cachedCms);
+        if (cachedPhotos) this.photos = JSON.parse(cachedPhotos);
+        if (cachedGramps) this.gramps = JSON.parse(cachedGramps);
+      }
+    },
+    async saveCms() {
+      localStorage.setItem('visser_cms_offline', JSON.stringify(this.cms));
+      try {
+        await fetch('/api/cms', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.cms)
+        });
+        this.isOnline = true;
+      } catch (_) { this.isOnline = false; }
+    },
+    async addSection() {
+      if (!this.newSection.title.trim()) return;
+      const sec = {
+        id: 'sec-' + Date.now(),
+        title: this.newSection.title,
+        category: this.newSection.category || 'Visser Dossier',
+        content: this.newSection.content,
+        updated_at: new Date().toISOString()
+      };
+      this.cms.sections.push(sec);
+      this.newSection = { title: '', category: 'Visser Dossier', content: '' };
+      await this.saveCms();
+    },
+    async removeSection(id) {
+      this.cms.sections = this.cms.sections.filter(s => s.id !== id);
+      await this.saveCms();
+    },
+    async fetchPhotos() {
+      try {
+        const res = await fetch('/api/photos?q=' + encodeURIComponent(this.photoSearch));
+        if (res.ok) {
+          const data = await res.json();
+          this.photos = data.results || [];
+        }
+      } catch (_) {}
+    },
+    async uploadPhoto() {
+      const fd = new FormData();
+      fd.append('title', this.photoForm.title || 'Visser Dossier Stuk');
+      fd.append('album', this.photoForm.album || 'Visser Dossier');
+      fd.append('gramps_handle', this.photoForm.gramps_handle);
+      fd.append('rd_x', this.photoForm.rd_x);
+      fd.append('rd_y', this.photoForm.rd_y);
+      fd.append('description', this.photoForm.description);
+      if (this.$refs.fileInput && this.$refs.fileInput.files[0]) {
+        fd.append('file', this.$refs.fileInput.files[0]);
+      }
+      try {
+        const res = await fetch('/api/photos', { method: 'POST', body: fd });
+        if (res.ok) {
+          this.photoForm = { title: '', album: 'Visser Dossier', gramps_handle: '', rd_x: '', rd_y: '', description: '' };
+          if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+          await this.fetchPhotos();
+        }
+      } catch (_) {}
+    },
+    async savePhotoMeta(p) {
+      try {
+        await fetch('/api/photos/' + p.id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(p)
+        });
+      } catch (_) {}
+    },
+    async deletePhoto(id) {
+      this.photos = this.photos.filter(p => p.id !== id);
+      localStorage.setItem('visser_photos_offline', JSON.stringify(this.photos));
+      try { await fetch('/api/photos/' + id, { method: 'DELETE' }); } catch (_) {}
+    },
+    async addGrampsPerson() {
+      if (!this.newPerson.first_name.trim()) return;
+      const payload = {
+        handle: '', gramps_id: '', gender: this.newPerson.gender,
+        primary_name: {
+          first_name: this.newPerson.first_name,
+          surname: this.newPerson.surname || 'Visser',
+          call_name: this.newPerson.first_name,
+          title: this.newPerson.title
+        },
+        event_ref_list: [], family_list: [], parent_family_list: [], citation_list: [], media_list: [],
+        note_list: this.newPerson.note ? [this.newPerson.note] : []
+      };
+      try {
+        const res = await fetch('/api/gramps/people', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          this.newPerson = { first_name: '', surname: 'Visser', title: '', gender: 'M', note: '' };
+          await this.loadAll();
+        }
+      } catch (_) {
+        payload.handle = 'p_offline_' + Date.now();
+        payload.gramps_id = 'I' + String(this.gramps.people.length + 1).padStart(4, '0');
+        this.gramps.people.push(payload);
+        localStorage.setItem('visser_gramps_offline', JSON.stringify(this.gramps));
+      }
+    },
+    async deleteGrampsPerson(handle) {
+      this.gramps.people = this.gramps.people.filter(p => p.handle !== handle);
+      localStorage.setItem('visser_gramps_offline', JSON.stringify(this.gramps));
+      try { await fetch('/api/gramps/people/' + handle, { method: 'DELETE' }); } catch (_) {}
+    },
+    async uploadGrampsXml(ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const buf = await file.arrayBuffer();
+      try {
+        const res = await fetch('/api/gramps/xml', {
+          method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: buf
+        });
+        if (res.ok) {
+          await this.loadAll();
+          alert('.gramps XML succesvol geïmporteerd!');
+        }
+      } catch (_) { alert('Fout bij importeren .gramps XML'); }
+    },
+    async purgeSolidPod() {
+      try {
+        const res = await fetch('/api/solid/purge-photos', { method: 'DELETE' });
+        this.solidStatus = await res.json();
+      } catch (e) { this.solidStatus = { status: 'Offline uitgevoerd' }; }
+    },
+    exportBackup() {
+      const bundle = { exported_at: new Date().toISOString(), cms: this.cms, gramps: this.gramps, photos: this.photos };
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'visser_dossier_offline_backup.json';
+      a.click();
+    },
+    rdToSvgX(x) {
+      const vb = this.rdViewBox;
+      return ((x - vb.minX) / Math.max(1, vb.maxX - vb.minX)) * 600;
+    },
+    rdToSvgY(y) {
+      const vb = this.rdViewBox;
+      return 400 - ((y - vb.minY) / Math.max(1, vb.maxY - vb.minY)) * 400;
+    },
+    addPointFromSvgClick(ev) {
+      const rect = ev.currentTarget.getBoundingClientRect();
+      const sx = ((ev.clientX - rect.left) / rect.width) * 600;
+      const sy = ((ev.clientY - rect.top) / rect.height) * 400;
+      const vb = this.rdViewBox;
+      const rx = vb.minX + (sx / 600) * (vb.maxX - vb.minX);
+      const ry = vb.minY + ((400 - sy) / 400) * (vb.maxY - vb.minY);
+      this.planimeterVertices.push({ x: Math.round(rx * 10) / 10, y: Math.round(ry * 10) / 10 });
+      this.recalculatePlanimeter();
+    },
+    addManualRdPoint() {
+      if (typeof this.manualRdPoint.x === 'number' && typeof this.manualRdPoint.y === 'number') {
+        this.planimeterVertices.push({ x: this.manualRdPoint.x, y: this.manualRdPoint.y });
+        this.recalculatePlanimeter();
+      }
+    },
+    removePlanimeterPoint(idx) {
+      this.planimeterVertices.splice(idx, 1);
+      this.recalculatePlanimeter();
+    },
+    clearPlanimeter() {
+      this.planimeterVertices = [];
+      this.recalculatePlanimeter();
+    },
+    loadPresetParcel(preset) {
+      if (preset === 'lodijke') {
+        this.planimeterVertices = [{x:71350,y:385600},{x:71620,y:385600},{x:71620,y:385840},{x:71350,y:385840}];
+      } else if (preset === 'reimerswaal') {
+        this.planimeterVertices = [{x:69050,y:386500},{x:69520,y:386500},{x:69580,y:386920},{x:69010,y:386890}];
+      } else if (preset === 'scherpenisse') {
+        this.planimeterVertices = [{x:65910,y:395720},{x:65965,y:395720},{x:65965,y:395785},{x:65910,y:395785}];
+      }
+      this.recalculatePlanimeter();
+    },
+    recalculatePlanimeter() {
+      const pts = this.planimeterVertices;
+      const n = pts.length;
+      if (n < 3) {
+        this.planimeterStats = { vertex_count: n, area_m2: 0, area_hectares: 0, area_zeeuwse_gemeten: 0, area_zeeuwse_roeden: 0, perimeter_m: 0, centroid_rd: pts[0]||{x:71460,y:385700}, ott_573_drum_delta: 0 };
+        return;
+      }
+      let signed2A = 0, perim = 0, cx = 0, cy = 0;
+      for (let i = 0; i < n; i++) {
+        const p0 = pts[i], p1 = pts[(i + 1) % n];
+        const cross = p0.x * p1.y - p1.x * p0.y;
+        signed2A += cross;
+        cx += (p0.x + p1.x) * cross;
+        cy += (p0.y + p1.y) * cross;
+        perim += Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      }
+      const area_m2 = 0.5 * Math.abs(signed2A);
+      const m2PerCm2 = Math.pow(this.planimeterScale / 100.0, 2);
+      this.planimeterStats = {
+        vertex_count: n, area_m2,
+        area_hectares: area_m2 / 10000.0,
+        area_zeeuwse_gemeten: area_m2 / 4091.58,
+        area_zeeuwse_roeden: area_m2 / 13.6386,
+        perimeter_m: perim,
+        centroid_rd: {
+          x: Math.abs(signed2A) > 1e-9 ? cx / (3 * signed2A) : pts[0].x,
+          y: Math.abs(signed2A) > 1e-9 ? cy / (3 * signed2A) : pts[0].y
+        },
+        ott_573_drum_delta: (area_m2 / m2PerCm2) * 10.0
+      };
+    }
+  },
+  mounted() {
+    this.loadAll();
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
+HTML
+
+cp index.html frontend/index.html 2>/dev/null || true
+
+echo "=== [2/2] Compileren en pushen naar GitHub ==="
+cargo build --release
+systemctl --user restart lodijke-cms-server.service 2>/dev/null || true
+
+git add -A
+if ! git diff --cached --quiet; then
+    git commit -m "style(ui): apply clean paper white and meekrab-rood theme with full Vue.js modules"
+    git push origin main
+    echo "[GitHub] Succesvol gepusht naar origin/main!"
+fi
+
+echo "================================================================="
+echo " KLAAR! De interface is succesvol omgezet naar een strakke"
+echo " archiefstijl (wit met meekrab-rood) met alle Vue.js modules."
+echo "================================================================="
