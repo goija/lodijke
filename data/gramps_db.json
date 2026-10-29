@@ -1,0 +1,94 @@
+{
+  "people": [
+    {
+      "handle": "p_visser_0001",
+      "gramps_id": "I0001",
+      "gender": "M",
+      "primary_name": {
+        "first_name": "Cornelis",
+        "surname": "Visser",
+        "call_name": "Cees",
+        "title": "Oudelandse Visser"
+      },
+      "event_ref_list": ["e_birth_0001", "e_occ_0001"],
+      "family_list": ["f_visser_0001"],
+      "parent_family_list": [],
+      "citation_list": ["c_arch_0001"],
+      "media_list": [],
+      "note_list": ["Kerndossier Visser — Verdronken Land van Reimerswaal & Lodijke"]
+    }
+  ],
+  "families": [
+    {
+      "handle": "f_visser_0001",
+      "gramps_id": "F0001",
+      "father_handle": "p_visser_0001",
+      "mother_handle": null,
+      "child_ref_list": [],
+      "event_ref_list": [],
+      "citation_list": ["c_arch_0001"]
+    }
+  ],
+  "events": [
+    {
+      "handle": "e_birth_0001",
+      "gramps_id": "E0001",
+      "event_type": "Birth",
+      "date": "1842-03-14",
+      "place_handle": "pl_reimerswaal_01",
+      "description": "Geboorte binnen geslacht Visser"
+    },
+    {
+      "handle": "e_occ_0001",
+      "gramps_id": "E0002",
+      "event_type": "Occupation",
+      "date": "1870-01-01",
+      "place_handle": "pl_lodijke_01",
+      "description": "Uitoefening Oudelandse Visrecht (Visser Dossier)"
+    }
+  ],
+  "places": [
+    {
+      "handle": "pl_reimerswaal_01",
+      "gramps_id": "P0001",
+      "title": "Reimerswaal / Oosterschelde",
+      "name": "Verdronken Land van Reimerswaal",
+      "place_type": "Historical Region",
+      "lat": 51.4667,
+      "lon": 4.1500,
+      "rd_x": 69250.0,
+      "rd_y": 386700.0
+    },
+    {
+      "handle": "pl_lodijke_01",
+      "gramps_id": "P0002",
+      "title": "Lodijke",
+      "name": "Heerlijkheid Lodijke",
+      "place_type": "Parish",
+      "lat": 51.4580,
+      "lon": 4.1820,
+      "rd_x": 71460.0,
+      "rd_y": 385700.0
+    }
+  ],
+  "sources": [
+    {
+      "handle": "s_zeeuws_01",
+      "gramps_id": "S0001",
+      "title": "Visser Dossier — Zeeuws Archief Charters & Visrechten",
+      "author": "Rekenkamer van Zeeland",
+      "pubinfo": "Middelburg / Tholen",
+      "abbrev": "ZA-VISSER"
+    }
+  ],
+  "citations": [
+    {
+      "handle": "c_arch_0001",
+      "gramps_id": "C0001",
+      "source_handle": "s_zeeuws_01",
+      "page": "Folio 14r - Akte Visrecht",
+      "date": "1530-11-05",
+      "confidence": 4
+    }
+  ]
+}

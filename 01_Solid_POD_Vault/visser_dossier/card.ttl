@@ -1,0 +1,8 @@
+@prefix : <#>.
+@prefix solid: <http://www.w3.org/ns/solid/terms#>.
+@prefix dc: <http://purl.org/dc/terms/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+
+:me a foaf:PersonalProfileDocument ;
+    dc:title "Visser Dossier" ;
+    solid:policy "NO_PHOTOS_STORED_IN_POD" .

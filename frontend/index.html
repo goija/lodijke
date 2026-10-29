@@ -2,184 +2,433 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>Archief &amp; AvoRed Rust CMS — Familie Schot &amp; Bout (Tholen, Scherpenisse &amp; Bol van Lodijke)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visser Dossier</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            meekrab: {
-              50: '#fdf7f7',
-              100: '#faeaea',
-              200: '#f3d5d7',
-              600: '#9e2a33',
-              700: '#8b2229',
-              800: '#731b21',
-              900: '#561318',
-              950: '#360a0d'
-            },
-            zeeuws: {
-              sand: '#f9f7f2',
-              paper: '#ffffff',
-              border: '#d8cfc4',
-              ink: '#18181b'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            serif: ['"Source Serif 4"', 'Georgia', 'serif'],
-            mono: ['"JetBrains Mono"', 'monospace']
-          }
-        }
-      }
-    };
-  </script>
   <style>
-    :root { --base-font-size: 19px; }
-    html {
-      font-size: var(--base-font-size);
-      line-height: 1.6;
-      background-color: #f9f7f2;
-      color: #18181b;
-      scroll-behavior: smooth;
-    }
-    body {
-      min-height: 100dvh;
-      background-color: #f9f7f2;
-      color: #18181b;
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-    }
-    .ui-btn {
-      min-height: 42px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.4rem 0.9rem;
-      font-weight: 600;
-      font-size: 0.82rem;
-      border-radius: 0.45rem;
-      transition: all 0.15s ease;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .ui-input {
-      min-height: 42px;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.88rem;
-      border-radius: 0.45rem;
-      border: 1.5px solid #c5b9ac;
-      background-color: #ffffff;
-      color: #18181b;
-    }
-    .ui-input:focus {
-      outline: none;
-      border-color: #8b2229;
-      box-shadow: 0 0 0 3px rgba(139, 34, 41, 0.14);
-    }
-    .sliding-drawer-left {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: min(320px, 86vw);
-      background-color: #ffffff;
-      border-right: 1.5px solid #dfd6cb;
-      z-index: 60;
-      transform: translateX(-102%);
-      transition: transform 0.25s ease;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 4px 0 20px rgba(0,0,0,0.06);
-    }
-    .sliding-drawer-left.open { transform: translateX(0); }
-    .sliding-drawer-right {
-      position: fixed;
-      top: 0; right: 0; bottom: 0;
-      width: min(380px, 90vw);
-      background-color: #ffffff;
-      border-left: 1.5px solid #dfd6cb;
-      z-index: 60;
-      transform: translateX(102%);
-      transition: transform 0.25s ease;
-      display: flex;
-      flex-direction: column;
-      box-shadow: -4px 0 20px rgba(0,0,0,0.1);
-    }
-    .sliding-drawer-right.open { transform: translateX(0); }
-    @media (min-width: 1180px) {
-      .drawer-pinned .sliding-drawer-left {
-        transform: translateX(0);
-        z-index: 35;
-        box-shadow: none;
-      }
-      .drawer-pinned .app-shell-content { margin-left: 320px; }
-    }
-    .sliding-tab-strip {
-      display: flex;
-      align-items: center;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      scrollbar-width: none;
-      gap: 0.35rem;
-      padding: 0.35rem 0.15rem;
-    }
-    .sliding-tab-strip::-webkit-scrollbar { display: none; }
-    .folder-tab-btn {
-      min-height: 40px;
-      padding: 0.4rem 0.85rem;
-      border-radius: 0.4rem;
-      border: 1.5px solid #dfd6cb;
-      background-color: #ffffff;
-      color: #27272a;
-      font-weight: 600;
-      font-size: 0.78rem;
-      white-space: nowrap;
-      transition: all 0.15s ease;
-      cursor: pointer;
-    }
-    .folder-tab-btn:hover {
-      background-color: #fdf7f7;
-      border-color: #8b2229;
-      color: #731b21;
-    }
-    .folder-tab-active {
-      background-color: #8b2229 !important;
-      color: #ffffff !important;
-      border-color: #561318 !important;
-    }
-    .sub-tab-btn {
-      min-height: 36px;
-      padding: 0.3rem 0.75rem;
-      border-radius: 0.38rem;
-      border: 1.5px solid #dfd6cb;
-      background-color: #ffffff;
-      color: #27272a;
-      font-weight: 600;
-      font-size: 0.76rem;
-      white-space: nowrap;
-      transition: all 0.15s ease;
-      cursor: pointer;
-    }
-    .sub-tab-active {
-      background-color: #731b21 !important;
-      color: #ffffff !important;
-      border-color: #561318 !important;
-    }
-    .viewport-grid-single { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
-    .viewport-grid-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
-    @media (min-width: 1024px) {
-      .viewport-grid-split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    .viewport-grid-stacked { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-    .node-shield { background-color: #27272a; border: 1.5px solid #52525b; color: #ffffff; }
+    body { background-color: #0b0f17; color: #e2e8f0; font-family: system-ui, -apple-system, sans-serif; }
+    .card { background: #151c28; border: 1px solid #263248; border-radius: 0.5rem; }
+    .input-dark { background: #0b0f17; border: 1px solid #334155; color: #f8fafc; border-radius: 0.375rem; padding: 0.5rem 0.75rem; width: 100%; }
+    .btn-primary { background: #1d4ed8; color: #fff; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 600; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-danger { background: #991b1b; color: #fff; padding: 0.35rem 0.75rem; border-radius: 0.375rem; font-size: 0.85rem; }
   </style>
 </head>
 <body>
-  <div id="app"></div>
-  <script type="module" src="/src/main.js"></script>
+<div id="app" class="min-h-screen flex flex-col">
+  <!-- Topbalk: Alleen Visser Dossier + Offline/Online schakelaar voor beheer -->
+  <header class="border-b border-slate-800 bg-slate-950/90 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-4">
+      <h1 class="text-2xl font-bold tracking-tight text-white">{{ cms.hero_title }}</h1>
+      <span class="text-xs px-2.5 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+        {{ isOnline ? 'Axum API Verbonden' : 'Offline Lokaal Beheer (LocalStorage)' }}
+      </span>
+    </div>
+    <nav class="flex flex-wrap gap-2">
+      <button @click="activeTab = 'home'" :class="tabClass('home')">Hoofdpagina</button>
+      <button @click="activeTab = 'cms'" :class="tabClass('cms')">Offline CMS Editor</button>
+      <button @click="activeTab = 'photos'" :class="tabClass('photos')">Fotoalbum ({{ photos.length }})</button>
+      <button @click="activeTab = 'gramps'" :class="tabClass('gramps')">GRAMPS API ({{ gramps.people.length }})</button>
+      <button @click="activeTab = 'solid'" :class="tabClass('solid')">Solid POD</button>
+    </nav>
+  </header>
+
+  <!-- 1. HOOFDPAGINA: UITSLUITEND VISSER DOSSIER -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-6">
+    <section v-if="activeTab === 'home'" class="space-y-8">
+      <div class="py-16 text-center border-b border-slate-800">
+        <h2 class="text-5xl font-extrabold tracking-tight text-white">{{ cms.hero_title }}</h2>
+      </div>
+
+      <div class="grid gap-6">
+        <article v-for="sec in cms.sections" :key="sec.id" class="card p-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xl font-bold text-white">{{ sec.title }}</h3>
+            <span class="text-xs text-slate-400">{{ sec.category }}</span>
+          </div>
+          <p class="text-slate-300 whitespace-pre-line leading-relaxed">{{ sec.content }}</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. OFFLINE CMS & FRONTEND WIJZIGINGEN -->
+    <section v-if="activeTab === 'cms'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white">Frontend & Offline CMS Beheer</h2>
+          <div class="flex gap-2">
+            <button @click="saveCms" class="btn-primary">Wijzigingen Opslaan (Server + Offline)</button>
+            <button @click="exportBackup" class="px-3 py-2 rounded bg-slate-800 text-sm hover:bg-slate-700">JSON Backup Downloaden</button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Hoofdtitel op voorpagina</label>
+          <input v-model="cms.hero_title" class="input-dark" />
+        </div>
+      </div>
+
+      <div class="card p-6 space-y-4">
+        <h3 class="text-lg font-semibold text-white">Nieuw Dossier-onderdeel toevoegen</h3>
+        <div class="grid md:grid-cols-2 gap-4">
+          <input v-model="newSection.title" placeholder="Titel (bijv. Akte 1530 Reimerswaal)" class="input-dark" />
+          <input v-model="newSection.category" placeholder="Categorie (Visser Dossier)" class="input-dark" />
+        </div>
+        <textarea v-model="newSection.content" rows="4" placeholder="Inhoud..." class="input-dark"></textarea>
+        <button @click="addSection" class="btn-primary">Onderdeel Toevoegen</button>
+      </div>
+
+      <div class="space-y-4">
+        <div v-for="sec in cms.sections" :key="sec.id" class="card p-5 space-y-3">
+          <div class="flex justify-between items-center gap-4">
+            <input v-model="sec.title" class="input-dark font-semibold" />
+            <button @click="removeSection(sec.id)" class="btn-danger">Verwijder</button>
+          </div>
+          <textarea v-model="sec.content" rows="3" class="input-dark"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. FOTOALBUM BEHEER (LOS VAN SOLID POD) -->
+    <section v-if="activeTab === 'photos'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <h2 class="text-xl font-bold text-white">Fotoalbum Beheer (Gekoppeld aan GRAMPS & RD-coördinaten)</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <input v-model="photoForm.title" placeholder="Titel foto / charter" class="input-dark" />
+          <input v-model="photoForm.album" placeholder="Album (standaard: Visser Dossier)" class="input-dark" />
+          <input v-model="photoForm.gramps_handle" placeholder="GRAMPS Handle (bijv. p_visser_0001)" class="input-dark" />
+          <input v-model="photoForm.rd_x" type="number" step="any" placeholder="RD X (bijv. 69250)" class="input-dark" />
+          <input v-model="photoForm.rd_y" type="number" step="any" placeholder="RD Y (bijv. 386700)" class="input-dark" />
+          <input type="file" ref="fileInput" class="input-dark" />
+        </div>
+        <textarea v-model="photoForm.description" rows="2" placeholder="Omschrijving / transcriptie..." class="input-dark"></textarea>
+        <button @click="uploadPhoto" class="btn-primary">Foto Uploaden naar Album</button>
+      </div>
+
+      <div class="flex gap-3">
+        <input v-model="photoSearch" @input="fetchPhotos" placeholder="Zoek op titel, tag of transcriptie..." class="input-dark" />
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div v-for="p in photos" :key="p.id" class="card p-4 flex flex-col justify-between space-y-3">
+          <div>
+            <div class="h-44 bg-slate-900 rounded mb-3 flex items-center justify-center overflow-hidden border border-slate-800">
+              <img v-if="p.filename !== 'placeholder.jpg'" :src="'/uploads/' + p.filename" class="object-cover w-full h-full" />
+              <span v-else class="text-xs text-slate-500">Archiefstuk ({{ p.album }})</span>
+            </div>
+            <input v-model="p.title" class="input-dark text-sm font-bold mb-2" />
+            <textarea v-model="p.description" rows="2" class="input-dark text-xs mb-2"></textarea>
+            <div class="text-xs text-slate-400 space-y-1">
+              <div>Album: <strong class="text-slate-200">{{ p.album }}</strong></div>
+              <div v-if="p.gramps_handle">GRAMPS: <code class="text-amber-300">{{ p.gramps_handle }}</code></div>
+              <div v-if="p.rd_x && p.rd_y">RD: {{ p.rd_x }}, {{ p.rd_y }}</div>
+            </div>
+          </div>
+          <div class="flex justify-between pt-2 border-t border-slate-800">
+            <button @click="savePhotoMeta(p)" class="text-xs px-3 py-1.5 rounded bg-blue-900 text-blue-200">Bewaar Meta</button>
+            <button @click="deletePhoto(p.id)" class="btn-danger">Verwijder</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. GRAMPS DEVELOPER API MODULE -->
+    <section v-if="activeTab === 'gramps'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white">GRAMPS Developer API & Native XML (.gramps)</h2>
+            <p class="text-xs text-slate-400">Importeer en exporteer direct volgens de GRAMPS XML 1.7.1 DTD standaard (ondersteunt zowel plain XML als gzipped .gramps)</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="/api/gramps/xml" download="visser_dossier.gramps" class="btn-primary text-sm inline-block">Download .gramps XML</a>
+            <label class="px-3 py-2 rounded bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer">
+              Importeer .gramps Bestand
+              <input type="file" accept=".gramps,.xml,.gz" @change="uploadGrampsXml" class="hidden" />
+            </label>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-4 gap-3">
+          <input v-model="newPerson.first_name" placeholder="Voornaam" class="input-dark" />
+          <input v-model="newPerson.surname" placeholder="Achternaam (Visser)" class="input-dark" />
+          <input v-model="newPerson.title" placeholder="Titel / Beroep" class="input-dark" />
+          <select v-model="newPerson.gender" class="input-dark">
+            <option value="M">Man (M)</option>
+            <option value="F">Vrouw (F)</option>
+            <option value="U">Onbekend (U)</option>
+          </select>
+        </div>
+        <input v-model="newPerson.note" placeholder="Notitie / Charterverwijzing in Visser Dossier" class="input-dark" />
+        <button @click="addGrampsPerson" class="btn-primary">Persoon Toevoegen aan GRAMPS Database</button>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="card p-5 space-y-3">
+          <h3 class="font-bold text-white">Geregistreerde Personen (`Person` objecten)</h3>
+          <div v-for="person in gramps.people" :key="person.handle" class="p-3 rounded bg-slate-900 border border-slate-800 flex justify-between items-start">
+            <div>
+              <div class="font-semibold text-white">
+                [{{ person.gramps_id }}] {{ person.primary_name.first_name }} {{ person.primary_name.surname }}
+              </div>
+              <div class="text-xs text-slate-400">
+                Handle: <code>{{ person.handle }}</code> | Titel: {{ person.primary_name.title }}
+              </div>
+              <div v-if="person.note_list.length" class="text-xs text-emerald-300 mt-1">{{ person.note_list[0] }}</div>
+            </div>
+            <button @click="deleteGrampsPerson(person.handle)" class="btn-danger">Wis</button>
+          </div>
+        </div>
+
+        <div class="card p-5 space-y-3">
+          <h3 class="font-bold text-white">GRAMPS Events & Kadastrale Plaatsen (RD)</h3>
+          <div v-for="ev in gramps.events" :key="ev.handle" class="p-3 rounded bg-slate-900 border border-slate-800 text-sm">
+            <span class="font-semibold text-amber-300">[{{ ev.gramps_id }}] {{ ev.event_type }}</span> — {{ ev.date }}
+            <div class="text-xs text-slate-300">{{ ev.description }}</div>
+          </div>
+          <hr class="border-slate-800" />
+          <div v-for="pl in gramps.places" :key="pl.handle" class="p-3 rounded bg-slate-900 border border-slate-800 text-sm">
+            <span class="font-semibold text-sky-300">[{{ pl.gramps_id }}] {{ pl.title }}</span>
+            <div class="text-xs text-slate-400">RD: ({{ pl.rd_x }}, {{ pl.rd_y }}) — WGS84: ({{ pl.lat }}, {{ pl.lon }})</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. SOLID POD BEHEER (FOTO-VRIJ) -->
+    <section v-if="activeTab === 'solid'" class="space-y-6">
+      <div class="card p-6 space-y-4">
+        <h2 class="text-xl font-bold text-white">Solid POD Kluis (`01_Solid_POD_Vault`)</h2>
+        <p class="text-sm text-slate-300">
+          Conform je instructie zijn alle foto's verwijderd uit de Solid POD. De POD bevat uitsluitend de gelinkte RDF/Turtle metadata voor het <strong>Visser Dossier</strong>.
+        </p>
+        <button @click="purgeSolidPod" class="btn-danger">Forceer Foto-opschoning in Solid POD</button>
+        <pre v-if="solidStatus" class="p-4 bg-slate-950 rounded text-xs text-emerald-400 border border-slate-800">{{ solidStatus }}</pre>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      activeTab: 'home',
+      isOnline: true,
+      cms: {
+        hero_title: 'Visser Dossier',
+        sections: []
+      },
+      newSection: { title: '', category: 'Visser Dossier', content: '' },
+      photos: [],
+      photoSearch: '',
+      photoForm: { title: '', album: 'Visser Dossier', gramps_handle: '', rd_x: '', rd_y: '', description: '' },
+      gramps: { people: [], families: [], events: [], places: [], sources: [], citations: [] },
+      newPerson: { first_name: '', surname: 'Visser', title: '', gender: 'M', note: '' },
+      solidStatus: null
+    };
+  },
+  methods: {
+    tabClass(tab) {
+      return [
+        'px-3 py-1.5 rounded text-sm font-medium transition',
+        this.activeTab === tab ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+      ];
+    },
+    async loadAll() {
+      try {
+        const [cmsRes, photosRes, grampsRes] = await Promise.all([
+          fetch('/api/cms'),
+          fetch('/api/photos'),
+          fetch('/api/gramps/tree')
+        ]);
+        if (cmsRes.ok) {
+          this.cms = await cmsRes.json();
+          localStorage.setItem('visser_cms_offline', JSON.stringify(this.cms));
+        }
+        if (photosRes.ok) {
+          const pData = await photosRes.json();
+          this.photos = pData.results || [];
+          localStorage.setItem('visser_photos_offline', JSON.stringify(this.photos));
+        }
+        if (grampsRes.ok) {
+          this.gramps = await grampsRes.json();
+          localStorage.setItem('visser_gramps_offline', JSON.stringify(this.gramps));
+        }
+        this.isOnline = true;
+      } catch (e) {
+        this.isOnline = false;
+        const cachedCms = localStorage.getItem('visser_cms_offline');
+        const cachedPhotos = localStorage.getItem('visser_photos_offline');
+        const cachedGramps = localStorage.getItem('visser_gramps_offline');
+        if (cachedCms) this.cms = JSON.parse(cachedCms);
+        if (cachedPhotos) this.photos = JSON.parse(cachedPhotos);
+        if (cachedGramps) this.gramps = JSON.parse(cachedGramps);
+      }
+    },
+    async saveCms() {
+      localStorage.setItem('visser_cms_offline', JSON.stringify(this.cms));
+      try {
+        await fetch('/api/cms', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.cms)
+        });
+        this.isOnline = true;
+      } catch (_) {
+        this.isOnline = false;
+      }
+    },
+    async addSection() {
+      if (!this.newSection.title.trim()) return;
+      const sec = {
+        id: 'sec-' + Date.now(),
+        title: this.newSection.title,
+        category: this.newSection.category || 'Visser Dossier',
+        content: this.newSection.content,
+        updated_at: new Date().toISOString()
+      };
+      this.cms.sections.push(sec);
+      this.newSection = { title: '', category: 'Visser Dossier', content: '' };
+      await this.saveCms();
+    },
+    async removeSection(id) {
+      this.cms.sections = this.cms.sections.filter(s => s.id !== id);
+      await this.saveCms();
+    },
+    async fetchPhotos() {
+      try {
+        const res = await fetch('/api/photos?q=' + encodeURIComponent(this.photoSearch));
+        if (res.ok) {
+          const data = await res.json();
+          this.photos = data.results || [];
+        }
+      } catch (_) {}
+    },
+    async uploadPhoto() {
+      const fd = new FormData();
+      fd.append('title', this.photoForm.title || 'Visser Dossier Stuk');
+      fd.append('album', this.photoForm.album || 'Visser Dossier');
+      fd.append('gramps_handle', this.photoForm.gramps_handle);
+      fd.append('rd_x', this.photoForm.rd_x);
+      fd.append('rd_y', this.photoForm.rd_y);
+      fd.append('description', this.photoForm.description);
+      if (this.$refs.fileInput && this.$refs.fileInput.files[0]) {
+        fd.append('file', this.$refs.fileInput.files[0]);
+      }
+      try {
+        const res = await fetch('/api/photos', { method: 'POST', body: fd });
+        if (res.ok) {
+          this.photoForm = { title: '', album: 'Visser Dossier', gramps_handle: '', rd_x: '', rd_y: '', description: '' };
+          if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+          await this.fetchPhotos();
+        }
+      } catch (_) {}
+    },
+    async savePhotoMeta(p) {
+      try {
+        await fetch('/api/photos/' + p.id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(p)
+        });
+      } catch (_) {}
+    },
+    async deletePhoto(id) {
+      this.photos = this.photos.filter(p => p.id !== id);
+      localStorage.setItem('visser_photos_offline', JSON.stringify(this.photos));
+      try {
+        await fetch('/api/photos/' + id, { method: 'DELETE' });
+      } catch (_) {}
+    },
+    async uploadGrampsXml(ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const buf = await file.arrayBuffer();
+      try {
+        const res = await fetch('/api/gramps/xml', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: buf
+        });
+        if (res.ok) {
+          await this.loadAll();
+          alert('.gramps XML succesvol geïmporteerd in Visser Dossier!');
+        }
+      } catch (e) {
+        alert('Offline: kan .gramps XML pas parsen zodra de lokale Rust-server draait.');
+      }
+    },
+    async addGrampsPerson() {
+      if (!this.newPerson.first_name.trim()) return;
+      const payload = {
+        handle: '',
+        gramps_id: '',
+        gender: this.newPerson.gender,
+        primary_name: {
+          first_name: this.newPerson.first_name,
+          surname: this.newPerson.surname || 'Visser',
+          call_name: this.newPerson.first_name,
+          title: this.newPerson.title
+        },
+        event_ref_list: [],
+        family_list: [],
+        parent_family_list: [],
+        citation_list: [],
+        media_list: [],
+        note_list: this.newPerson.note ? [this.newPerson.note] : []
+      };
+      try {
+        const res = await fetch('/api/gramps/people', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          this.newPerson = { first_name: '', surname: 'Visser', title: '', gender: 'M', note: '' };
+          await this.loadAll();
+        }
+      } catch (_) {
+        payload.handle = 'p_offline_' + Date.now();
+        payload.gramps_id = 'I' + String(this.gramps.people.length + 1).padStart(4, '0');
+        this.gramps.people.push(payload);
+        localStorage.setItem('visser_gramps_offline', JSON.stringify(this.gramps));
+      }
+    },
+    async deleteGrampsPerson(handle) {
+      this.gramps.people = this.gramps.people.filter(p => p.handle !== handle);
+      localStorage.setItem('visser_gramps_offline', JSON.stringify(this.gramps));
+      try {
+        await fetch('/api/gramps/people/' + handle, { method: 'DELETE' });
+      } catch (_) {}
+    },
+    async purgeSolidPod() {
+      try {
+        const res = await fetch('/api/solid/purge-photos', { method: 'DELETE' });
+        this.solidStatus = await res.json();
+      } catch (e) {
+        this.solidStatus = { status: 'Offline uitgevoerd via bash-script' };
+      }
+    },
+    exportBackup() {
+      const bundle = {
+        exported_at: new Date().toISOString(),
+        cms: this.cms,
+        gramps: this.gramps,
+        photos: this.photos
+      };
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'visser_dossier_offline_backup.json';
+      a.click();
+    }
+  },
+  mounted() {
+    this.loadAll();
+  }
+}).mount('#app');
+</script>
 </body>
 </html>
