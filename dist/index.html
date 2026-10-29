@@ -1,0 +1,360 @@
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lodijke Master Platform | Zeeuws Visserij Dossier & Archiefbeheer</title>
+  <link rel="stylesheet" href="[suspicious link removed]">
+  <style>
+    :root {
+      --primary: #8B1E1E; /* Zeeuws Meekrap Rood */
+      --primary-hover: #661010;
+      --primary-focus: rgba(139, 30, 30, 0.25);
+      --bg-dark: #3A0808;
+      --accent-white: #FFFFFF;
+      --off-white: #F9F8F6;
+      --card-bg: #FFFFFF;
+      --border-color: #E2D7D5;
+      --text-color: #2C2221;
+    }
+
+    body {
+      background-color: var(--off-white);
+      color: var(--text-color);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header.master-nav {
+      background-color: var(--primary);
+      color: var(--accent-white);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    header.master-nav .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--accent-white);
+      text-decoration: none;
+    }
+
+    /* Direct Klikbare Visserij Dossier Knop naar Home */
+    .visserij-home-btn {
+      background-color: var(--accent-white);
+      color: var(--primary);
+      font-weight: 800;
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .visserij-home-btn:hover {
+      background-color: var(--off-white);
+      color: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .subnav-links {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .subnav-links a {
+      color: var(--accent-white);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .subnav-links a:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--bg-dark) 100%);
+      color: var(--accent-white);
+      padding: 3.5rem 2rem;
+      text-align: center;
+    }
+
+    .hero-banner h1 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      margin-bottom: 0.8rem;
+      color: var(--accent-white);
+    }
+
+    .hero-banner p {
+      font-size: 1.2rem;
+      max-width: 900px;
+      margin: 0 auto 1.8rem auto;
+      opacity: 0.95;
+    }
+
+    .container-wide {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .card-module {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-top: 4px solid var(--primary);
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card-module:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(139,30,30,0.12);
+    }
+
+    .card-module h3 {
+      color: var(--primary);
+      margin-top: 0;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Map Box & Pulsing Animation voor Perceel 369 */
+    .map-container {
+      background-color: #1a2634;
+      border-radius: 12px;
+      padding: 2rem;
+      color: var(--accent-white);
+      position: relative;
+      overflow: hidden;
+      min-height: 380px;
+      border: 2px solid var(--primary);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .map-grid-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .perceel-pin {
+      position: absolute;
+      top: 48%;
+      left: 58%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      cursor: pointer;
+    }
+
+    .pulse-core {
+      width: 18px;
+      height: 18px;
+      background-color: var(--primary);
+      border: 3px solid #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--primary);
+    }
+
+    .pulse-wave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      animation: pulse-wave-anim 2s infinite ease-out;
+      pointer-events: none;
+    }
+
+    .pulse-wave-delay {
+      animation-delay: 0.8s;
+    }
+
+    @keyframes pulse-wave-anim {
+      0% {
+        width: 20px;
+        height: 20px;
+        opacity: 1;
+        border-color: #8B1E1E;
+      }
+      100% {
+        width: 90px;
+        height: 90px;
+        opacity: 0;
+        border-color: #FF6B6B;
+      }
+    }
+
+    .map-tooltip {
+      position: absolute;
+      top: -105px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--primary);
+      color: var(--accent-white);
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.3);
+      text-align: center;
+    }
+
+    .map-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 8px 0 8px;
+      border-style: solid;
+      border-color: var(--primary) transparent transparent transparent;
+    }
+
+    .tree-box {
+      background: #1E1E1E;
+      color: #D4D4D4;
+      font-family: "Fira Code", Monaco, Consolas, "Courier New", monospace;
+      padding: 1.5rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      border-left: 5px solid var(--primary);
+    }
+
+    .tree-box .folder { color: #569CD6; font-weight: bold; }
+    .tree-box .file { color: #CE9178; }
+    .tree-box .comment { color: #6A9955; font-style: italic; }
+
+    footer {
+      background-color: var(--bg-dark);
+      color: var(--accent-white);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      margin-top: 4rem;
+    }
+
+    footer a { color: #FF9999; text-decoration: underline; }
+  </style>
+</head>
+<body id="home">
+
+  <!-- Navigatie -->
+  <header class="master-nav">
+    <div class="nav-container">
+      <a href="#home" class="brand-title">
+        <span>🏛️</span> Lodijke Master Platform
+      </a>
+
+      <!-- Direct Klikbare Visserij Dossier Home Knop  -->
+      <a href="#home" class="visserij-home-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+        <span>🎣</span> Visserij Dossier (Home)
+      </a>
+
+      <nav class="subnav-links">
+        <a href="#architectuur">Systeemarchitectuur</a>
+        <a href="#kaart">Perceel 369 (GIS)</a>
+        <a href="#sporen">Woo Sporen (A-F)</a>
+        <a href="#mappenboom">Mappenboom</a>
+        <a href="https://github.com/goija/lodijke" target="_blank">GitHub Repository</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Banner  -->
+  <section class="hero-banner">
+    <h1>Zeeuws Visserij Dossier & Lodijke Archiefbeheer</h1>
+   
+    <a href="#sporen" class="visserij-home-btn">Bekijk de 6 Woo-Sporen</a>
+  </section>
+
+  <div class="container-wide">
+
+    <!-- GIS Kaart met Animatie  -->
+    <section id="kaart" style="margin-bottom: 3rem;">
+      <h2 style="color: var(--primary);">📍 Geodetische Kaartweergave &amp; Perceel No. 369</h2>
+      <p>Oesterperceel No. 369 op de Bol van Lodijke (12,5 ha, RD X=68120 Y=388050) van Reder Benjamin Willem Schot (1840–1935).</p>
+      
+      <div class="map-container">
+        <div class="map-grid-overlay"></div>
+        
+        <div class="perceel-pin">
+          <div class="map-tooltip">
+            <strong>Oesterperceel No. 369 (12,5 ha)</strong><br>
+            Bol van Lodijke | Reder B.W. Schot (1840–1935)<br>
+            <small>Hoogaarzen: TH 2 "Eben Haëzer", TH 12 &amp; TH 90</small>
+          </div>
+          <div class="pulse-core"></div>
+          <div class="pulse-wave"></div>
+          <div class="pulse-wave pulse-wave-delay"></div>
+        </div>
+
+        <div style="position: absolute; bottom: 15px; left: 20px; font-size: 0.85rem; background: rgba(0,0,0,0.6); padding: 0.5rem 1rem; border-radius: 6px;">
+          Coördinaten: <strong>RD EPSG:28992 (X:68120, Y:388050)</strong> | WGS84: <strong>51.47833°N, 4.13750°E</strong><br>
+          Diepte: <strong>-2.10m NAP</strong> (Bol van Lodijke) | Kasteel Lodijke (ARC-LOD-01): <strong>-3.20m NAP</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 Modules  -->
+    <section id="architectuur" style="margin-bottom: 3rem;">
+      <h2 style="color: var(--primary);">⚙️ De 9 Overkoepelende Platform Modules</h2>
+      
+      <div class="module-grid">
+        <article class="card-module">
+          <h3>01. Solid POD Vault</h3>
+          <p>W3C Personal Online Datastore. Beheert de openbare fotodatabase, GeoJSON percelen en een AVG-geïsoleerde private zone voor BRP-auditlogs.</p>
+        </article>
+
+        <article class="card-module">
+          <h3>02. GRAMPS Genealogy Core</h3>
+          <p>Gramps Web API &amp; SQLite database. Herbergt stamvader B.W. Schot (I0103), zijn 13 kinderen, 2e echtgenote D.P. Kegge en GEDCOM 5.5.1 exports.</p>
+        </article>
+
+        <article class="card-module">
+          <h3>03. Axum Rust &amp; GraphQL API</h3>
+          <p>Hoge-performance Rust backend op poort 8082 met Async-GraphQL, 
