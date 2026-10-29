@@ -1,9 +1,10 @@
 {
-  "cleanUrls": true,
+  "version": 2,
+  "framework": "vite",
+  "installCommand": "cd 04_CMS_Document_Tabs_Frontend/frontend && npm install",
+  "buildCommand": "cd 04_CMS_Document_Tabs_Frontend/frontend && npm run build",
+  "outputDirectory": "04_CMS_Document_Tabs_Frontend/frontend/dist",
   "rewrites": [
-    {
-      "source": "/((?!.*\\.).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

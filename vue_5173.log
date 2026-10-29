@@ -1,0 +1,16 @@
+nohup: invoer wordt genegeerd
+
+> lodijke-avored-vue-cms@2.0.0 dev
+> vite --host --port 5173
+
+
+  VITE v5.4.21  ready in 550 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://192.168.2.6:5173/
+21:14:54 [vite] page reload index.html
+21:14:55 [vite] ✨ new dependencies optimized: vue
+21:16:10 [vite] page reload index.html
+21:16:10 [vite] hmr update /src/App.vue
+21:16:11 [vite] ✨ new dependencies optimized: leaflet
+21:16:11 [vite] ✨ optimized dependencies changed. reloading
