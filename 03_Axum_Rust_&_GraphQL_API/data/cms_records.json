@@ -1,5 +1,14 @@
 [
-  { "id": "LOD-1421-01", "titel": "Oorkonde Verdronken Land van Reimerswaal & Lodijke", "categorie": "Oorkonde", "datum": "1421-11-19" },
-  { "id": "LOD-1530-02", "titel": "Oudelandse Visrecht & Dijkrol Sint-Felixvloed", "categorie": "Visrecht", "datum": "1530-11-05" },
-  { "id": "SCH-1552-03", "titel": "Kadastrale Legger Scherpenisse Platteweg 3-7", "categorie": "Kadaster", "datum": "1832-10-01" }
+  {
+    "id": "doc-369",
+    "title": "Oesterperceel No. 369 Concessie",
+    "content": "Concessie op de Bol van Lodijke (12,5 ha) gepacht door B.W. Schot.",
+    "createdAt": "1892-11-22"
+  },
+  {
+    "id": "doc-gortzak",
+    "title": "Hofstede De Gortzak Schakerloo",
+    "content": "Tholen Sectie I nr. 360 (53,75 ha / 122 gemeten).",
+    "createdAt": "1873-12-23"
+  }
 ]
