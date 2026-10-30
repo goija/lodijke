@@ -3,15 +3,10 @@
 </template>
 
 <script setup>
-import MainInterface from './components/MainInterface.vue'
+import MainInterface from './components/MainInterface.vue';
 </script>
 
 <style>
-html, body, #app {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
 </style>

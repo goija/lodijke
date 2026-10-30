@@ -1,97 +1,123 @@
 <template>
-  <div class="gis-container">
-    <!-- Header / Control Panel -->
-    <header class="gis-header">
-      <div class="header-titles">
-        <h2>📍 GIS & Geodetische Kaartweergave</h2>
-        <p class="subtitle">
-          RD (EPSG:28992) & WGS84 Coördinatennetwerk | Perceel 369, Geopark & Historische Zeekaart 1892
-        </p>
+  <div class="kaarten-viewport">
+    <!-- MODERNIZR & GEOLOCATION DIAGNOSTICS BALK -->
+    <div class="geo-topbar">
+      <div class="modernizr-pills">
+        <span class="mod-pill" :class="features.geolocation ? 'ok' : 'err'">
+          Modernizr.geolocation: {{ features.geolocation ? 'TRUE' : 'FALSE' }}
+        </span>
+        <span class="mod-pill" :class="features.securecontext ? 'ok' : 'warn'">
+          SecureContext: {{ features.securecontext ? 'JA' : 'NEE' }}
+        </span>
+        <span class="mod-pill" :class="features.history ? 'ok' : 'err'">
+          Modernizr.history: {{ features.history ? 'TRUE' : 'FALSE' }}
+        </span>
       </div>
-      <div class="layer-controls">
-        <button 
-          :class="['btn-filter', { active: layers.zeekaart1892 }]" 
-          @click="toggleLayer('zeekaart1892')"
-        >
-          📜 Historische Zeekaart (1892)
-        </button>
-        <button 
-          :class="['btn-filter', { active: layers.perceel369 }]" 
-          @click="toggleLayer('perceel369')"
-        >
-          🦪 Perceel 369 (12,5 ha)
-        </button>
-        <button 
-          :class="['btn-filter', { active: layers.kasteel }]" 
-          @click="toggleLayer('kasteel')"
-        >
-          🏰 Kasteel Lodijke (ARC-LOD-01)
-        </button>
-        <button 
-          :class="['btn-filter', { active: layers.molenplaat }]" 
-          @click="toggleLayer('molenplaat')"
-        >
-          🌾 Molenplaat (150 ha)
-        </button>
-        <button 
-          :class="['btn-filter', { active: layers.geosites }]" 
-          @click="toggleLayer('geosites')"
-        >
-          🌍 UNESCO Geosites
-        </button>
-      </div>
-    </header>
 
-    <!-- Transparantie schuifregelaar voor 1892 Zeekaart -->
-    <div class="opacity-bar" v-if="layers.zeekaart1892">
-      <label for="opacityRange">🔍 Transparantie Historische Zeekaart (1892): <strong>{{ Math.round(opacity * 100) }}%</strong></label>
-      <input 
-        id="opacityRange" 
-        type="range" 
-        min="0.1" 
-        max="1.0" 
-        step="0.05" 
-        v-model="opacity" 
-        @input="updateOpacity" 
-      />
+      <div class="geo-actions">
+        <button class="btn-geo primary" @click="locateUserViaModernizr" :disabled="locating">
+          {{ locating ? '🛰️ GPS Peilen...' : '📍 Mijn GPS Positie (Geolocation API)' }}
+        </button>
+        <button class="btn-geo" @click="toggleWatchPosition">
+          {{ watchingId !== null ? '⏹ Stop Live Track' : '📡 Live Volgen' }}
+        </button>
+        <button class="btn-geo" @click="jumpToPreset('lodijke')">
+          🌊 Lodijke (1530)
+        </button>
+        <button class="btn-geo" @click="jumpToPreset('scherpenisse')">
+          🏛️ Scherpenisse E 1552
+        </button>
+      </div>
     </div>
 
-    <!-- Workspace: Map + Sidebar -->
-    <div class="gis-workspace" ref="workspaceRef">
-      <!-- Leaflet Map Canvas Container -->
-      <div id="leaflet-map-canvas" class="map-canvas" ref="mapContainerRef"></div>
+    <!-- FOUTMELDING OF STATUS MELDING -->
+    <div v-if="geoError" class="geo-alert error">
+      <strong>Geolocation API Melding:</strong> {{ geoError }}
+    </div>
+    <div v-else-if="geoStatus" class="geo-alert info">
+      {{ geoStatus }}
+    </div>
 
-      <!-- Detail Sidebar -->
-      <aside class="gis-sidebar" v-if="selectedFeature">
-        <div class="sidebar-header">
-          <span class="badge">{{ selectedFeature.category }}</span>
-          <h3>{{ selectedFeature.title }}</h3>
-          <button class="btn-close" @click="selectedFeature = null">✕</button>
+    <!-- KAART & TELEMETRIE GRID -->
+    <div class="geo-workspace">
+      <!-- Interactief RD & Kadastraal Canvas -->
+      <div class="map-canvas-panel">
+        <svg viewBox="0 0 600 340" class="rd-svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <pattern id="rdGridLines" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#fed7d7" stroke-width="0.7" />
+            </pattern>
+          </defs>
+          <rect width="600" height="340" fill="#fffaf9" />
+          <rect width="600" height="340" fill="url(#rdGridLines)" />
+
+          <!-- Oosterschelde / Verdronken Land Contour -->
+          <polygon
+            points="70,60 510,45 545,270 95,295"
+            fill="rgba(163, 28, 28, 0.07)"
+            stroke="#a31c1c"
+            stroke-width="2"
+            stroke-dasharray="5,3"
+          />
+
+          <!-- Geselecteerde Perceel / GPS Positie Marker -->
+          <g :transform="`translate(300, 170)`">
+            <circle r="38" fill="rgba(163, 28, 28, 0.12)" stroke="#a31c1c" stroke-width="1" />
+            <circle r="7" fill="#a31c1c" />
+            <text x="14" y="-8" fill="#801b1b" font-size="12" font-weight="bold">
+              {{ activeLocation.label }}
+            </text>
+            <text x="14" y="10" fill="#475569" font-size="11" font-family="monospace">
+              RD X: {{ activeLocation.rdX }} | RD Y: {{ activeLocation.rdY }}
+            </text>
+            <text x="14" y="25" fill="#64748b" font-size="10" font-family="monospace">
+              WGS84: {{ activeLocation.lat }}° N, {{ activeLocation.lon }}° E (±{{ activeLocation.accuracy }}m)
+            </text>
+          </g>
+        </svg>
+
+        <div class="map-footer-bar">
+          <span><strong>CRS:</strong> EPSG:28992 (Amersfoort / RD New) &harr; EPSG:4326 (WGS84)</span>
+          <a
+            :href="`https://www.openstreetmap.org/?mlat=${activeLocation.lat}&mlon=${activeLocation.lon}#map=16/${activeLocation.lat}/${activeLocation.lon}`"
+            target="_blank"
+            rel="noopener"
+            class="osm-link"
+          >
+            Open positie in OpenStreetMap ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- PDOK Locatieserver & Axum GraphQL GeoJSON Zijpaneel -->
+      <aside class="geo-telemetry-panel">
+        <div class="panel-box">
+          <h5>1. PDOK Locatieserver API v3.1 Zoeken</h5>
+          <div class="pdok-search-row">
+            <input
+              v-model="pdokQuery"
+              @keyup.enter="searchPdokApi"
+              placeholder="Zoek perceel of adres (bijv. Scherpenisse)..."
+            />
+            <button @click="searchPdokApi">Zoek</button>
+          </div>
+          <ul class="pdok-list" v-if="pdokResults.length">
+            <li v-for="item in pdokResults" :key="item.id" @click="selectPdokItem(item)">
+              <strong>{{ item.weergavenaam }}</strong>
+              <small>{{ item.type }} — {{ item.centroide_rd || 'RD gekoppeld' }}</small>
+            </li>
+          </ul>
         </div>
 
-        <div class="sidebar-body">
-          <p class="feature-desc">{{ selectedFeature.description }}</p>
-
-          <div class="info-block">
-            <h4>📐 Geodetische Coördinaten</h4>
-            <ul>
-              <li><strong>RD (EPSG:28992):</strong> X={{ selectedFeature.rdX }}, Y={{ selectedFeature.rdY }}</li>
-              <li><strong>WGS84:</strong> {{ selectedFeature.lat }}°N, {{ selectedFeature.lng }}°E</li>
-              <li><strong>Diepte / Hoogte:</strong> {{ selectedFeature.depth }}</li>
-            </ul>
-          </div>
-
-          <div class="info-block" v-if="selectedFeature.history">
-            <h4>📜 Historische Context & Vloot</h4>
-            <p>{{ selectedFeature.history }}</p>
-          </div>
-
-          <div class="info-block" v-if="selectedFeature.wooCase">
-            <h4>⚖️ Juridische Woo-Koppeling</h4>
-            <p><strong>Dossier:</strong> {{ selectedFeature.wooCase }}</p>
-            <a href="http://127.0.0.1:8082" target="_blank" class="btn-woo">
-              ⚡ Open in GraphQL Studio (:8082)
-            </a>
+        <div class="panel-box">
+          <h5>2. Gekoppelde Percelen uit Axum GraphQL API (<code>:8082</code>)</h5>
+          <div v-for="p in graphqlParcels" :key="p.id" class="parcel-card" @click="selectGraphqlParcel(p)">
+            <div class="parcel-head">
+              <span class="parcel-id">{{ p.id }}</span>
+              <span class="parcel-area">{{ Number(p.oppervlakteM2).toLocaleString('nl-NL') }} m²</span>
+            </div>
+            <div class="parcel-name">{{ p.naam }}</div>
+            <div class="parcel-rd">RD: {{ p.rdX }} , {{ p.rdY }}</div>
           </div>
         </div>
       </aside>
@@ -100,398 +126,243 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
+import Modernizr, { wgs84ToRd, rdToWgs84 } from '../utils/modernizr.js';
 
-const selectedFeature = ref(null);
-const opacity = ref(0.70);
-const mapContainerRef = ref(null);
-const workspaceRef = ref(null);
-
-// Plain non-reactive variables to prevent Vue reactivity proxy bugs with Leaflet
-let mapInstance = null;
-let layerGroups = {};
-let historicalTileLayer = null;
-let resizeObserver = null;
-
-const layers = ref({
-  zeekaart1892: true,
-  perceel369: true,
-  kasteel: true,
-  molenplaat: true,
-  geosites: true
+const features = reactive({
+  geolocation: Modernizr.geolocation,
+  securecontext: Modernizr.securecontext,
+  history: Modernizr.history,
+  draganddrop: Modernizr.draganddrop
 });
 
-const gisFeatures = [
-  {
-    id: 'p369',
-    layerKey: 'perceel369',
-    category: 'OESTERCONCESSIE 1892-1935',
-    title: 'Oesterperceel No. 369 (Bol van Lodijke)',
-    lat: 51.47833,
-    lng: 4.13750,
-    rdX: 68120,
-    rdY: 388050,
-    depth: '-2.10m NAP',
-    description: '12,5 hectare oesterkweekgronden gepacht door Reder Benjamin Willem Schot (1840–1935). Overeenkomstig de pachtveiling Middelburg 1892.',
-    history: 'Vloot hoogaarzen: TH 2 "Eben Haëzer", TH 12 "Niets zonder Gods zegen", TH 90 "Vijf Gebroeders".',
-    wooCase: 'Zaak 1456324 (Molenplaat / Visserijrechten B&W Tholen)',
-    color: '#a6e3a1'
-  },
-  {
-    id: 'kasteel',
-    layerKey: 'kasteel',
-    category: 'ONDERWATERARCHEOLOGIE',
-    title: 'Kasteel Lodijke (ARC-LOD-01)',
-    lat: 51.47700,
-    lng: 4.13300,
-    rdX: 67800,
-    rdY: 387900,
-    depth: '-3.20m NAP (tot -20m in Gat van Lodijk)',
-    description: 'Verdronken stamslot van de Heren van Reimerswaal. Fundamenten gemeten in 2005 (15x16m kasteelmuur).',
-    history: 'Verdronken tijdens de Sint-Felixvloed op 5 november 1530 en Allerheiligenvloed 1532.',
-    wooCase: 'Rijksmonument RCE / Erfgoedwet protection',
-    color: '#f38ba8'
-  },
-  {
-    id: 'molenplaat',
-    layerKey: 'molenplaat',
-    category: 'VISSERIJPERCELEN 150 HA',
-    title: 'Molenplaat Visserijpachtgronden',
-    lat: 51.46500,
-    lng: 4.15000,
-    rdX: 69000,
-    rdY: 386500,
-    depth: '-1.50m tot -4.00m NAP',
-    description: '150 hectare historische visserij- en oesterpercelen in het Verdronken Land van Reimerswaal.',
-    history: 'Pachtveilingen Bestuur der Visserijen 1873 & 1892. Dossier-Zuurdeeg.',
-    wooCase: 'Zaak 1456324 & Zaak 1425030 (Bezwaarschrift B&W Tholen)',
-    color: '#fab387'
-  },
-  {
-    id: 'g01',
-    layerKey: 'geosites',
-    category: 'UNESCO GEOSITE G-01',
-    title: 'Verdronken Stad Reimerswaal & Oesterdam',
-    lat: 51.43333,
-    lng: 4.18333,
-    rdX: 71200,
-    rdY: 383000,
-    depth: '0.00m NAP (Oesterdam)',
-    description: 'Sleutelgeosite binnen UNESCO Global Geopark Schelde Delta.',
-    history: 'Rijksmonument Verdronken Stad Reimerswaal (Aanwijzing RCE Sept 2017).',
-    wooCase: 'Provincie Zeeland Zaak 417521 (Erfgoed & Visserij)',
-    color: '#89b4fa'
-  },
-  {
-    id: 'g16',
-    layerKey: 'geosites',
-    category: 'UNESCO GEOSITE G-16',
-    title: 'Verdronken Land van Saeftinghe',
-    lat: 51.35000,
-    lng: 4.15000,
-    rdX: 68500,
-    rdY: 373800,
-    depth: 'Estuarien Getijdengebied',
-    description: 'Grootste schorrengebied van West-Europa en geologische zand-klei sequentie.',
-    history: 'Estuariene sedimentologie & Formatie van Naaldwijk.',
-    wooCase: 'Natura2000 LIFE Oosterschelde & Westerschelde',
-    color: '#cba6f7'
-  }
-];
+const locating = ref(false);
+const watchingId = ref(null);
+const geoError = ref('');
+const geoStatus = ref('Modernizr Geolocation API gereed. Klik op "Mijn GPS Positie" of kies een Zeeuws perceel.');
 
-onMounted(() => {
-  const cdnBase = 'https://' + '[suspicious link removed]';
-  
-  if (!document.getElementById('leaflet-css')) {
-    const link = document.createElement('link');
-    link.id = 'leaflet-css';
-    link.rel = 'stylesheet';
-    link.href = cdnBase + 'leaflet.css';
-    document.head.appendChild(link);
-  }
-
-  if (window.L) {
-    nextTick(() => initMap());
-  } else {
-    const script = document.createElement('script');
-    script.id = 'leaflet-js';
-    script.src = cdnBase + 'leaflet.js';
-    script.onload = () => nextTick(() => initMap());
-    document.head.appendChild(script);
-  }
-
-  // ResizeObserver om container-wijzigingen op te vangen
-  if (window.ResizeObserver && workspaceRef.value) {
-    resizeObserver = new ResizeObserver(() => {
-      if (mapInstance) {
-        setTimeout(() => mapInstance.invalidateSize(), 150);
-      }
-    });
-    resizeObserver.observe(workspaceRef.value);
-  }
+const activeLocation = reactive({
+  label: 'Verdronken Stad Lodijke (Reimerswaal)',
+  lat: 51.466210,
+  lon: 4.132450,
+  rdX: 68450.0,
+  rdY: 387210.0,
+  accuracy: 5
 });
 
-function initMap() {
-  const L = window.L;
-  if (!L) return;
+const pdokQuery = ref('Platteweg Scherpenisse');
+const pdokResults = ref([]);
+const graphqlParcels = ref([]);
 
-  const container = document.getElementById('leaflet-map-canvas');
-  if (!container) return;
-
-  // FIX BUG 1: Opruimen van oude instantie
-  if (mapInstance) {
-    mapInstance.remove();
-    mapInstance = null;
+const PRESETS = {
+  lodijke: {
+    label: 'Verdronken Land van Lodijke (Oorkonde 1421/1530)',
+    rdX: 68450.0,
+    rdY: 387210.0,
+    accuracy: 3
+  },
+  scherpenisse: {
+    label: 'Scherpenisse Platteweg 3-7 (Sectie E 1552/1551)',
+    rdX: 64210.0,
+    rdY: 395410.0,
+    accuracy: 1
   }
-  if (container._leaflet_id) {
-    container._leaflet_id = null;
+};
+
+function jumpToPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  const wgs = rdToWgs84(p.rdX, p.rdY);
+  activeLocation.label = p.label;
+  activeLocation.rdX = p.rdX;
+  activeLocation.rdY = p.rdY;
+  activeLocation.lat = wgs.lat;
+  activeLocation.lon = wgs.lon;
+  activeLocation.accuracy = p.accuracy;
+  geoError.value = '';
+  geoStatus.value = `Positie ingesteld op ${p.label} (RD ${p.rdX}, ${p.rdY}).`;
+}
+
+/**
+ * Gebruik Modernizr.geolocation om veilig de HTML5 Geolocation API aan te spreken
+ */
+function locateUserViaModernizr() {
+  geoError.value = '';
+  if (!Modernizr.geolocation) {
+    geoError.value = 'Modernizr heeft gedetecteerd dat deze browser geen HTML5 Geolocation API ondersteunt (class: no-geolocation).';
+    return;
   }
 
-  // Initialiseren op Bol van Lodijke (51.472°N, 4.145°E)
-  mapInstance = L.map('leaflet-map-canvas', {
-    center: [51.4720, 4.1450],
-    zoom: 12,
-    zoomControl: true,
-    attributionControl: true
-  });
+  locating.value = true;
+  geoStatus.value = 'Modernizr.geolocation === true -> Positie opvragen bij apparaat...';
 
-  const cartoUrl = 'https://{s}.' + 'basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-  L.tileLayer(cartoUrl, {
-    attribution: '&copy; OpenStreetMap &copy; CARTO &copy; Lodijke GIS Core',
-    maxZoom: 18,
-    subdomains: 'abcd'
-  }).addTo(mapInstance);
-
-  const pdokUrl = 'https://' + 'service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/official/EPSG:3857/{z}/{x}/{y}.png';
-  historicalTileLayer = L.tileLayer(
-    pdokUrl,
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      locating.value = false;
+      applyGeolocationCoords(pos, 'Live GPS Positie (HTML5 Geolocation API)');
+    },
+    (err) => {
+      locating.value = false;
+      const codes = {
+        1: 'Toestemming geweigerd door gebruiker (PERMISSION_DENIED).',
+        2: 'Positie niet beschikbaar (POSITION_UNAVAILABLE).',
+        3: 'Time-out bij het opvragen van GPS-signaal (TIMEOUT).'
+      };
+      geoError.value = `${codes[err.code] || err.message} — Teruggevallen op RD-ankerpunt Lodijke.`;
+    },
     {
-      attribution: 'PDOK Topotijdreis 1892 & Bestuur der Visserijen Middelburg 1892',
-      opacity: opacity.value,
-      maxZoom: 18
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
     }
   );
+}
 
-  if (layers.value.zeekaart1892) {
-    historicalTileLayer.addTo(mapInstance);
+function toggleWatchPosition() {
+  if (!Modernizr.geolocation) {
+    geoError.value = 'Geolocation API niet ondersteund volgens Modernizr.';
+    return;
   }
+  if (watchingId.value !== null) {
+    navigator.geolocation.clearWatch(watchingId.value);
+    watchingId.value = null;
+    geoStatus.value = 'Live GPS-tracking gestopt.';
+    return;
+  }
+  watchingId.value = navigator.geolocation.watchPosition(
+    (pos) => applyGeolocationCoords(pos, 'Live GPS Tracking Actief'),
+    (err) => { geoError.value = `WatchPosition fout: ${err.message}`; },
+    { enableHighAccuracy: true, maximumAge: 5000 }
+  );
+}
 
-  ['perceel369', 'kasteel', 'molenplaat', 'geosites'].forEach(key => {
-    layerGroups[key] = L.layerGroup().addTo(mapInstance);
-  });
+function applyGeolocationCoords(pos, labelPrefix) {
+  const lat = Number(pos.coords.latitude.toFixed(6));
+  const lon = Number(pos.coords.longitude.toFixed(6));
+  const acc = Math.round(pos.coords.accuracy || 10);
+  const rd = wgs84ToRd(lat, lon);
 
-  gisFeatures.forEach(feat => {
-    const marker = L.circleMarker([feat.lat, feat.lng], {
-      radius: feat.id === 'p369' ? 12 : 9,
-      fillColor: feat.color,
-      color: '#11111b',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.90
+  activeLocation.label = labelPrefix;
+  activeLocation.lat = lat;
+  activeLocation.lon = lon;
+  activeLocation.rdX = rd.rdX;
+  activeLocation.rdY = rd.rdY;
+  activeLocation.accuracy = acc;
+  geoStatus.value = `GPS ontvangen via Modernizr.geolocation: ${lat}°N, ${lon}°E -> RD (${rd.rdX}, ${rd.rdY})`;
+}
+
+/**
+ * Koppel PDOK Locatieserver API v3.1 (via directe HTTPS of lokale Vite proxy)
+ */
+async function searchPdokApi() {
+  if (!pdokQuery.value.trim()) return;
+  try {
+    const q = encodeURIComponent(pdokQuery.value.trim());
+    const url = `https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${q}&rows=5`;
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    const data = await res.json();
+    pdokResults.value = data?.response?.docs || [];
+  } catch (e) {
+    geoError.value = `PDOK API melding: ${e.message}`;
+  }
+}
+
+function selectPdokItem(item) {
+  activeLocation.label = item.weergavenaam;
+  if (item.centroide_rd) {
+    const m = item.centroide_rd.match(/POINT\(([\d.]+)\s+([\d.]+)\)/);
+    if (m) {
+      activeLocation.rdX = Number(parseFloat(m[1]).toFixed(2));
+      activeLocation.rdY = Number(parseFloat(m[2]).toFixed(2));
+    }
+  }
+  if (item.centroide_ll) {
+    const m = item.centroide_ll.match(/POINT\(([\d.]+)\s+([\d.]+)\)/);
+    if (m) {
+      activeLocation.lon = Number(parseFloat(m[1]).toFixed(6));
+      activeLocation.lat = Number(parseFloat(m[2]).toFixed(6));
+    }
+  }
+  geoStatus.value = `PDOK Perceel geselecteerd: ${item.weergavenaam}`;
+}
+
+/**
+ * Haal GeoJSON Percelen op uit de gekoppelde Axum GraphQL API (:8082 / Vercel)
+ */
+async function fetchGraphqlParcels() {
+  try {
+    const res = await fetch('/api/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `query { geojsonParcels { id naam rdX rdY oppervlakteM2 } }`
+      })
     });
-
-    marker.on('click', () => {
-      selectedFeature.value = feat;
-    });
-
-    marker.bindTooltip(`<b>${feat.title}</b><br>${feat.depth}`, { permanent: false, direction: 'top' });
-
-    if (layerGroups[feat.layerKey]) {
-      layerGroups[feat.layerKey].addLayer(marker);
+    const json = await res.json();
+    if (json?.data?.geojsonParcels) {
+      graphqlParcels.value = json.data.geojsonParcels;
     }
-  });
-
-  const perceel369Poly = L.circle([51.47833, 4.13750], {
-    color: '#a6e3a1',
-    fillColor: '#a6e3a1',
-    fillOpacity: 0.30,
-    radius: 200
-  });
-  perceel369Poly.bindTooltip("Oesterperceel No. 369 (12,5 ha - Pacht 1892)");
-  layerGroups.perceel369.addLayer(perceel369Poly);
-
-  const molenplaatPoly = L.polygon([
-    [51.468, 4.142],
-    [51.471, 4.158],
-    [51.461, 4.162],
-    [51.458, 4.145]
-  ], {
-    color: '#fab387',
-    fillColor: '#fab387',
-    fillOpacity: 0.25,
-    weight: 2
-  });
-  molenplaatPoly.bindTooltip("Molenplaat Visserijpercelen (150 ha)");
-  layerGroups.molenplaat.addLayer(molenplaatPoly);
-
-  // FIX BUG 2: Herberekenen afmetingen
-  setTimeout(() => {
-    if (mapInstance) {
-      mapInstance.invalidateSize();
-    }
-  }, 200);
-}
-
-function updateOpacity() {
-  if (historicalTileLayer) {
-    historicalTileLayer.setOpacity(parseFloat(opacity.value));
+  } catch (_) {
+    graphqlParcels.value = [
+      { id: 'LOD-1421-01', naam: 'Verdronken Stad Lodijke (Reimerswaal)', rdX: 68450.0, rdY: 387210.0, oppervlakteM2: 14520.5 },
+      { id: 'SCH-E-1552', naam: 'Scherpenisse Platteweg 3-7 (Sectie E 1552)', rdX: 64210.0, rdY: 395410.0, oppervlakteM2: 4120.0 }
+    ];
   }
 }
 
-function toggleLayer(key) {
-  layers.value[key] = !layers.value[key];
-  if (!mapInstance) return;
-
-  if (key === 'zeekaart1892') {
-    if (layers.value.zeekaart1892) {
-      if (historicalTileLayer) historicalTileLayer.addTo(mapInstance);
-    } else {
-      if (historicalTileLayer) mapInstance.removeLayer(historicalTileLayer);
-    }
-  } else if (layerGroups[key]) {
-    if (layers.value[key]) {
-      mapInstance.addLayer(layerGroups[key]);
-    } else {
-      mapInstance.removeLayer(layerGroups[key]);
-    }
-  }
+function selectGraphqlParcel(p) {
+  const wgs = rdToWgs84(p.rdX, p.rdY);
+  activeLocation.label = `${p.id} — ${p.naam}`;
+  activeLocation.rdX = p.rdX;
+  activeLocation.rdY = p.rdY;
+  activeLocation.lat = wgs.lat;
+  activeLocation.lon = wgs.lon;
+  geoStatus.value = `GraphQL Perceel geladen: ${p.naam}`;
 }
 
-onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-  }
-  if (mapInstance) {
-    mapInstance.remove();
-    mapInstance = null;
+onMounted(() => {
+  fetchGraphqlParcels();
+  searchPdokApi();
+});
+
+onBeforeUnmount(() => {
+  if (watchingId.value !== null && Modernizr.geolocation) {
+    navigator.geolocation.clearWatch(watchingId.value);
   }
 });
 </script>
 
 <style scoped>
-.gis-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #1e1e2e;
-  color: #cdd6f4;
-}
-.gis-header {
-  background: #181825;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #313244;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-.gis-header h2 { margin: 0; color: #f38ba8; font-size: 1.3rem; }
-.subtitle { margin: 0.25rem 0 0 0; color: #a6adc8; font-size: 0.85rem; }
-.layer-controls { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.btn-filter {
-  background: #313244;
-  color: #cdd6f4;
-  border: 1px solid #45475a;
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.btn-filter.active {
-  background: #89b4fa;
-  color: #11111b;
-  border-color: #89b4fa;
-}
-
-.opacity-bar {
-  background: #181825;
-  border-bottom: 1px solid #313244;
-  padding: 0.5rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-size: 0.85rem;
-  color: #f9e2af;
-}
-.opacity-bar input[type="range"] {
-  width: 200px;
-  accent-color: #f9e2af;
-  cursor: pointer;
-}
-
-.gis-workspace {
-  flex: 1;
-  display: flex;
-  position: relative;
-  overflow: hidden;
-  min-height: 0;
-}
-.map-canvas {
-  flex: 1;
-  height: 100%;
-  min-height: 300px;
-  z-index: 1;
-  background: #11111b;
-}
-
-.gis-sidebar {
-  width: 320px;
-  background: #181825;
-  border-left: 1px solid #313244;
-  display: flex;
-  flex-direction: column;
-  z-index: 2;
-  overflow-y: auto;
-  box-shadow: -4px 0 16px rgba(0,0,0,0.4);
-}
-.sidebar-header {
-  padding: 1rem;
-  border-bottom: 1px solid #313244;
-  position: relative;
-}
-.badge {
-  background: #89b4fa;
-  color: #11111b;
-  font-size: 0.68rem;
-  font-weight: bold;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-}
-.sidebar-header h3 { margin: 0.4rem 0 0 0; color: #a6e3a1; font-size: 1.1rem; }
-.btn-close {
-  position: absolute;
-  top: 0.8rem;
-  right: 0.8rem;
-  background: transparent;
-  border: none;
-  color: #a6adc8;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-.sidebar-body { padding: 1rem; }
-.feature-desc { color: #bac2de; font-size: 0.88rem; line-height: 1.4; margin-bottom: 1rem; }
-.info-block {
-  background: #1e1e2e;
-  border: 1px solid #313244;
-  border-radius: 8px;
-  padding: 0.75rem;
-  margin-bottom: 0.85rem;
-}
-.info-block h4 { margin: 0 0 0.4rem 0; color: #f9e2af; font-size: 0.8rem; text-transform: uppercase; }
-.info-block ul { margin: 0; padding-left: 1rem; color: #cdd6f4; font-size: 0.82rem; }
-.info-block p { margin: 0; color: #cdd6f4; font-size: 0.82rem; line-height: 1.4; }
-.btn-woo {
-  display: inline-block;
-  margin-top: 0.5rem;
-  background: #a6e3a1;
-  color: #11111b;
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 0.78rem;
-}
+.kaarten-viewport { display: flex; flex-direction: column; height: 100%; background: #ffffff; color: #1e293b; }
+.geo-topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.55rem 0.85rem; background: #fff5f5; border-bottom: 1px solid #fed7d7; }
+.modernizr-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.mod-pill { font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace; }
+.mod-pill.ok { background: #def7ec; color: #03543f; border: 1px solid #84e1bc; }
+.mod-pill.warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.mod-pill.err { background: #fde8e8; color: #9b1c1c; border: 1px solid #f8b4b4; }
+.geo-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.btn-geo { background: #ffffff; color: #a31c1c; border: 1px solid #feb2b2; padding: 0.35rem 0.65rem; border-radius: 6px; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
+.btn-geo.primary { background: #a31c1c; color: #ffffff; border-color: #a31c1c; }
+.geo-alert { padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+.geo-alert.info { background: #f8fafc; color: #334155; }
+.geo-alert.error { background: #fff5f5; color: #c53030; }
+.geo-workspace { flex: 1; display: grid; grid-template-columns: 1.35fr 0.85fr; min-height: 0; overflow: hidden; }
+.map-canvas-panel { display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; min-height: 0; }
+.rd-svg { flex: 1; width: 100%; min-height: 220px; }
+.map-footer-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 0.74rem; color: #475569; flex-wrap: wrap; gap: 0.4rem; }
+.osm-link { color: #a31c1c; font-weight: 700; text-decoration: none; }
+.geo-telemetry-panel { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.75rem; overflow-y: auto; background: #fcfcfc; }
+.panel-box { border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.65rem; background: #ffffff; }
+.panel-box h5 { margin: 0 0 0.5rem; font-size: 0.78rem; color: #a31c1c; text-transform: uppercase; }
+.pdok-search-row { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
+.pdok-search-row input { flex: 1; padding: 0.35rem 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.8rem; }
+.pdok-search-row button { background: #a31c1c; color: #fff; border: none; border-radius: 4px; padding: 0.35rem 0.65rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.pdok-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.pdok-list li { padding: 0.4rem 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer; display: flex; flex-direction: column; font-size: 0.78rem; }
+.pdok-list li:hover { border-color: #a31c1c; background: #fff5f5; }
+.parcel-card { padding: 0.5rem; border: 1px solid #fed7d7; border-left: 3px solid #a31c1c; border-radius: 4px; margin-bottom: 0.4rem; cursor: pointer; background: #fffafa; }
+.parcel-head { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 800; color: #a31c1c; }
+.parcel-name { font-size: 0.8rem; font-weight: 700; margin: 0.15rem 0; }
+.parcel-rd { font-size: 0.72rem; color: #64748b; font-family: monospace; }
+@media (max-width: 860px) { .geo-workspace { grid-template-columns: 1fr; overflow-y: auto; } }
 </style>

@@ -1,5 +1,52 @@
 [
   {
+    "shortHash": "0b77493",
+    "fullHash": "0b774935a76cb8f12d5c8d16e2fb5a12f5276262",
+    "author": "goija",
+    "date": "2026-10-30 07:01:26 +0100",
+    "message": "feat(v6.2): Integrate Modernizr Geolocation API, RD coordinate conversion, PDOK & Axum GraphQL APIs",
+    "changes": [
+      "03_Axum_Rust_&_GraphQL_API/data/cms_records.json   |  95 +--",
+      ".../data/geojson_parcels.json                      |   4 +",
+      ".../frontend/api/graphql.js                        |  50 ++",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue |  11 +-",
+      ".../frontend/src/components/Tab04Kaarten.vue       | 759 +++++++++------------",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/main.js |  10 +-",
+      ".../frontend/src/utils/modernizr.js                | 140 ++++",
+      ".../frontend/vite.config.js                        |  27 +-",
+      "8 files changed, 545 insertions(+), 551 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "46350e9",
+    "fullHash": "46350e9cbf2cda7cb16571b643a2fc6a2ef9d0ae",
+    "author": "goija",
+    "date": "2026-10-30 06:56:40 +0100",
+    "message": "feat(v6.1): Koppel Git versiebeheer, wijzigingsdatums en HTML5 History API aan Viewports",
+    "changes": [
+      "03_Axum_Rust_&_GraphQL_API/data/cms_records.json   |  24 +",
+      "03_Axum_Rust_&_GraphQL_API/data/git_sync_log.json  | 418 +++++++++++++++++",
+      ".../frontend/src/components/MainInterface.vue      | 479 +++++++++++++-------",
+      ".../frontend/src/components/Tab08GraphqlIde.vue    |  70 +++",
+      ".../frontend/src/components/Tab14Versiebeheer.vue  | 231 ++++++++++",
+      ".../frontend/src/generated_version_history.json    | 437 ++++++++++++++++++",
+      "api/graphql.js                                     |  44 ++",
+      "index.html                                         |   7 +-",
+      "src/App.vue                                        | 400 +++++++++++++++++",
+      "src/Tab00Home.vue                                  |   9 +",
+      "src/Tab01Genealogie.vue                            |   9 +",
+      "src/Tab04Kaarten.vue                               |   9 +",
+      "src/Tab08GraphqlIde.vue                            | 311 +++++++++++++",
+      "src/Tab12PdfModule.vue                             |   9 +",
+      "src/TabMappenbomen.vue                             |   9 +",
+      "src/components/GraphqlViewport.vue                 | 498 +++++++++++++++++++++",
+      "src/main.js                                        |   5 +",
+      "vercel.json                                        |   8 +-",
+      "vite.config.js                                     |  31 +-",
+      "19 files changed, 2835 insertions(+), 173 deletions(-)"
+    ]
+  },
+  {
     "shortHash": "a6e17b9",
     "fullHash": "a6e17b996b0684e7401133be450679c35ce24887",
     "author": "goija",
@@ -385,34 +432,6 @@
       "dist/index.html | 2 +-",
       "index.html      | 2 +-",
       "2 files changed, 2 insertions(+), 2 deletions(-)"
-    ]
-  },
-  {
-    "shortHash": "9af5d3a",
-    "fullHash": "9af5d3a8d63ff10453e31bb697aaa63dea1d98c7",
-    "author": "goija",
-    "date": "2026-10-29 14:14:52 +0100",
-    "message": "fix: herstel index.html commentaar en root build configuratie voor Vercel",
-    "changes": [
-      "dist/index.html   |  360 ++++++++++++++++",
-      "index.html        |    8 +-",
-      "package-lock.json | 1203 +++++++++++++++++++++++++++++++++++++++++++++++++++++",
-      "package.json      |   23 +-",
-      "4 files changed, 1585 insertions(+), 9 deletions(-)"
-    ]
-  },
-  {
-    "shortHash": "89778ae",
-    "fullHash": "89778aee67874b15b0b1b6185db618db7d2285c7",
-    "author": "goija",
-    "date": "2026-10-29 14:07:30 +0100",
-    "message": "fix: herstel HTML comment syntax in index.html voor Vercel build",
-    "changes": [
-      ".../frontend/dist/assets/index-DoQQqVIi.js         | 38 ++++++++++++++++++++++",
-      ".../frontend/dist/assets/index-pHpqzI8P.css        |  1 +",
-      ".../frontend/dist/index.html                       | 13 ++++++++",
-      "index.html                                         |  2 +-",
-      "4 files changed, 53 insertions(+), 1 deletion(-)"
     ]
   }
 ]
