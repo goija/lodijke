@@ -69,7 +69,9 @@
       </header>
 
       <!-- 3. DYNAMICALLY DRAGGABLE & SWAPPABLE VIEWPORTS MATRIX -->
-      <div :class="['viewports-matrix', `layout-${layoutMode}`]">
+      <div 
+        :class="['viewports-matrix', `layout-${layoutMode}`]"
+      >
         <section 
           v-for="(vp, index) in activeViewports" 
           :key="vp.id"
@@ -215,7 +217,6 @@ function onDragEnd() {
 .sidebar-collapsed .menu-panel { width: 64px; }
 .brand-header { padding: 1.1rem 1rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 2px solid #a31c1c; background: #fff5f5; }
 .logo-icon { font-size: 1.5rem; }
-.brand-text { flex: 1; overflow: hidden; }
 .brand-text h2 { margin: 0; font-size: 1.1rem; color: #a31c1c; font-weight: 800; letter-spacing: -0.02em; }
 .version-tag { font-size: 0.7rem; color: #718096; font-weight: 600; }
 .btn-toggle-sidebar { background: #ffffff; color: #a31c1c; border: 1px solid #fed7d7; padding: 0.35rem 0.6rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
