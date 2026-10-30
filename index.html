@@ -1,13 +1,1648 @@
 <!DOCTYPE html>
 <html lang="nl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#a31c1c" />
-    <title>Lodijke Platform v3.1 — Meekrab Rood & Wit</title>
-  </head>
-  <body style="margin:0; padding:0; background:#f8fafc;">
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Archief &amp; Rust CMS — Familie Schot &amp; Bout (Tholen, Scherpenisse &amp; Bol van Lodijke)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            meekrab: {
+              50: '#fdf7f7',
+              100: '#faeaea',
+              200: '#f3d5d7',
+              600: '#9e2a33',
+              700: '#8b2229',
+              800: '#731b21',
+              900: '#561318',
+              950: '#360a0d'
+            },
+            zeeuws: {
+              sand: '#f9f7f2',
+              paper: '#ffffff',
+              border: '#d8cfc4',
+              ink: '#18181b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* STANDAARD OP A+ (19px) VOOR RUST EN OVERZICHT */
+    :root { --base-font-size: 19px; }
+    html {
+      font-size: var(--base-font-size);
+      line-height: 1.6;
+      background-color: #f9f7f2;
+      color: #18181b;
+      scroll-behavior: smooth;
+    }
+    body {
+      min-height: 100dvh;
+      background-color: #f9f7f2;
+      color: #18181b;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .ui-btn {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.9rem;
+      font-weight: 600;
+      font-size: 0.82rem;
+      border-radius: 0.45rem;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .ui-input {
+      min-height: 42px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.88rem;
+      border-radius: 0.45rem;
+      border: 1.5px solid #c5b9ac;
+      background-color: #ffffff;
+      color: #18181b;
+    }
+    .ui-input:focus {
+      outline: none;
+      border-color: #8b2229;
+      box-shadow: 0 0 0 3px rgba(139, 34, 41, 0.14);
+    }
+    .sliding-drawer-left {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: min(320px, 86vw);
+      background-color: #ffffff;
+      border-right: 1.5px solid #dfd6cb;
+      z-index: 60;
+      transform: translateX(-102%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.06);
+    }
+    .sliding-drawer-left.open { transform: translateX(0); }
+    .sliding-drawer-right {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: min(380px, 90vw);
+      background-color: #ffffff;
+      border-left: 1.5px solid #dfd6cb;
+      z-index: 60;
+      transform: translateX(102%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+    }
+    .sliding-drawer-right.open { transform: translateX(0); }
+    @media (min-width: 1180px) {
+      body.drawer-pinned .sliding-drawer-left {
+        transform: translateX(0);
+        z-index: 35;
+        box-shadow: none;
+      }
+      body.drawer-pinned .app-shell-content { margin-left: 320px; }
+      body.drawer-pinned #drawerBackdrop { display: none !important; }
+    }
+    .sliding-tab-strip {
+      display: flex;
+      align-items: center;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      gap: 0.35rem;
+      padding: 0.35rem 0.15rem;
+    }
+    .sliding-tab-strip::-webkit-scrollbar { display: none; }
+    .folder-tab-btn {
+      min-height: 40px;
+      padding: 0.4rem 0.85rem;
+      border-radius: 0.4rem;
+      border: 1.5px solid #dfd6cb;
+      background-color: #ffffff;
+      color: #27272a;
+      font-weight: 600;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .folder-tab-btn:hover {
+      background-color: #fdf7f7;
+      border-color: #8b2229;
+      color: #731b21;
+    }
+    .folder-tab-active {
+      background-color: #8b2229 !important;
+      color: #ffffff !important;
+      border-color: #561318 !important;
+    }
+    .sub-tab-btn {
+      min-height: 36px;
+      padding: 0.3rem 0.75rem;
+      border-radius: 0.38rem;
+      border: 1.5px solid #dfd6cb;
+      background-color: #ffffff;
+      color: #27272a;
+      font-weight: 600;
+      font-size: 0.76rem;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .sub-tab-active {
+      background-color: #731b21 !important;
+      color: #ffffff !important;
+      border-color: #561318 !important;
+    }
+    .viewport-grid-single { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+    .viewport-grid-split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+    @media (min-width: 1024px) {
+      .viewport-grid-split { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    .viewport-grid-stacked { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+    .node-shield { background-color: #27272a; border: 1.5px solid #52525b; color: #ffffff; }
+  </style>
+</head>
+<body class="drawer-pinned flex flex-col pb-16 lg:pb-8">
+
+  <div id="drawerBackdrop" onclick="closeAllDrawers()" class="hidden fixed inset-0 bg-black/40 z-50"></div>
+
+  <div id="statusToast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[70] max-w-lg w-[90vw] bg-meekrab-800 text-white border border-white shadow-xl rounded-lg p-3">
+    <div class="flex items-center justify-between gap-3">
+      <div class="font-medium text-xs sm:text-sm" id="statusToastText">Melding</div>
+      <button onclick="hideToast()" class="px-2.5 py-1 bg-white text-meekrab-900 rounded text-xs font-bold">Sluiten</button>
+    </div>
+  </div>
+
+  <!-- LINKER SCHUIFMENU (STANDAARD OPEN & GESTRUCTUREERD) -->
+  <aside id="leftSlidingDrawer" class="sliding-drawer-left open" aria-label="Hoofdnavigatie">
+    <div class="bg-meekrab-800 text-white p-3.5 border-b border-meekrab-950 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="font-mono text-[11px] uppercase tracking-wider text-meekrab-100 font-semibold">Archiefmenu</span>
+        <div class="flex items-center gap-1">
+          <button onclick="togglePinLeftDrawer()" id="btnPinDrawer" class="hidden xl:inline-flex px-2 py-0.5 bg-white/15 hover:bg-white/25 text-white rounded text-[11px]">Vastgezet</button>
+          <button onclick="toggleLeftDrawer(false)" class="px-2 py-0.5 bg-white text-meekrab-900 rounded text-[11px] font-bold">Sluit</button>
+        </div>
+      </div>
+      <div class="font-serif font-bold text-sm text-white">Schot, Bout &amp; Bol van Lodijke</div>
+      <input id="drawerMenuFilterInput" type="text" placeholder="Filter hoofdstuk..." oninput="filterSlidingMenu(this.value)" class="w-full px-2.5 py-1 bg-white text-black rounded text-xs placeholder-gray-500" />
+    </div>
+
+    <div id="drawerMenuList" class="flex-1 overflow-y-auto p-3 space-y-4 bg-zeeuws-sand text-xs">
+      <div class="space-y-1.5">
+        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">1. Genealogie &amp; Dossiers</div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1" data-keywords="stamboom genealogie kwartierstaat avg schot bout">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabGenealogie')" class="font-bold text-zinc-900 hover:text-meekrab-700">01. Stamboom &amp; AVG</button>
+            <button onclick="openInSecondaryViewport('stamboom')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenBoom');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1A. Boom</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenTakken');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1B. 13 Kinderen</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenKwartier');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1C. Kwartierstaat</button>
+            <button onclick="switchTab('tabGenealogie'); switchSubTab('tabGenealogie','subGenPrivacy');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">1D. AVG-Schild</button>
+          </div>
+        </div>
+
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1" data-keywords="fotoalbum uploads beeldbank fotos camera solid pod">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabFotos')" class="font-bold text-zinc-900 hover:text-meekrab-700">02. Fotoalbum &amp; Uploads</button>
+            <button onclick="openInSecondaryViewport('fotos')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosOverzicht');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2A. Galerij</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosUpload');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2B. Uploaden</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosFilter');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2C. Filter</button>
+            <button onclick="switchTab('tabFotos'); switchSubTab('tabFotos','subFotosBackup');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">2D. JSON POD</button>
+          </div>
+        </div>
+
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 space-y-1" data-keywords="documenten dossiers bw schot regenten hofsteden kruittoren watersnood 1906">
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('tabDocumenten')" class="font-bold text-zinc-900 hover:text-meekrab-700">03. Dossier B.W. Schot</button>
+            <button onclick="openInSecondaryViewport('dossier')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px]">
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docA');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">B.W. Schot (6)</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docB');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">Regenten</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docC');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">Akten 1901/13</button>
+            <button onclick="switchTab('tabDocumenten'); switchDocTab('docNew');" class="px-1.5 py-0.5 bg-zeeuws-sand rounded text-left">+ Nieuw</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">2. Kaarten &amp; Scheepsbouw</div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="zeekaart bol van lodijke perceel 369 oosterschelde">
+          <button onclick="switchTab('tabKaarten')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">04. Zeekaart Perceel 369</button>
+          <button onclick="openInSecondaryViewport('zeekaart')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="plattegronden hoogaars th 2 eben haezer klepduiker">
+          <button onclick="switchTab('tabPlattegronden')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">05. Hoogaars TH 2 &amp; Sluis</button>
+          <button onclick="openInSecondaryViewport('plattegronden')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">3. Onderzoeksregisters (DB)</div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="archeologie vondsten kasteel lodijke reimerswaal">
+          <button onclick="switchTab('tabArcheologie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">06. Archeologie Lodijke</button>
+          <button onclick="openInSecondaryViewport('archeologie')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="geologie boorprofielen bodem klei veen">
+          <button onclick="switchTab('tabGeologie')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">07. Geologie &amp; Boringen</button>
+          <button onclick="openInSecondaryViewport('geologie')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="percelen kadaster historie gortzak kandia gemeten">
+          <button onclick="switchTab('tabKadaster')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">08. Percelen &amp; Gemeten</button>
+          <button onclick="openInSecondaryViewport('kadaster')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="font-mono font-bold text-[10px] text-meekrab-800 uppercase tracking-wider px-1">4. Bestuursrecht &amp; Rust CMS</div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="woo besluiten commissies rechters awb">
+          <button onclick="switchTab('tabWoo')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">09. Woo &amp; Rechtbank</button>
+          <button onclick="openInSecondaryViewport('woo')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+        <div class="drawer-item bg-white border border-zeeuws-border rounded-md p-2 flex items-center justify-between" data-keywords="google sites viewport generator nieuw tabblad">
+          <button onclick="switchTab('tabUitbreiding')" class="font-bold text-zinc-900 hover:text-meekrab-700 text-left">10. Eigen Tabs &amp; Embed</button>
+        </div>
+        <div class="drawer-item bg-meekrab-50 border border-meekrab-700 rounded-md p-2 flex items-center justify-between" data-keywords="rust axum cms api backend server solid pod">
+          <button onclick="switchTab('tabRustCms')" class="font-bold text-meekrab-800 text-left">11. Rust Axum CMS</button>
+          <button onclick="openInSecondaryViewport('rustcms')" class="text-[10px] text-meekrab-700 font-semibold">+ VP 2</button>
+        </div>
+      </div>
+
+      <div id="drawerCustomMenuList" class="space-y-1.5"></div>
+    </div>
+
+    <div class="p-2.5 bg-zinc-900 text-white flex items-center justify-between text-[11px] font-mono">
+      <span>STANDAARD: A+ (19PX)</span>
+      <button onclick="setViewportLayout('split')" class="px-2 py-0.5 bg-meekrab-700 text-white rounded font-sans font-semibold">Split-VP</button>
+    </div>
+  </aside>
+
+  <!-- RECHTER DETAILPANEEL -->
+  <aside id="rightSlidingInspector" class="sliding-drawer-right" aria-label="Detailpaneel">
+    <div class="bg-meekrab-800 text-white p-3.5 flex items-center justify-between">
+      <div>
+        <span id="rightDrawerBadge" class="font-mono text-[11px] text-meekrab-100 uppercase">Inspectie</span>
+        <h2 id="rightDrawerTitle" class="font-serif font-bold text-sm text-white">Benjamin Willem Schot (1840–1935)</h2>
+      </div>
+      <button onclick="toggleRightDrawer(false)" class="px-2.5 py-1 bg-white text-meekrab-900 rounded text-xs font-bold">Sluit</button>
+    </div>
+    <div id="rightDrawerBody" class="flex-1 overflow-y-auto p-4 space-y-3 bg-zeeuws-sand text-sm">
+      <div class="bg-white border border-zeeuws-border rounded-lg p-3.5 space-y-1.5">
+        <div class="font-mono text-xs text-meekrab-700 font-semibold">GRAMPS-ID: I0103</div>
+        <h3 class="font-serif font-bold text-base">Benjamin Willem Schot (1840–1935)</h3>
+        <p>Geboren 26 september 1840 te Tholen, overleden 17 november 1935 te Tholen (95 jr). Woonhuis: Kruittoren 23 (Wijk A 107). Oesterperceel No. 369 op de Bol van Lodijke (12,5 ha). Vloot: TH 2, TH 12 en TH 90.</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- HOOFDSCHIL -->
+  <div class="app-shell-content flex-1 flex flex-col transition-all duration-200">
+
+    <header class="bg-meekrab-800 text-white border-b border-meekrab-950 sticky top-0 z-40">
+      <div class="max-w-[1520px] mx-auto px-4 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
+        <div class="flex items-center gap-2.5">
+          <button onclick="toggleLeftDrawer()" class="ui-btn bg-white text-meekrab-900 hover:bg-meekrab-50">Menu</button>
+          <div>
+            <h1 class="font-serif font-bold text-base sm:text-lg text-white leading-tight">Archief Familie Schot, Bout &amp; Van Vrijberghe — Tholen &amp; Bol van Lodijke</h1>
+            <p class="text-xs text-meekrab-100">Dossier B.W. Schot (1840–1935) • Perceel No. 369 (12,5 ha) • Hoogaarzen TH 2, TH 12 &amp; TH 90 • Rust Axum CMS</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <input id="globalSearchInput" type="text" placeholder="Zoek in archief..." oninput="performGlobalSearch(this.value)" class="w-44 sm:w-52 px-2.5 py-1.5 bg-white text-black rounded text-xs font-medium placeholder-gray-500" />
+          <div class="flex items-center bg-meekrab-950 p-0.5 rounded border border-meekrab-600" role="group" aria-label="Lettergrootte">
+            <button onclick="setFontSize(17, 'btnFontA')" id="btnFontA" class="px-2 py-1 rounded text-xs font-semibold text-white">A</button>
+            <button onclick="setFontSize(19, 'btnFontAPlus')" id="btnFontAPlus" class="px-2.5 py-1 rounded text-xs font-bold bg-white text-meekrab-950 shadow-sm">A+</button>
+            <button onclick="setFontSize(22, 'btnFontAPlusPlus')" id="btnFontAPlusPlus" class="px-2 py-1 rounded text-xs font-semibold text-white">A++</button>
+          </div>
+          <button onclick="switchTab('tabRustCms')" class="ui-btn bg-white/15 hover:bg-white/25 text-white border border-white/25 text-xs">Rust CMS</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="bg-white border-b border-zeeuws-border px-4 py-1.5">
+      <div class="max-w-[1520px] mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 bg-zinc-800 text-white font-mono rounded text-[11px]">AVG-Waarborg</span>
+          <span class="text-zinc-700">Namen van mijzelf, broer, vader en moeder zijn afgeschermd.</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="setViewportLayout('single')" id="btnVpSingle" class="px-2.5 py-1 rounded bg-meekrab-700 text-white font-semibold">1 Viewport</button>
+          <button onclick="setViewportLayout('split')" id="btnVpSplit" class="px-2.5 py-1 rounded bg-zeeuws-sand text-zinc-800 border border-zeeuws-border font-semibold">2 Viewports naast elkaar</button>
+          <button onclick="setViewportLayout('stacked')" id="btnVpStacked" class="px-2.5 py-1 rounded bg-zeeuws-sand text-zinc-800 border border-zeeuws-border font-semibold">Gestapeld</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="globalSearchResultsBox" class="hidden bg-meekrab-50 border-b border-meekrab-200 px-4 py-2">
+      <div class="max-w-[1520px] mx-auto flex items-center justify-between text-xs">
+        <div id="globalSearchSummary" class="font-medium text-meekrab-950">Zoekresultaten:</div>
+        <button onclick="clearGlobalSearch()" class="px-2 py-0.5 bg-meekrab-700 text-white rounded font-semibold">Sluit</button>
+      </div>
+    </section>
+
+    <nav class="bg-zeeuws-sand border-b border-zeeuws-border sticky top-[56px] z-30" aria-label="Hoofdtabbladen">
+      <div class="max-w-[1520px] mx-auto px-2 sm:px-4 flex items-center gap-1.5">
+        <button onclick="scrollTabStrip('mainSlidingTabStrip', -280)" class="px-2 py-1 bg-white border border-zeeuws-border rounded text-xs font-mono font-bold">&lsaquo;</button>
+        <div id="mainSlidingTabStrip" class="sliding-tab-strip flex-1">
+          <button onclick="switchTab('tabGenealogie')" id="btn-tabGenealogie" class="folder-tab-btn folder-tab-active">01. Stamboom &amp; AVG</button>
+          <button onclick="switchTab('tabFotos')" id="btn-tabFotos" class="folder-tab-btn">02. Fotoalbum &amp; Uploads</button>
+          <button onclick="switchTab('tabDocumenten')" id="btn-tabDocumenten" class="folder-tab-btn">03. Dossier B.W. Schot</button>
+          <button onclick="switchTab('tabKaarten')" id="btn-tabKaarten" class="folder-tab-btn">04. Zeekaart Perceel 369</button>
+          <button onclick="switchTab('tabPlattegronden')" id="btn-tabPlattegronden" class="folder-tab-btn">05. Hoogaars TH 2 &amp; Sluis</button>
+          <button onclick="switchTab('tabArcheologie')" id="btn-tabArcheologie" class="folder-tab-btn">06. Archeologie DB</button>
+          <button onclick="switchTab('tabGeologie')" id="btn-tabGeologie" class="folder-tab-btn">07. Geologie DB</button>
+          <button onclick="switchTab('tabKadaster')" id="btn-tabKadaster" class="folder-tab-btn">08. Percelen &amp; Gemeten</button>
+          <button onclick="switchTab('tabWoo')" id="btn-tabWoo" class="folder-tab-btn">09. Woo &amp; Rechtbank</button>
+          <button onclick="switchTab('tabUitbreiding')" id="btn-tabUitbreiding" class="folder-tab-btn">10. Eigen Tabs &amp; Embed</button>
+          <button onclick="switchTab('tabRustCms')" id="btn-tabRustCms" class="folder-tab-btn">11. Rust Axum CMS</button>
+        </div>
+        <button onclick="scrollTabStrip('mainSlidingTabStrip', 280)" class="px-2 py-1 bg-white border border-zeeuws-border rounded text-xs font-mono font-bold">&rsaquo;</button>
+      </div>
+    </nav>
+
+    <main class="flex-1 max-w-[1520px] w-full mx-auto p-3 sm:p-5">
+      <div id="multiViewportWrapper" class="viewport-grid-single">
+
+        <!-- VIEWPORT 1 -->
+        <section id="primaryViewportContainer" class="bg-white border border-zeeuws-border rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
+
+          <div class="flex items-center justify-between pb-2.5 border-b border-zeeuws-border">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 bg-meekrab-700 text-white font-mono text-xs rounded">Viewport 1</span>
+              <h2 id="breadcrumbCurrentTab" class="font-serif font-bold text-base sm:text-lg text-zinc-900">01. Stamboom &amp; Kwartierstaat (AVG-Afgeschermd)</h2>
+            </div>
+          </div>
+
+          <!-- TAB 01 -->
+          <div id="tabGenealogie" class="tab-pane space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabGenealogie', 'subGenBoom')" id="subbtn-tabGenealogie-subGenBoom" class="sub-tab-btn sub-tab-active">1A. Voorouderboom (AVG)</button>
+              <button onclick="switchSubTab('tabGenealogie', 'subGenTakken')" id="subbtn-tabGenealogie-subGenTakken" class="sub-tab-btn">1B. 13 Kinderen B.W. Schot</button>
+              <button onclick="switchSubTab('tabGenealogie', 'subGenKwartier')" id="subbtn-tabGenealogie-subGenKwartier" class="sub-tab-btn">1C. Kwartierstaat Tabel</button>
+              <button onclick="switchSubTab('tabGenealogie', 'subGenPrivacy')" id="subbtn-tabGenealogie-subGenPrivacy" class="sub-tab-btn">1D. AVG Toelichting</button>
+            </div>
+
+            <div id="subGenBoom" class="subtab-pane-tabGenealogie grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5">
+              <div class="bg-zeeuws-sand p-3 rounded-lg border border-zeeuws-border space-y-2">
+                <div class="font-mono font-bold text-xs text-zinc-600 uppercase">Generatie I (Huidig)</div>
+                <button onclick="showGenealogyDetail('locked_self', false)" class="w-full text-left node-shield rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-zinc-300">Afgeschermd conform AVG</div>
+                  <div class="font-bold text-sm">Beheerder / Uzelf</div>
+                </button>
+                <button onclick="showGenealogyDetail('locked_broer', false)" class="w-full text-left node-shield rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-zinc-300">Afgeschermd conform AVG</div>
+                  <div class="font-bold text-sm">Broer (Zelfde generatie)</div>
+                </button>
+              </div>
+
+              <div class="bg-zeeuws-sand p-3 rounded-lg border border-zeeuws-border space-y-2">
+                <div class="font-mono font-bold text-xs text-zinc-600 uppercase">Generatie II (Ouders)</div>
+                <button onclick="showGenealogyDetail('locked_vader', false)" class="w-full text-left node-shield rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-zinc-300">Afgeschermd conform AVG</div>
+                  <div class="font-bold text-sm">Vader (Niet openbaar)</div>
+                </button>
+                <button onclick="showGenealogyDetail('locked_moeder', false)" class="w-full text-left node-shield rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-zinc-300">Afgeschermd conform AVG</div>
+                  <div class="font-bold text-sm">Moeder (Niet openbaar)</div>
+                </button>
+              </div>
+
+              <div class="bg-zeeuws-sand p-3 rounded-lg border border-zeeuws-border space-y-2">
+                <div class="font-mono font-bold text-xs text-meekrab-800 uppercase">Generatie III (Openbaar)</div>
+                <button onclick="showGenealogyDetail('jacob_bout', false)" class="w-full text-left bg-white border border-zeeuws-border rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-meekrab-700">Echtgenoot</div>
+                  <div class="font-bold text-sm">Jacob Bout</div>
+                  <div class="text-xs text-zinc-600">Gehuwd met C.A. Schot</div>
+                </button>
+                <button onclick="showGenealogyDetail('cornelia_schot', false)" class="w-full text-left bg-white border border-zeeuws-border rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-meekrab-700">Dochter B.W. Schot</div>
+                  <div class="font-bold text-sm">Cornelia Adriana Schot</div>
+                  <div class="text-xs text-zinc-600">Geboren 1867 te Tholen</div>
+                </button>
+              </div>
+
+              <div class="bg-zeeuws-sand p-3 rounded-lg border border-zeeuws-border space-y-2">
+                <div class="font-mono font-bold text-xs text-meekrab-800 uppercase">Generatie IV &amp; V (Stamvader)</div>
+                <button onclick="showGenealogyDetail('bw_schot', false)" class="w-full text-left bg-meekrab-700 text-white rounded-md p-2.5">
+                  <div class="font-mono text-[10px] text-meekrab-100">Stamvader (1840–1935)</div>
+                  <div class="font-bold text-sm">Benjamin Willem Schot</div>
+                  <div class="text-xs text-meekrab-100">Reder TH 2, TH 12, TH 90</div>
+                </button>
+                <button onclick="showGenealogyDetail('maria_bolier', false)" class="w-full text-left bg-white border border-zeeuws-border rounded-md p-2 text-xs">
+                  <strong>1e Huwelijk (1863):</strong> Maria Mathea Bolier (1840–1909, 13 kinderen)
+                </button>
+                <button onclick="showGenealogyDetail('dina_kegge', false)" class="w-full text-left bg-white border border-zeeuws-border rounded-md p-2 text-xs">
+                  <strong>2e Huwelijk (1915):</strong> Dina Pieternella Kegge (1868–1944)
+                </button>
+                <button onclick="showGenealogyDetail('jan_schot', false)" class="w-full text-left bg-white border border-zeeuws-border rounded-md p-2 text-xs">
+                  <strong>Ouders:</strong> Jan Schot (1814–1882) &amp; Elisabeth Josina van Dijk
+                </button>
+              </div>
+            </div>
+
+            <div id="subGenTakken" class="subtab-pane-tabGenealogie hidden grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+              <div class="p-3 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>Jan Schot B.W.zn. (1863):</strong> Aanvraag aankoop gemeentegrond Oud-Vossemeersepoort (januari 1901) met Jacob en Cathalina Schot.</div>
+              <div class="p-3 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>Simon Leendert Schot (1865–1942):</strong> Oester- en mosselvisser op de Zeeuwse stromen.</div>
+              <div class="p-3 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>Cornelia Adriana Schot (1867):</strong> Trouwde met Jacob Bout te Tholen.</div>
+              <div class="p-3 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>Willem Karel Schot (1874):</strong> Bevaarder van de hoogaars TH 90 "Vijf Gebroeders / Eben Haëzer".</div>
+              <div class="p-3 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>Kees, Jacob &amp; Willem Schot (1912/1913):</strong> Pacht Flauwers onder Zierikzee (1912) van mr. Fokker; vergroting oesterloods Contr'Escarpe (1913) met Jacob Kegge.</div>
+              <div class="p-3 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>Karel Jacob Dingenus Schot (1888, kleinzoon):</strong> Ontving in 1917 de hoogaars TH 90.</div>
+            </div>
+
+            <div id="subGenKwartier" class="subtab-pane-tabGenealogie hidden overflow-x-auto border border-zeeuws-border rounded-lg">
+              <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead class="bg-meekrab-800 text-white font-mono text-xs">
+                  <tr><th class="p-2.5">Kwartier</th><th class="p-2.5">Naam / Status</th><th class="p-2.5">Jaren</th><th class="p-2.5">Opmerking</th></tr>
+                </thead>
+                <tbody class="divide-y divide-zeeuws-border">
+                  <tr class="bg-zinc-100"><td class="p-2.5 font-mono font-bold">1 / 1b</td><td class="p-2.5 font-semibold">Afgeschermd conform AVG (Uzelf &amp; Broer)</td><td class="p-2.5">Privacy</td><td class="p-2.5">Huidige generatie niet zichtbaar</td></tr>
+                  <tr class="bg-zinc-100"><td class="p-2.5 font-mono font-bold">2 &amp; 3</td><td class="p-2.5 font-semibold">Afgeschermd conform AVG (Vader &amp; Moeder)</td><td class="p-2.5">Privacy</td><td class="p-2.5">Ouderlijke generatie niet zichtbaar</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">4 &amp; 5</td><td class="p-2.5 font-bold">Jacob Bout x Cornelia Adriana Schot</td><td class="p-2.5">Geb. 1867</td><td class="p-2.5">Doortrekking lijn Tholen</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">10 &amp; 11</td><td class="p-2.5 font-bold">Benjamin Willem Schot x Maria Mathea Bolier</td><td class="p-2.5">1840–1935</td><td class="p-2.5">Reder TH 2, TH 12, TH 90 (13 kinderen)</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">20 &amp; 21</td><td class="p-2.5 font-bold">Jan Schot x Elisabeth Josina van Dijk</td><td class="p-2.5">1814–1882</td><td class="p-2.5">Ouders van B.W. Schot</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="subGenPrivacy" class="subtab-pane-tabGenealogie hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm">
+              Conform de AVG zijn alle namen en persoonsgegevens van de huidige generatie (uzelf en broer) en de ouderlijke generatie (vader en moeder) volledig afgeschermd.
+            </div>
+
+            <div id="genealogyDetailBox" class="bg-zeeuws-sand border border-zeeuws-border rounded-lg p-3.5">
+              <div class="flex items-center justify-between border-b border-zeeuws-border pb-1.5">
+                <div>
+                  <span id="genDetailBadge" class="px-2 py-0.5 text-xs font-mono rounded bg-meekrab-700 text-white">Stamvader Dossier</span>
+                  <h3 id="genDetailTitle" class="font-serif font-bold text-base text-zinc-900 mt-1">Benjamin Willem Schot (1840–1935)</h3>
+                </div>
+                <span class="text-xs font-mono text-zinc-500">ID: I0103</span>
+              </div>
+              <div id="genDetailContent" class="mt-2 text-sm space-y-1">
+                <p><strong>Geboorte &amp; Overlijden:</strong> 26 september 1840 te Tholen – 17 november 1935 te Tholen (95 jaar oud).</p>
+                <p><strong>Woonhuis &amp; Bedrijf:</strong> Kruittoren 23 (Kruistoren 113h / Wijk A 107). Pachter van Perceel No. 369 op de Bol van Lodijke (12,5 ha) en reder van de hoogaarzen TH 2, TH 12 en TH 90.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 02 -->
+          <div id="tabFotos" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="switchSubTab('tabFotos', 'subFotosOverzicht')" id="subbtn-tabFotos-subFotosOverzicht" class="sub-tab-btn sub-tab-active">2A. Fotogalerij</button>
+                <button onclick="switchSubTab('tabFotos', 'subFotosUpload')" id="subbtn-tabFotos-subFotosUpload" class="sub-tab-btn">2B. Foto Uploaden</button>
+                <button onclick="switchSubTab('tabFotos', 'subFotosFilter')" id="subbtn-tabFotos-subFotosFilter" class="sub-tab-btn">2C. Categorieën</button>
+                <button onclick="switchSubTab('tabFotos', 'subFotosBackup')" id="subbtn-tabFotos-subFotosBackup" class="sub-tab-btn">2D. Solid POD JSON</button>
+              </div>
+              <span id="albumCountBadge" class="font-mono text-xs text-zinc-600 font-semibold">8 items</span>
+            </div>
+
+            <div id="subFotosUpload" class="subtab-pane-tabFotos hidden bg-zeeuws-sand border border-zeeuws-border rounded-lg p-4 space-y-3">
+              <div id="dropZoneArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-meekrab-700 bg-white rounded-lg p-4 text-center space-y-2">
+                <div class="font-semibold text-sm">Sleep uw foto's hierheen of kies bestanden vanaf uw toestel</div>
+                <label class="ui-btn bg-meekrab-700 text-white cursor-pointer">
+                  Kies Foto's
+                  <input id="photoFileInput" type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoSelection(event)" />
+                </label>
+                <div id="selectedFilesStatus" class="text-xs font-mono text-zinc-600">Nog geen bestand geselecteerd.</div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+                <input id="upPhotoTitle" type="text" placeholder="Titel van de foto" class="ui-input" />
+                <select id="upPhotoCategory" class="ui-input">
+                  <option value="Eigen Collectie">Eigen Collectie</option>
+                  <option value="Vloot TH 2 / TH 12 / TH 90">Vloot TH 2 / TH 12 / TH 90</option>
+                  <option value="Kruittoren 23 & Contr'Escarpe">Kruittoren 23 &amp; Contr'Escarpe</option>
+                  <option value="Bol van Lodijke & Percelen">Bol van Lodijke &amp; Percelen</option>
+                </select>
+                <input id="upPhotoYear" type="text" placeholder="Jaar (bijv. 1902)" class="ui-input" />
+                <input id="upPhotoLocation" type="text" placeholder="Locatie (bijv. Tholen)" class="ui-input" />
+                <input id="upPhotoDesc" type="text" placeholder="Toelichting..." class="ui-input md:col-span-4" />
+              </div>
+              <button onclick="processPendingUploads()" class="ui-btn bg-meekrab-700 text-white">Toevoegen aan Fotoalbum</button>
+            </div>
+
+            <div id="subFotosFilter" class="subtab-pane-tabFotos hidden p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg flex flex-wrap gap-2">
+              <button onclick="filterPhotosByCategory('ALLE'); switchSubTab('tabFotos','subFotosOverzicht');" class="ui-btn bg-meekrab-700 text-white">Alle Foto's</button>
+              <button onclick="filterPhotosByCategory('Vloot TH 2 / TH 12 / TH 90'); switchSubTab('tabFotos','subFotosOverzicht');" class="ui-btn bg-white border border-zeeuws-border">Vloot TH 2 / 12 / 90</button>
+              <button onclick="filterPhotosByCategory('Bol van Lodijke & Percelen'); switchSubTab('tabFotos','subFotosOverzicht');" class="ui-btn bg-white border border-zeeuws-border">Bol van Lodijke 369</button>
+            </div>
+
+            <div id="subFotosBackup" class="subtab-pane-tabFotos hidden p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg flex flex-wrap gap-2">
+              <button onclick="exportPhotosJson()" class="ui-btn bg-meekrab-700 text-white">Exporteer Fotoalbum JSON</button>
+              <label class="ui-btn bg-white border border-zeeuws-border cursor-pointer">
+                Importeer JSON
+                <input type="file" accept=".json" class="hidden" onchange="importPhotosJson(event)" />
+              </label>
+            </div>
+
+            <div id="subFotosOverzicht" class="subtab-pane-tabFotos space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap gap-1.5">
+                  <button onclick="filterPhotosByCategory('ALLE')" class="px-2.5 py-1 bg-meekrab-700 text-white rounded text-xs font-semibold">Alle</button>
+                  <button onclick="filterPhotosByCategory('Vloot TH 2 / TH 12 / TH 90')" class="px-2.5 py-1 bg-zeeuws-sand border border-zeeuws-border rounded text-xs font-semibold">Vloot TH 2/12/90</button>
+                  <button onclick="filterPhotosByCategory('Bol van Lodijke & Percelen')" class="px-2.5 py-1 bg-zeeuws-sand border border-zeeuws-border rounded text-xs font-semibold">Perceel 369</button>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <input id="photoSearchInput" type="text" placeholder="Filter foto's..." oninput="renderPhotoAlbum()" class="px-2.5 py-1 bg-white border border-zeeuws-border rounded text-xs" />
+                  <button onclick="setAlbumLayout('cards')" id="btnLayoutCards" class="px-2.5 py-1 bg-meekrab-700 text-white rounded text-xs">Kaarten</button>
+                  <button onclick="setAlbumLayout('table')" id="btnLayoutTable" class="px-2.5 py-1 bg-white border border-zeeuws-border rounded text-xs">Tabel</button>
+                </div>
+              </div>
+              <div id="photoAlbumContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+          </div>
+
+          <!-- TAB 03 -->
+          <div id="tabDocumenten" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border" id="docMainTabsBar">
+              <button onclick="switchDocTab('docA')" id="btn-docA" class="sub-tab-btn sub-tab-active">Doc A: Dossier B.W. Schot (1840–1935)</button>
+              <button onclick="switchDocTab('docB')" id="btn-docB" class="sub-tab-btn">Doc B: Regenten &amp; Hofsteden</button>
+              <button onclick="switchDocTab('docC')" id="btn-docC" class="sub-tab-btn">Doc C: Akten 1901 &amp; 1913</button>
+              <button onclick="switchDocTab('docNew')" id="btn-docNew" class="sub-tab-btn ml-auto">+ Nieuw Dossier</button>
+            </div>
+
+            <div id="docPaneA" class="doc-subpane space-y-3">
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="switchSubDocA('subProfiel')" id="btn-subProfiel" class="sub-tab-btn sub-tab-active">1. Profiel &amp; Gezin</button>
+                <button onclick="switchSubDocA('subKruittoren')" id="btn-subKruittoren" class="sub-tab-btn">2. Kruittoren 23 &amp; Loods</button>
+                <button onclick="switchSubDocA('subVloot')" id="btn-subVloot" class="sub-tab-btn">3. Vloot &amp; Perceel 369</button>
+                <button onclick="switchSubDocA('subWatersnood')" id="btn-subWatersnood" class="sub-tab-btn">4. Watersnood 1906 (TH 12)</button>
+                <button onclick="switchSubDocA('subZierikzee')" id="btn-subZierikzee" class="sub-tab-btn">5. Zierikzee 1912</button>
+                <button onclick="switchSubDocA('subChronologie')" id="btn-subChronologie" class="sub-tab-btn">6. Chronologie</button>
+              </div>
+              <div id="subDocProfiel" class="p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm space-y-1.5">
+                <p><strong>Benjamin Willem Schot</strong> (geb. 26 sep 1840 Tholen – overl. 17 nov 1935 Tholen, 95 jr). Zoon van Jan Schot (1814–1882) en Elisabeth Josina van Dijk (1812–1895).</p>
+                <p><strong>1e Huwelijk (1863):</strong> Maria Mathea Bolier (27 aug 1840 Scherpenisse – 1909, 13 kinderen). <strong>2e Huwelijk (1 okt 1915):</strong> Dina Pieternella Kegge (1868–1944, oesterkoopvrouw).</p>
+              </div>
+              <div id="subDocKruittoren" class="hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm space-y-1.5">
+                <p><strong>Kruittoren 23 (Kruistoren 113h / Wijk A 107):</strong> Hoofdvestiging en familiehuizen te Tholen (waaronder het huis van Anna Schot).</p>
+                <p><strong>1901 &amp; 1913:</strong> Aanvraag aankoop gemeentegrond Oud-Vossemeersepoort voor 3 woningen (jan 1901) en vergroting oesterloods Contr'Escarpe door C.J. Schot en J. Kegge (juli 1913).</p>
+              </div>
+              <div id="subDocVloot" class="hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm space-y-1.5">
+                <p><strong>Oesterperceel No. 369:</strong> Gelegen op de Bol van Lodijke (Oosterschelde), 12,5 hectare.</p>
+                <p><strong>Vloot (Werf Van Duivendijk):</strong> TH 2 "Eben Haëzer" (1902, bevaren door C.J. Schot; vernieuwd in 1918), TH 12 "Niets zonder Gods zegen", en TH 90 "Vijf Gebroeders / Eben Haëzer" (Willem Karel Schot; in 1917 naar kleinzoon Karel Jacob Dingenus Schot).</p>
+              </div>
+              <div id="subDocWatersnood" class="hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm">
+                Tijdens de stormvloed van 12–13 maart 1906 bij Oud-Vossemeer fungeerde de roeiboot van hoogaars <strong>TH 12 "Niets zonder Gods zegen"</strong> van B.W. Schot als een van de voornaamste reddingsboten.
+              </div>
+              <div id="subDocZierikzee" class="hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm">
+                In 1912 pachtten drie zonen (Kees, Jacob en Willem Schot) oester- en mosselgronden te Flauwers onder Zierikzee van mr. Fokker.
+              </div>
+              <div id="subDocChronologie" class="hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm">
+                1840 Geboorte B.W. Schot • 1863 Huwelijk M.M. Bolier • 1901 Drie woningen Oud-Vossemeersepoort • 1902 Bouw TH 2 • 1906 Watersnoodredding TH 12 • 1912 Expansie Flauwers Zierikzee • 1913 Vergroting loods Contr'Escarpe • 1915 Huwelijk D.P. Kegge • 1917/1918 TH 90 &amp; nieuwe TH 2 • 1935 Overlijden B.W. Schot (95 jr).
+              </div>
+            </div>
+
+            <div id="docPaneB" class="doc-subpane hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm space-y-1.5">
+              <p><strong>Van Vrijberghe &amp; Hofsteden:</strong> Rekenmeester Adriaen van Vrijberghe (1684–1719) en mr. Johan Turcq; Hofstede De Gortzak (Schakerloo Sectie I nr. 360, 122 gemeten), Hofstede Kandia (&gt;76 ha), Molenvliet (43,3 ha) en Watervliet (77 ha).</p>
+            </div>
+            <div id="docPaneC" class="doc-subpane hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm font-mono space-y-1">
+              <div>[1901-01] Verzoek aankoop gemeentegrond Oud-Vossemeersepoort door Jan, Jacob en Cathalina Schot.</div>
+              <div>[1913-07] Verzoek vergroting oesterloods Contr'Escarpe door Cornelis Jan Schot en Jacob Kegge.</div>
+            </div>
+            <div id="docPaneNew" class="doc-subpane hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <input id="newDocTitle" type="text" placeholder="Titel document..." class="ui-input" />
+                <input id="newDocYear" type="text" placeholder="Jaartal" class="ui-input" />
+                <textarea id="newDocContent" rows="3" placeholder="Inhoud..." class="ui-input md:col-span-2"></textarea>
+              </div>
+              <button onclick="createNewDocTab()" class="ui-btn bg-meekrab-700 text-white">Document Opslaan</button>
+            </div>
+            <div id="customDocPanesContainer" class="space-y-3"></div>
+          </div>
+
+          <!-- TAB 04 -->
+          <div id="tabKaarten" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="switchSubTab('tabKaarten', 'subKaartZeekaart')" id="subbtn-tabKaarten-subKaartZeekaart" class="sub-tab-btn sub-tab-active">4A. Zeekaart Bol van Lodijke (Perceel 369)</button>
+                <button onclick="switchSubTab('tabKaarten', 'subKaartKadaster')" id="subbtn-tabKaarten-subKaartKadaster" class="sub-tab-btn">4B. Kadastrale Kaart Tholen</button>
+                <button onclick="switchSubTab('tabKaarten', 'subKaartLegenda')" id="subbtn-tabKaarten-subKaartLegenda" class="sub-tab-btn">4C. Coördinaten</button>
+              </div>
+              <div class="flex items-center gap-3 text-xs">
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="layerRoutes" checked onchange="updateSvgMapLayers()" class="accent-meekrab-700" /> Vaarroutes</label>
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="layerLodijke" checked onchange="updateSvgMapLayers()" class="accent-meekrab-700" /> Perceel 369</label>
+              </div>
+            </div>
+
+            <div id="subKaartZeekaart" class="subtab-pane-tabKaarten">
+              <svg viewBox="0 0 920 420" class="w-full h-auto bg-[#dfeef5] border border-zeeuws-border rounded-lg select-none">
+                <path d="M 0,180 Q 260,165 470,220 T 920,205 L 920,285 Q 560,305 350,260 T 0,250 Z" fill="#a8cfe0" stroke="#4d7c94" stroke-width="1.5" />
+                <text x="190" y="218" fill="#163547" font-size="13" font-family="JetBrains Mono" font-weight="bold">OOSTERSCHELDE / DE EENDRACHT (-8.5m)</text>
+                <path d="M 0,0 L 920,0 L 920,135 L 790,155 L 640,125 L 520,145 L 400,115 L 220,145 L 0,105 Z" fill="#ffffff" stroke="#8b2229" stroke-width="2" />
+                <text x="35" y="38" fill="#8b2229" font-size="18" font-weight="bold">EILAND THOLEN (SCHAKERLOO &amp; BROEKPOLDER)</text>
+                <g class="cursor-pointer" onclick="inspectFeature('flauwers1912', false)">
+                  <rect x="25" y="55" width="205" height="36" rx="5" fill="#fdf7f7" stroke="#8b2229" stroke-width="1.5" />
+                  <text x="38" y="78" fill="#8b2229" font-size="12" font-weight="bold">Flauwers Zierikzee (1912)</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('kruittoren', false)">
+                  <circle cx="580" cy="130" r="7" fill="#8b2229" stroke="#ffffff" stroke-width="2" />
+                  <text x="435" y="114" fill="#8b2229" font-size="12" font-weight="bold">Haven Tholen &amp; Kruittoren 23</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('oudvossemeer1906', false)">
+                  <rect x="735" y="45" width="160" height="44" rx="5" fill="#fdf7f7" stroke="#8b2229" stroke-width="1.5" />
+                  <text x="748" y="66" fill="#8b2229" font-size="12" font-weight="bold">Oud-Vossemeer (1906)</text>
+                </g>
+                <path d="M 90,330 Q 300,275 510,310 T 900,320 L 920,420 L 0,420 L 0,365 Z" fill="#efe7d3" stroke="#8b2229" stroke-width="1.5" stroke-dasharray="6,4" />
+                <g id="svgGroupLodijke" class="cursor-pointer" onclick="inspectFeature('lodijke369', false)">
+                  <rect x="320" y="270" width="215" height="75" rx="6" fill="#8b2229" fill-opacity="0.2" stroke="#8b2229" stroke-width="2.5" />
+                  <text x="335" y="298" fill="#561318" font-family="JetBrains Mono" font-size="13" font-weight="bold">BOL VAN LODIJKE</text>
+                  <text x="335" y="318" fill="#8b2229" font-size="12" font-weight="bold">Perceel No. 369 (12,5 ha)</text>
+                  <text x="335" y="335" fill="#18181b" font-size="11">Oesterbank B.W. Schot (TH 2 / TH 90)</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('kasteelLodijke', false)">
+                  <rect x="130" y="315" width="165" height="42" rx="5" fill="#ffffff" stroke="#8b2229" stroke-width="1.5" />
+                  <text x="142" y="340" fill="#8b2229" font-size="11" font-weight="bold">ARC-LOD-01: Kasteel Lodijke</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('weerE', false)">
+                  <rect x="650" y="315" width="205" height="42" rx="5" fill="#ffffff" stroke="#8b2229" stroke-width="1.5" />
+                  <text x="665" y="340" fill="#8b2229" font-size="11" font-weight="bold">Weer E: Eldernissen (1825)</text>
+                </g>
+                <g id="svgGroupRoutes">
+                  <path d="M 580,138 Q 510,205 435,270" fill="none" stroke="#8b2229" stroke-width="2.5" stroke-dasharray="6,4" />
+                  <path d="M 590,128 Q 665,95 735,72" fill="none" stroke="#18181b" stroke-width="2" stroke-dasharray="4,4" />
+                </g>
+              </svg>
+            </div>
+
+            <div id="subKaartKadaster" class="subtab-pane-tabKaarten hidden">
+              <svg viewBox="0 0 920 340" class="w-full h-auto bg-zeeuws-sand border border-zeeuws-border rounded-lg select-none">
+                <g class="cursor-pointer" onclick="inspectFeature('gortzak360', false)">
+                  <polygon points="35,30 325,30 340,165 50,165" fill="#ffffff" stroke="#8b2229" stroke-width="2" />
+                  <text x="65" y="80" fill="#8b2229" font-weight="bold" font-size="14">Schakerloo Sectie I nr. 360</text>
+                  <text x="65" y="105" fill="#18181b" font-size="13">Hofstede De Gortzak (122 gemeten)</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('kandia', false)">
+                  <polygon points="360,30 650,30 665,165 375,165" fill="#ffffff" stroke="#8b2229" stroke-width="2" />
+                  <text x="390" y="80" fill="#8b2229" font-weight="bold" font-size="14">Broekpolder &amp; Rooland</text>
+                  <text x="390" y="105" fill="#18181b" font-size="13">Hofstede Kandia (&gt;76 hectare)</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('kruittoren', false)">
+                  <polygon points="685,30 890,30 890,310 695,310" fill="#fdf7f7" stroke="#8b2229" stroke-width="2" />
+                  <text x="708" y="85" fill="#8b2229" font-weight="bold" font-size="14">Stad Tholen</text>
+                  <text x="708" y="110" fill="#18181b" font-size="12">Kruittoren 23 (A 107)</text>
+                  <text x="708" y="135" fill="#18181b" font-size="12">Contr'Escarpe &amp; Werf</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('scherpenisse', false)">
+                  <polygon points="35,185 340,185 340,310 35,310" fill="#ffffff" stroke="#8b2229" stroke-width="2" />
+                  <text x="60" y="235" fill="#8b2229" font-weight="bold" font-size="14">Scherpenisse Sectie E 1551–1552</text>
+                  <text x="60" y="260" fill="#18181b" font-size="12">Platteweg &amp; Klepduiker</text>
+                </g>
+                <g class="cursor-pointer" onclick="inspectFeature('watervliet', false)">
+                  <polygon points="365,185 670,185 670,310 365,310" fill="#ffffff" stroke="#8b2229" stroke-width="2" />
+                  <text x="390" y="235" fill="#8b2229" font-weight="bold" font-size="14">Molenvliet (43 ha) &amp; Watervliet (77 ha)</text>
+                </g>
+              </svg>
+            </div>
+
+            <div id="subKaartLegenda" class="subtab-pane-tabKaarten hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm">
+              <strong>Perceel No. 369 (Bol van Lodijke):</strong> 51°28'42" NB, 04°08'15" OL (12,50 ha) | <strong>Kruittoren 23 Tholen:</strong> 51°31'50" NB, 04°13'22" OL.
+            </div>
+
+            <div id="mapInspectorCard" class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg">
+              <div class="flex items-center justify-between">
+                <h3 id="mapInspectTitle" class="font-serif font-bold text-base text-meekrab-800">Oesterperceel No. 369 — Bol van Lodijke</h3>
+                <span id="mapInspectTag" class="font-mono text-xs font-bold text-meekrab-700">12,5 Hectare</span>
+              </div>
+              <p id="mapInspectDesc" class="text-sm mt-1">Geëxploiteerd door Benjamin Willem Schot met de houten hoogaarzen TH 2 "Eben Haëzer" en TH 90 "Vijf Gebroeders".</p>
+            </div>
+          </div>
+
+          <!-- TAB 05 -->
+          <div id="tabPlattegronden" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabPlattegronden', 'subPlatHoogaars')" id="subbtn-tabPlattegronden-subPlatHoogaars" class="sub-tab-btn sub-tab-active">5A. Lijnenplan Hoogaars TH 2 (1902)</button>
+              <button onclick="switchSubTab('tabPlattegronden', 'subPlatKlepduiker')" id="subbtn-tabPlattegronden-subPlatKlepduiker" class="sub-tab-btn">5B. Eikenhouten Klepduiker 1:5</button>
+              <button onclick="switchSubTab('tabPlattegronden', 'subPlatRegister')" id="subbtn-tabPlattegronden-subPlatRegister" class="sub-tab-btn">5C. Bouwregister 1901–1913</button>
+            </div>
+            <div id="subPlatHoogaars" class="subtab-pane-tabPlattegronden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg">
+              <svg viewBox="0 0 680 240" class="w-full h-auto bg-white border border-zeeuws-border rounded">
+                <path d="M 50,65 Q 160,190 570,165 L 615,95 L 560,90 Q 340,110 50,65 Z" fill="#fdf7f7" stroke="#8b2229" stroke-width="2.5" />
+                <ellipse cx="305" cy="145" rx="42" ry="54" fill="#8b2229" fill-opacity="0.2" stroke="#8b2229" stroke-width="2" />
+                <text x="80" y="220" fill="#18181b" font-size="13" font-family="JetBrains Mono" font-weight="bold">TH 2 "Eben Haëzer" (1902) — Werf Van Duivendijk, Contr'Escarpe Tholen (14,80m x 4,35m)</text>
+              </svg>
+            </div>
+            <div id="subPlatKlepduiker" class="subtab-pane-tabPlattegronden hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg">
+              <svg viewBox="0 0 680 230" class="w-full h-auto bg-white border border-zeeuws-border rounded">
+                <polygon points="55,200 230,45 415,45 595,200" fill="#f9f7f2" stroke="#8b2229" stroke-width="2.5" />
+                <rect x="35" y="170" width="600" height="30" fill="#efe7d3" stroke="#18181b" stroke-width="2" />
+                <text x="165" y="190" fill="#18181b" font-size="13" font-family="JetBrains Mono" font-weight="bold">Eikenhouten Polder-Klepduiker met Getijdeklep (Schaal 1:5)</text>
+              </svg>
+            </div>
+            <div id="subPlatRegister" class="subtab-pane-tabPlattegronden hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-sm space-y-1.5">
+              <div><strong>PG-01 (1902):</strong> Lijnenplan Houten Hoogaars TH 2 "Eben Haëzer" — Scheepswerf Van Duivendijk.</div>
+              <div><strong>PG-02 (18e/19e eeuw):</strong> Eikenhouten Polderklepduiker Schakerloo / Scherpenisse Sectie E 1551.</div>
+              <div><strong>PG-03 (1901) &amp; PG-04 (1913):</strong> Drie woningen Oud-Vossemeersepoort &amp; Oesterloods Contr'Escarpe.</div>
+            </div>
+          </div>
+
+          <!-- TAB 06 -->
+          <div id="tabArcheologie" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabArcheologie', 'subArcRegister')" id="subbtn-tabArcheologie-subArcRegister" class="sub-tab-btn sub-tab-active">6A. Vondstenregister</button>
+              <button onclick="switchSubTab('tabArcheologie', 'subArcNieuw')" id="subbtn-tabArcheologie-subArcNieuw" class="sub-tab-btn">6B. + Nieuwe Vondst</button>
+            </div>
+            <div id="subArcRegister" class="subtab-pane-tabArcheologie overflow-x-auto border border-zeeuws-border rounded-lg">
+              <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead class="bg-meekrab-800 text-white font-mono text-xs">
+                  <tr><th class="p-2.5">Code</th><th class="p-2.5">Diepte</th><th class="p-2.5">Artefact</th><th class="p-2.5">Locatie</th></tr>
+                </thead>
+                <tbody id="archeoTableBody" class="divide-y divide-zeeuws-border">
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">ARC-LOD-01</td><td class="p-2.5">-3,20m NAP</td><td class="p-2.5 font-semibold">Kloostermoppen en tufsteen Kasteel Lodijke</td><td class="p-2.5">Bol van Lodijke (Perceel 369)</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">ARC-LOD-02</td><td class="p-2.5">-2,10m NAP</td><td class="p-2.5 font-semibold">Kalkpannen met oesterbroed</td><td class="p-2.5">Perceel No. 369 Bol van Lodijke</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">ARC-SCH-04</td><td class="p-2.5">-1,45m NAP</td><td class="p-2.5 font-semibold">Eikenhouten klepduiker</td><td class="p-2.5">Scherpenisse Sectie E 1551</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="subArcNieuw" class="subtab-pane-tabArcheologie hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                <input id="arcInputCode" type="text" placeholder="Code (ARC-LOD-09)" class="ui-input" />
+                <input id="arcInputLoc" type="text" placeholder="Locatie" class="ui-input" />
+                <input id="arcInputDesc" type="text" placeholder="Omschrijving" class="ui-input" />
+              </div>
+              <button onclick="addArcheoRecord()" class="ui-btn bg-meekrab-700 text-white">Vondst Opslaan</button>
+            </div>
+          </div>
+
+          <!-- TAB 07 -->
+          <div id="tabGeologie" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabGeologie', 'subGeoBoringen')" id="subbtn-tabGeologie-subGeoBoringen" class="sub-tab-btn sub-tab-active">7A. Boorstaten</button>
+              <button onclick="switchSubTab('tabGeologie', 'subGeoNieuw')" id="subbtn-tabGeologie-subGeoNieuw" class="sub-tab-btn">7B. + Nieuw Boorprofiel</button>
+            </div>
+            <div id="subGeoBoringen" class="subtab-pane-tabGeologie grid grid-cols-1 md:grid-cols-3 gap-3.5 text-sm">
+              <div class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>GEO-01 (Perceel 369):</strong> Formatie van Naaldwijk (kalkrijk marien zand) op Laagpakket van Walcheren en Hollandveen.</div>
+              <div class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>GEO-02 (Schakerloo):</strong> Jonge zeeklei geschikt voor meekrabteelt (Rubia tinctorum) op kreekrug Deurloo.</div>
+              <div class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg"><strong>GEO-03 (Oud-Vossemeer):</strong> Zandlens stormvloedlaag 12–13 maart 1906 op Formatie van Boxtel.</div>
+            </div>
+            <div id="subGeoNieuw" class="subtab-pane-tabGeologie hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                <input id="geoInputCode" type="text" placeholder="Code (GEO-04)" class="ui-input" />
+                <input id="geoInputPolder" type="text" placeholder="Polder" class="ui-input" />
+                <input id="geoInputLayer" type="text" placeholder="Laagbeschrijving" class="ui-input" />
+              </div>
+              <button onclick="addGeoRecord()" class="ui-btn bg-meekrab-700 text-white">Boorprofiel Opslaan</button>
+            </div>
+          </div>
+
+          <!-- TAB 08 -->
+          <div id="tabKadaster" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabKadaster', 'subKadRegister')" id="subbtn-tabKadaster-subKadRegister" class="sub-tab-btn sub-tab-active">8A. Kadastraal Register</button>
+              <button onclick="switchSubTab('tabKadaster', 'subKadCalculator')" id="subbtn-tabKadaster-subKadCalculator" class="sub-tab-btn">8B. Gemeten Calculator</button>
+              <button onclick="switchSubTab('tabKadaster', 'subKadNieuw')" id="subbtn-tabKadaster-subKadNieuw" class="sub-tab-btn">8C. + Nieuw Perceel</button>
+            </div>
+            <div id="subKadRegister" class="subtab-pane-tabKadaster overflow-x-auto border border-zeeuws-border rounded-lg">
+              <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead class="bg-meekrab-800 text-white font-mono text-xs">
+                  <tr><th class="p-2.5">Perceel</th><th class="p-2.5">Object</th><th class="p-2.5">Grootte</th><th class="p-2.5">Eigenaar / Pachter</th></tr>
+                </thead>
+                <tbody id="kadasterTableBody" class="divide-y divide-zeeuws-border">
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">Perceel No. 369</td><td class="p-2.5 font-semibold">Oesterbank Bol van Lodijke</td><td class="p-2.5">12,50 ha</td><td class="p-2.5">Benjamin Willem Schot (TH 2 &amp; TH 90)</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">Sectie A nr. 107</td><td class="p-2.5 font-semibold">Kruittoren 23 Tholen</td><td class="p-2.5">Woonhuizen</td><td class="p-2.5">B.W. Schot &amp; familie</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">Sectie I nr. 360</td><td class="p-2.5 font-semibold">Hofstede De Gortzak</td><td class="p-2.5">122 gemeten</td><td class="p-2.5">Boogaart (1768) • Wagtho (1893) • Moelker (1915)</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">Sectie E 1551/1552</td><td class="p-2.5 font-semibold">Platteweg Scherpenisse</td><td class="p-2.5">Polderland</td><td class="p-2.5">Geboortegrond Maria Mathea Bolier (1840)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="subKadCalculator" class="subtab-pane-tabKadaster hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg flex flex-wrap items-center gap-3 text-sm">
+              <input id="calcGemeten" type="number" value="122" oninput="calcToHectare(this.value)" class="ui-input w-28 font-mono font-bold" />
+              <span>Zeeuwse gemeten (à 300 roeden) =</span>
+              <span id="calcResultHectare" class="px-3 py-1 bg-meekrab-700 text-white font-mono font-bold rounded">53,75 ha</span>
+            </div>
+            <div id="subKadNieuw" class="subtab-pane-tabKadaster hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+                <input id="kadInputSectie" type="text" placeholder="Sectie &amp; Nr." class="ui-input" />
+                <input id="kadInputNaam" type="text" placeholder="Naam / Hofstede" class="ui-input" />
+                <input id="kadInputGrootte" type="text" placeholder="Oppervlakte" class="ui-input" />
+                <input id="kadInputEigenaar" type="text" placeholder="Eigenaar" class="ui-input" />
+              </div>
+              <button onclick="addKadasterRecord()" class="ui-btn bg-meekrab-700 text-white">Perceel Opslaan</button>
+            </div>
+          </div>
+
+          <!-- TAB 09 -->
+          <div id="tabWoo" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabWoo', 'subWooKeten')" id="subbtn-tabWoo-subWooKeten" class="sub-tab-btn sub-tab-active">9A. Bestuursrechtelijke Keten</button>
+              <button onclick="switchSubTab('tabWoo', 'subWooRegister')" id="subbtn-tabWoo-subWooRegister" class="sub-tab-btn">9B. Zaakregister</button>
+              <button onclick="switchSubTab('tabWoo', 'subWooNieuw')" id="subbtn-tabWoo-subWooNieuw" class="sub-tab-btn">9C. + Nieuw Besluit</button>
+            </div>
+            <div id="subWooKeten" class="subtab-pane-tabWoo grid grid-cols-1 md:grid-cols-2 gap-3.5 text-sm">
+              <div class="p-3.5 bg-zeeuws-sand border-l-4 border-meekrab-700 rounded"><strong>1. Art. 4.1 Woo:</strong> Openbaarmaking concessieregisters Perceel 369 &amp; bouwakten 1901/1913.</div>
+              <div class="p-3.5 bg-zeeuws-sand border-l-4 border-meekrab-700 rounded"><strong>2. Art. 5.1 lid 2e Woo:</strong> Strikte AVG-afscherming huidige en ouderlijke generatie.</div>
+              <div class="p-3.5 bg-zeeuws-sand border-l-4 border-meekrab-700 rounded"><strong>3. Art. 7:13 Awb:</strong> Adviescommissie bezwaarschriften inzake archiefzoekslag.</div>
+              <div class="p-3.5 bg-zeeuws-sand border-l-4 border-meekrab-700 rounded"><strong>4. Art. 8:1 Awb:</strong> Bestuursrechter Rechtbank Zeeland-West-Brabant.</div>
+            </div>
+            <div id="subWooRegister" class="subtab-pane-tabWoo hidden overflow-x-auto border border-zeeuws-border rounded-lg">
+              <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead class="bg-meekrab-800 text-white font-mono text-xs">
+                  <tr><th class="p-2.5">Zaaknr.</th><th class="p-2.5">Instantie</th><th class="p-2.5">Uitkomst</th></tr>
+                </thead>
+                <tbody id="wooTableBody" class="divide-y divide-zeeuws-border">
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">WOO-THO-01</td><td class="p-2.5 font-semibold">Gemeente / Archief</td><td class="p-2.5">Historische stukken openbaar; levende generaties afgeschermd</td></tr>
+                  <tr><td class="p-2.5 font-mono font-bold text-meekrab-800">RB-ZWB-03</td><td class="p-2.5 font-semibold">Rechtbank Zeeland-West-Brabant</td><td class="p-2.5">Bevestiging AVG-schild en belanghebbendestatus</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="subWooNieuw" class="subtab-pane-tabWoo hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                <input id="wooInputCode" type="text" placeholder="Zaaknummer" class="ui-input" />
+                <input id="wooInputInstantie" type="text" placeholder="Instantie" class="ui-input" />
+                <input id="wooInputBesluit" type="text" placeholder="Besluit" class="ui-input" />
+              </div>
+              <button onclick="addWooRecord()" class="ui-btn bg-meekrab-700 text-white">Zaak Opslaan</button>
+            </div>
+          </div>
+
+          <!-- TAB 10 -->
+          <div id="tabUitbreiding" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap gap-1.5 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <button onclick="switchSubTab('tabUitbreiding', 'subUitNieuwTab')" id="subbtn-tabUitbreiding-subUitNieuwTab" class="sub-tab-btn sub-tab-active">10A. + Nieuw Hoofdtabblad</button>
+              <button onclick="switchSubTab('tabUitbreiding', 'subUitViewportCode')" id="subbtn-tabUitbreiding-subUitViewportCode" class="sub-tab-btn">10B. Google Sites Embed-Code</button>
+            </div>
+            <div id="subUitNieuwTab" class="subtab-pane-tabUitbreiding p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                <input id="customTabNameInput" type="text" placeholder="Naam nieuw tabblad" class="ui-input" />
+                <select id="customTabTypeInput" class="ui-input"><option value="DOSSIER">Onderzoeksdossier</option><option value="ARCHIEFTABEL">Archieftabel</option></select>
+                <textarea id="customTabFirstEntry" rows="3" placeholder="Inhoud..." class="ui-input md:col-span-2"></textarea>
+              </div>
+              <button onclick="createCustomTab()" class="ui-btn bg-meekrab-700 text-white">Tabblad Aanmaken</button>
+            </div>
+            <div id="subUitViewportCode" class="subtab-pane-tabUitbreiding hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2.5">
+              <textarea id="viewportCodeSnippet" rows="6" readonly class="w-full p-2.5 font-mono text-xs bg-white border border-zeeuws-border rounded"></textarea>
+              <button onclick="copyViewportSnippet()" class="ui-btn bg-meekrab-700 text-white">Kopieer Embed-Code</button>
+            </div>
+          </div>
+
+          <!-- TAB 11: RUST AXUM CMS -->
+          <div id="tabRustCms" class="tab-pane hidden space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-zeeuws-sand p-2 rounded-lg border border-zeeuws-border">
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="switchSubTab('tabRustCms', 'subRustEditor')" id="subbtn-tabRustCms-subRustEditor" class="sub-tab-btn sub-tab-active">11A. Rust CMS Dossier-Editor</button>
+                <button onclick="switchSubTab('tabRustCms', 'subRustStatus')" id="subbtn-tabRustCms-subRustStatus" class="sub-tab-btn">11B. API Endpoints</button>
+              </div>
+              <span id="rustApiStatusBadge" class="px-2.5 py-0.5 bg-meekrab-700 text-white font-mono text-xs rounded">Solid POD + Rust API</span>
+            </div>
+
+            <div id="subRustEditor" class="subtab-pane-tabRustCms space-y-4">
+              <div class="p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h3 class="font-serif font-bold text-base text-zinc-900">Nieuw Archiefstuk Publiceren in Rust Axum CMS</h3>
+                  <button onclick="syncWithRustBackend(false)" class="px-2.5 py-1 bg-white border border-zeeuws-border rounded text-xs font-semibold">Synchroniseer met 127.0.0.1:8082</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                  <input id="cmsInputTitle" type="text" placeholder="Titel van archiefstuk..." class="ui-input" />
+                  <select id="cmsInputCategory" class="ui-input">
+                    <option value="DOSSIER_SCHOT">Dossier B.W. Schot (1840–1935)</option>
+                    <option value="LODIJKE_369">Bol van Lodijke Perceel 369</option>
+                    <option value="VLOOT_HOOGAARS">Vloot TH 2 / TH 12 / TH 90</option>
+                    <option value="WOO_BESLUIT">Woo-Besluit / Rechtbank</option>
+                  </select>
+                  <input id="cmsInputDate" type="text" placeholder="Datering / Jaar" class="ui-input" />
+                  <textarea id="cmsInputBody" rows="3" placeholder="Volledige inhoud (AVG-conform)..." class="ui-input md:col-span-3"></textarea>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button onclick="publishRustCmsItem()" class="ui-btn bg-meekrab-700 text-white">Publiceren in Rust CMS</button>
+                  <button onclick="exportCmsJson()" class="ui-btn bg-white border border-zeeuws-border">Exporteer CMS JSON</button>
+                </div>
+              </div>
+              <div id="rustCmsRecordsContainer" class="space-y-2.5"></div>
+            </div>
+
+            <div id="subRustStatus" class="subtab-pane-tabRustCms hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg text-xs font-mono space-y-1.5">
+              <div>GET  http://127.0.0.1:8082/api/cms — Haalt alle archiefrecords op uit data/cms_records.json</div>
+              <div>POST http://127.0.0.1:8082/api/cms — Slaat een nieuw archiefstuk atomair op in Rust Axum</div>
+            </div>
+          </div>
+
+          <div id="dynamicMainTabsPanes" class="space-y-4"></div>
+        </section>
+
+        <!-- VIEWPORT 2 -->
+        <aside id="secondaryViewportContainer" class="hidden bg-white border border-zeeuws-border rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between pb-2.5 border-b border-zeeuws-border">
+            <span class="px-2 py-0.5 bg-zinc-800 text-white font-mono text-xs rounded">Viewport 2</span>
+            <select id="vp2Selector" onchange="renderSecondaryViewport(this.value)" class="ui-input text-xs py-1 min-h-[34px]">
+              <option value="fotos">Fotoalbum &amp; Uploads</option>
+              <option value="zeekaart">Zeekaart Perceel 369</option>
+              <option value="dossier">Dossier B.W. Schot</option>
+              <option value="stamboom">Kwartierstaat (AVG)</option>
+              <option value="plattegronden">Hoogaars TH 2 &amp; Klepduiker</option>
+              <option value="archeologie">Archeologie Lodijke</option>
+              <option value="geologie">Geologie &amp; Boringen</option>
+              <option value="kadaster">Percelen &amp; Gemeten</option>
+              <option value="woo">Woo &amp; Rechtbank</option>
+              <option value="rustcms">Rust Axum CMS</option>
+            </select>
+          </div>
+          <div id="secondaryViewportContent" class="space-y-3 text-sm"></div>
+        </aside>
+
+      </div>
+    </main>
+
+    <footer class="bg-zinc-900 text-zinc-300 py-4 px-4 mt-8 text-xs">
+      <div class="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div>Archiefplatform Familie Schot &amp; Bout — Tholen, Scherpenisse &amp; Bol van Lodijke (1684–1935)</div>
+        <div class="font-mono text-zinc-400">Standaard A+ (19px) • Rust Axum CMS • Solid POD • AVG-Compliant</div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div id="photoLightboxModal" class="hidden fixed inset-0 bg-black/80 z-[65] flex items-center justify-center p-4">
+    <div class="bg-white border border-zeeuws-border rounded-xl max-w-4xl w-full p-4 sm:p-5 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-zeeuws-border pb-2">
+        <div>
+          <span id="lbCategoryBadge" class="px-2 py-0.5 bg-meekrab-700 text-white font-mono text-xs rounded">Categorie</span>
+          <h3 id="lbTitle" class="font-serif font-bold text-base sm:text-lg text-zinc-900 mt-1">Fototitel</h3>
+        </div>
+        <button onclick="closeModal('photoLightboxModal')" class="ui-btn bg-meekrab-700 text-white">Sluiten</button>
+      </div>
+      <div class="bg-zeeuws-sand rounded-lg p-2 flex items-center justify-center max-h-[58dvh] overflow-hidden">
+        <img id="lbImage" src="" alt="Vergrote weergave" class="max-h-[54dvh] w-auto object-contain rounded" />
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs bg-zeeuws-sand p-3 rounded-lg">
+        <div><strong>Datering:</strong> <span id="lbYear">-</span></div>
+        <div><strong>Locatie:</strong> <span id="lbLocation">-</span></div>
+        <div><strong>Bestand:</strong> <span id="lbTech" class="font-mono">-</span></div>
+        <div class="md:col-span-3"><strong>Toelichting:</strong> <span id="lbDesc">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY_PHOTOS = 'tholen_schot_solid_pod_photos_v5';
+    const STORAGE_KEY_CMS = 'tholen_schot_rust_cms_records_v5';
+    const RUST_API_URL = 'http://127.0.0.1:8082/api/cms';
+
+    let currentPhotoFilter = 'ALLE';
+    let currentAlbumLayout = 'cards';
+    let pendingUploadFiles = [];
+    let isLeftDrawerPinned = true;
+
+    function makeHistoricalSvgPlate(code, title, subtitle, drawingType) {
+      let inner = '';
+      if (drawingType === 'ship') {
+        inner = `<rect x="30" y="30" width="740" height="390" fill="#f9f7f2" stroke="#8b2229" stroke-width="3"/><path d="M 110,275 Q 260,340 650,310 L 690,220 L 635,215 Q 380,235 110,275 Z" fill="#8b2229" fill-opacity="0.18" stroke="#8b2229" stroke-width="3"/><line x1="310" y1="70" x2="310" y2="295" stroke="#18181b" stroke-width="5"/><ellipse cx="375" cy="285" rx="42" ry="58" fill="#8b2229" fill-opacity="0.3" stroke="#18181b" stroke-width="2.5"/>`;
+      } else if (drawingType === 'rescue') {
+        inner = `<rect x="30" y="30" width="740" height="390" fill="#eef6fa" stroke="#8b2229" stroke-width="3"/><path d="M 30,290 Q 200,260 400,290 T 770,280 L 770,420 L 30,420 Z" fill="#a8cfe0" stroke="#4d7c94" stroke-width="2"/><path d="M 160,265 L 390,265 L 365,305 L 185,305 Z" fill="#8b2229" stroke="#18181b" stroke-width="2.5"/>`;
+      } else if (drawingType === 'house') {
+        inner = `<rect x="30" y="30" width="740" height="390" fill="#f9f7f2" stroke="#8b2229" stroke-width="3"/><rect x="140" y="165" width="230" height="200" fill="#ffffff" stroke="#8b2229" stroke-width="3"/><polygon points="130,165 255,85 380,165" fill="#8b2229" fill-opacity="0.22" stroke="#8b2229" stroke-width="3"/><rect x="390" y="180" width="250" height="185" fill="#ffffff" stroke="#8b2229" stroke-width="3"/>`;
+      } else {
+        inner = `<rect x="30" y="30" width="740" height="390" fill="#f9f7f2" stroke="#8b2229" stroke-width="3"/><rect x="130" y="115" width="540" height="210" rx="10" fill="#8b2229" fill-opacity="0.14" stroke="#8b2229" stroke-width="3" stroke-dasharray="8,5"/>`;
+      }
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500"><rect width="800" height="500" fill="#ffffff"/>${inner}<rect x="30" y="420" width="740" height="50" fill="#8b2229"/><text x="50" y="451" fill="#ffffff" font-family="Inter, sans-serif" font-size="19" font-weight="bold">[${code}] ${title}</text><text x="55" y="70" fill="#8b2229" font-family="JetBrains Mono, monospace" font-size="15" font-weight="bold">${subtitle}</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    const DEFAULT_ARCHIVE_PHOTOS = [
+      { id: 'pod-img-01', title: 'Hoogaars TH 2 "Eben Haëzer" bij Scheepswerf Van Duivendijk', category: 'Vloot TH 2 / TH 12 / TH 90', year: '1902', location: "Contr'Escarpe, Tholen", desc: 'Houten Thoolse hoogaars TH 2 Eben Haëzer, gebouwd in 1902 voor Benjamin Willem Schot en bevaren door zijn zoon Cornelis Jan Schot B.W.zn.', dimensions: '800 x 500 px', sizeText: 'POD-01', dataUrl: makeHistoricalSvgPlate('TH 2 - 1902', 'Hoogaars TH 2 Eben Haezer - Werf Van Duivendijk', 'VLOOT B.W. SCHOT THOLEN', 'ship') },
+      { id: 'pod-img-02', title: 'Reddingsactie met roeiboot van de TH 12 bij Watersnood Oud-Vossemeer', category: 'Vloot TH 2 / TH 12 / TH 90', year: '12-13 maart 1906', location: 'Oud-Vossemeer', desc: 'Evacuatie van inwoners met de roeiboot van hoogaars TH 12 "Niets zonder Gods zegen" tijdens de stormvloed van maart 1906.', dimensions: '800 x 500 px', sizeText: 'POD-02', dataUrl: makeHistoricalSvgPlate('TH 12 - 1906', 'Reddingsactie Watersnood Oud-Vossemeer met TH 12', 'STORMVLOED 12-13 MAART 1906', 'rescue') },
+      { id: 'pod-img-03', title: 'Woonhuis Kruittoren 23 & Familiepanden te Tholen', category: "Kruittoren 23 & Contr'Escarpe", year: 'ca. 1905', location: 'Kruittoren 23 (Wijk A 107), Tholen', desc: 'Woonhuis van Benjamin Willem Schot aan de Kruittoren 23 en de naastgelegen familiehuizen (waaronder Anna Schot).', dimensions: '800 x 500 px', sizeText: 'POD-03', dataUrl: makeHistoricalSvgPlate('KRUITTOREN 23', 'Woonhuis B.W. Schot & Familiepanden Tholen', 'WIJK A NR. 107 THOLEN', 'house') },
+      { id: 'pod-img-04', title: "Oesterloods Schot & Kegge aan de Contr'Escarpe", category: "Kruittoren 23 & Contr'Escarpe", year: 'Juli 1913', location: "Contr'Escarpe, Tholen", desc: 'De oesterloods van Cornelis Jan Schot en Jacob Kegge waarvoor in juli 1913 vergroting werd aangevraagd.', dimensions: '800 x 500 px', sizeText: 'POD-04', dataUrl: makeHistoricalSvgPlate('LOODS 1913', "Oesterloods C.J. Schot & J. Kegge - Contr'Escarpe", 'VERZENDING ZEEUWSE OESTERS', 'house') },
+      { id: 'pod-img-05', title: 'Perceel No. 369 op de Bol van Lodijke (12,5 ha)', category: 'Bol van Lodijke & Percelen', year: '1892 / 1915', location: 'Bol van Lodijke, Oosterschelde', desc: 'Ligging van oesterperceel No. 369 (12,5 ha) op de Bol van Lodijke in het Verdronken Land van Reimerswaal.', dimensions: '800 x 500 px', sizeText: 'POD-05', dataUrl: makeHistoricalSvgPlate('PERCEEL 369', 'Bol van Lodijke - 12,5 Hectare Oesterbank', 'CONCESSIE B.W. SCHOT', 'map') },
+      { id: 'pod-img-06', title: 'Hofstede De Gortzak in Polder Schakerloo (Sectie I nr. 360)', category: 'Hofsteden & Schakerloo', year: '1768 / 1893 / 1915', location: 'Schakerloo Sectie I nr. 360', desc: 'Hofstede De Gortzak (122 gemeten), geveild door erven mr. T.A. Wagtho (1893) en verkocht door Jacob Moelker (1915).', dimensions: '800 x 500 px', sizeText: 'POD-06', dataUrl: makeHistoricalSvgPlate('DE GORTZAK', 'Hofstede De Gortzak - Schakerloo Sectie I 360', 'BOOGAART - WAGTHO - MOELKER', 'house') },
+      { id: 'pod-img-07', title: 'Eikenhouten Polderklepduiker (Schaal 1:5)', category: 'Archeologie & Klepduiker', year: '18e / 19e eeuw', location: 'Scherpenisse Sectie E 1551', desc: 'Constructietekening van een eikenhouten uitwateringssluis met getijdeklep onder de zeedijk.', dimensions: '800 x 500 px', sizeText: 'POD-07', dataUrl: makeHistoricalSvgPlate('KLEPDUIKER 1:5', 'Eikenhouten Polderklepduiker met Getijdeklep', 'WATERSTAAT THOLEN & SCHERPENISSE', 'map') },
+      { id: 'pod-img-08', title: 'Expansie naar Flauwers onder Zierikzee (1912)', category: 'Bol van Lodijke & Percelen', year: '1912', location: 'Flauwers onder Zierikzee', desc: 'Pachting van oester- en mosselgronden te Flauwers van mr. Fokker door Kees, Jacob en Willem Schot.', dimensions: '800 x 500 px', sizeText: 'POD-08', dataUrl: makeHistoricalSvgPlate('FLAUWERS 1912', 'Oester- en Mosselgronden Flauwers Zierikzee', 'ZIERIKZEESE TAK FAMILIE SCHOT', 'ship') }
+    ];
+
+    const DEFAULT_CMS_RECORDS = [
+      { id: 'cms-01', title: 'Concessie Perceel No. 369 Bol van Lodijke (12,5 Hectare)', category: 'LODIJKE_369', date: '1892 / 1915', body: 'Exploitatie van oesterperceel No. 369 op de Bol van Lodijke door Benjamin Willem Schot met de houten hoogaarzen TH 2 Eben Haëzer en TH 90 Vijf Gebroeders.' },
+      { id: 'cms-02', title: 'Reddingsoperatie Watersnood Oud-Vossemeer (TH 12)', category: 'VLOOT_HOOGAARS', date: '12-13 maart 1906', body: 'Inzet van de roeiboot van hoogaars TH 12 "Niets zonder Gods zegen" door Thoolse vissers bij de evacuatie van Oud-Vossemeer.' },
+      { id: 'cms-03', title: "Uitbreiding Oesterloods Contr'Escarpe (Schot & Kegge)", category: 'DOSSIER_SCHOT', date: 'Juli 1913', body: "Verzoek van maatschapsleden Cornelis Jan Schot en Jacob Kegge aan B&W van Tholen tot vergroting van de oesterloods aan de Contr'Escarpe." }
+    ];
+
+    let photoDatabase = [];
+    let cmsDatabase = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPhotoDatabase();
+      loadCmsDatabase();
+      renderPhotoAlbum();
+      renderRustCmsRecords();
+      generateViewportSnippet();
+      renderSecondaryViewport('fotos');
+      syncWithRustBackend(true);
+    });
+
+    function openModal(id) { const m = document.getElementById(id); if (m) m.classList.remove('hidden'); }
+    function closeModal(id) { const m = document.getElementById(id); if (m) m.classList.add('hidden'); }
+
+    function toggleLeftDrawer(forceState) {
+      const drawer = document.getElementById('leftSlidingDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      if (!drawer) return;
+      const shouldOpen = typeof forceState === 'boolean' ? forceState : !drawer.classList.contains('open');
+      if (shouldOpen) {
+        drawer.classList.add('open');
+        if (!isLeftDrawerPinned && backdrop) backdrop.classList.remove('hidden');
+      } else {
+        isLeftDrawerPinned = false;
+        document.body.classList.remove('drawer-pinned');
+        const btnPin = document.getElementById('btnPinDrawer');
+        if (btnPin) btnPin.innerText = 'Vastzetten';
+        drawer.classList.remove('open');
+        if (backdrop && !document.getElementById('rightSlidingInspector').classList.contains('open')) backdrop.classList.add('hidden');
+      }
+    }
+
+    function togglePinLeftDrawer() {
+      isLeftDrawerPinned = !isLeftDrawerPinned;
+      const btnPin = document.getElementById('btnPinDrawer');
+      const drawer = document.getElementById('leftSlidingDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      if (isLeftDrawerPinned) {
+        document.body.classList.add('drawer-pinned');
+        drawer.classList.add('open');
+        if (backdrop) backdrop.classList.add('hidden');
+        if (btnPin) btnPin.innerText = 'Vastgezet';
+      } else {
+        document.body.classList.remove('drawer-pinned');
+        if (btnPin) btnPin.innerText = 'Vastzetten';
+      }
+    }
+
+    function toggleRightDrawer(forceState) {
+      const drawer = document.getElementById('rightSlidingInspector');
+      const backdrop = document.getElementById('drawerBackdrop');
+      if (!drawer) return;
+      const shouldOpen = typeof forceState === 'boolean' ? forceState : !drawer.classList.contains('open');
+      if (shouldOpen) {
+        drawer.classList.add('open');
+        if (backdrop) backdrop.classList.remove('hidden');
+      } else {
+        drawer.classList.remove('open');
+        if (backdrop && (!document.getElementById('leftSlidingDrawer').classList.contains('open') || isLeftDrawerPinned)) backdrop.classList.add('hidden');
+      }
+    }
+
+    function closeAllDrawers() {
+      if (!isLeftDrawerPinned) document.getElementById('leftSlidingDrawer')?.classList.remove('open');
+      document.getElementById('rightSlidingInspector')?.classList.remove('open');
+      document.getElementById('drawerBackdrop')?.classList.add('hidden');
+    }
+
+    function filterSlidingMenu(query) {
+      const q = (query || '').toLowerCase().trim();
+      document.querySelectorAll('#drawerMenuList .drawer-item').forEach(item => {
+        const text = (item.innerText + ' ' + (item.getAttribute('data-keywords') || '')).toLowerCase();
+        item.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    }
+
+    function openInSecondaryViewport(topic) {
+      setViewportLayout('split');
+      const sel = document.getElementById('vp2Selector');
+      if (sel) sel.value = topic;
+      renderSecondaryViewport(topic);
+      showToast('Onderdeel geopend in Viewport 2.');
+    }
+
+    function scrollTabStrip(stripId, deltaX) {
+      document.getElementById(stripId)?.scrollBy({ left: deltaX, behavior: 'smooth' });
+    }
+
+    function switchSubTab(parentTabId, subPaneId) {
+      document.querySelectorAll(`.subtab-pane-${parentTabId}`).forEach(el => el.classList.add('hidden'));
+      document.getElementById(subPaneId)?.classList.remove('hidden');
+      document.querySelectorAll(`[id^="subbtn-${parentTabId}-"]`).forEach(btn => btn.classList.remove('sub-tab-active'));
+      document.getElementById(`subbtn-${parentTabId}-${subPaneId}`)?.classList.add('sub-tab-active');
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('statusToast');
+      const text = document.getElementById('statusToastText');
+      if (toast && text) {
+        text.innerText = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 4000);
+      }
+    }
+
+    function hideToast() { document.getElementById('statusToast')?.classList.add('hidden'); }
+
+    function setFontSize(px, activeBtnId) {
+      document.documentElement.style.setProperty('--base-font-size', px + 'px');
+      ['btnFontA', 'btnFontAPlus', 'btnFontAPlusPlus'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) {
+          b.className = (id === activeBtnId)
+            ? 'px-2.5 py-1 rounded text-xs font-bold bg-white text-meekrab-950 shadow-sm'
+            : 'px-2 py-1 rounded text-xs font-semibold text-white';
+        }
+      });
+    }
+
+    function setViewportLayout(mode) {
+      const wrapper = document.getElementById('multiViewportWrapper');
+      const secVp = document.getElementById('secondaryViewportContainer');
+      const bSingle = document.getElementById('btnVpSingle');
+      const bSplit = document.getElementById('btnVpSplit');
+      const bStacked = document.getElementById('btnVpStacked');
+      const act = 'px-2.5 py-1 rounded bg-meekrab-700 text-white font-semibold';
+      const inact = 'px-2.5 py-1 rounded bg-zeeuws-sand text-zinc-800 border border-zeeuws-border font-semibold';
+      bSingle.className = mode === 'single' ? act : inact;
+      bSplit.className = mode === 'split' ? act : inact;
+      bStacked.className = mode === 'stacked' ? act : inact;
+      if (mode === 'single') {
+        wrapper.className = 'viewport-grid-single';
+        secVp.classList.add('hidden');
+      } else {
+        wrapper.className = mode === 'split' ? 'viewport-grid-split' : 'viewport-grid-stacked';
+        secVp.classList.remove('hidden');
+        renderSecondaryViewport(document.getElementById('vp2Selector').value);
+      }
+    }
+
+    function renderSecondaryViewport(topic) {
+      const container = document.getElementById('secondaryViewportContent');
+      if (!container) return;
+      if (topic === 'fotos') {
+        container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${photoDatabase.slice(0, 4).map(p => `<div class="border border-zeeuws-border rounded-lg p-2.5 bg-zeeuws-sand space-y-1.5"><img src="${p.dataUrl}" alt="${p.title}" class="w-full h-32 object-cover rounded cursor-pointer" onclick="openPhotoLightbox('${p.id}')"/><div class="font-bold text-xs">${p.title}</div></div>`).join('')}</div>`;
+      } else if (topic === 'zeekaart') {
+        container.innerHTML = `<div class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2"><div class="font-mono text-xs text-meekrab-800 font-bold">Perceel No. 369 — Bol van Lodijke</div><p>12,5 hectare oesterbank in de Oosterschelde, geëxploiteerd door B.W. Schot met de hoogaarzen TH 2 en TH 90.</p><button onclick="switchTab('tabKaarten')" class="ui-btn bg-meekrab-700 text-white w-full">Open Zeekaart in Viewport 1</button></div>`;
+      } else if (topic === 'dossier') {
+        container.innerHTML = `<div class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-1.5"><strong>Benjamin Willem Schot (1840–1935):</strong> Kruittoren 23 Tholen, Perceel 369 Bol van Lodijke (12,5 ha), hoogaarzen TH 2, TH 12 (watersnoodredding 1906) en TH 90.</div>`;
+      } else if (topic === 'stamboom') {
+        container.innerHTML = `<div class="space-y-2"><div class="p-2.5 bg-zinc-800 text-white rounded text-xs">Generatie I &amp; II: Afgeschermd conform AVG</div><div class="p-2.5 bg-zeeuws-sand border border-zeeuws-border rounded text-xs"><strong>Generatie III:</strong> Jacob Bout x Cornelia Adriana Schot (1867)</div><div class="p-2.5 bg-zeeuws-sand border border-zeeuws-border rounded text-xs"><strong>Generatie IV:</strong> B.W. Schot (1840–1935) x Maria Mathea Bolier (1840–1909)</div></div>`;
+      } else if (topic === 'rustcms') {
+        container.innerHTML = `<div class="space-y-2">${cmsDatabase.map(c => `<div class="p-2.5 bg-zeeuws-sand border border-zeeuws-border rounded text-xs"><div class="font-mono text-meekrab-700">[${c.category}] ${c.date}</div><div class="font-bold">${c.title}</div></div>`).join('')}</div>`;
+      } else {
+        container.innerHTML = `<div class="p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg">Onderdeel <strong>${topic}</strong> geselecteerd in Viewport 2.</div>`;
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId)?.classList.remove('hidden');
+      document.querySelectorAll('#mainSlidingTabStrip .folder-tab-btn').forEach(btn => btn.classList.remove('folder-tab-active'));
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('folder-tab-active');
+        activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+      const titles = {
+        tabGenealogie: '01. Stamboom & Kwartierstaat (AVG-Afgeschermd)',
+        tabFotos: '02. Solid POD Fotoalbum & Uploads',
+        tabDocumenten: '03. Historisch Dossier B.W. Schot (1840–1935)',
+        tabKaarten: '04. Zeekaart Bol van Lodijke (Perceel 369) & Kadaster',
+        tabPlattegronden: '05. Lijnenplan Hoogaars TH 2 & Polder-Klepduiker',
+        tabArcheologie: '06. Archeologisch Onderzoek Bol van Lodijke',
+        tabGeologie: '07. Geologie & Boorprofielen Tholen',
+        tabKadaster: '08. Kadastrale Percelen & Zeeuwse Gemeten Calculator',
+        tabWoo: '09. Bestuursrechtelijke Keten (Woo & Rechtbank)',
+        tabUitbreiding: '10. Eigen Tabbladen & Google Sites Embed',
+        tabRustCms: '11. Rust Axum CMS & Decentrale API'
+      };
+      const bc = document.getElementById('breadcrumbCurrentTab');
+      if (bc) bc.innerText = titles[tabId] || tabId;
+    }
+
+    function showGenealogyDetail(personKey, openDrawer) {
+      const badge = document.getElementById('genDetailBadge');
+      const title = document.getElementById('genDetailTitle');
+      const content = document.getElementById('genDetailContent');
+      let bTxt = '', tTxt = '', html = '';
+      if (personKey.startsWith('locked_')) {
+        bTxt = 'Afgeschermd conform AVG';
+        tTxt = 'Persoonsgegevens Niet Openbaar';
+        html = `<p>De namen en persoonsgegevens van uzelf, uw broer, uw vader en uw moeder zijn strikt afgeschermd conform de AVG.</p>`;
+      } else if (personKey === 'bw_schot') {
+        bTxt = 'Stamvader Dossier (1840–1935)';
+        tTxt = 'Benjamin Willem Schot (26 sep 1840 – 17 nov 1935)';
+        html = `<p>Oestervisser en reder te Tholen (Kruittoren 23). Pachter van Perceel No. 369 op de Bol van Lodijke (12,5 ha) en eigenaar van de hoogaarzen TH 2, TH 12 en TH 90.</p>`;
+      } else if (personKey === 'jacob_bout' || personKey === 'cornelia_schot') {
+        bTxt = 'Generatie III';
+        tTxt = 'Jacob Bout x Cornelia Adriana Schot (geb. 1867)';
+        html = `<p>Cornelia Adriana Schot (geb. 1867 te Tholen), dochter van B.W. Schot en Maria Mathea Bolier, gehuwd met Jacob Bout.</p>`;
+      } else if (personKey === 'maria_bolier') {
+        bTxt = '1e Huwelijk (1863)';
+        tTxt = 'Maria Mathea Bolier (27 aug 1840 Scherpenisse – 1909)';
+        html = `<p>Moeder van de 13 kinderen uit het eerste huwelijk van Benjamin Willem Schot.</p>`;
+      } else if (personKey === 'dina_kegge') {
+        bTxt = '2e Huwelijk (1 okt 1915)';
+        tTxt = 'Dina Pieternella Kegge (1868–1944)';
+        html = `<p>Oesterkoopvrouw te Tholen, weduwe van visser Willem Frederik van der Stel.</p>`;
+      } else {
+        bTxt = 'Generatie V';
+        tTxt = 'Jan Schot (1814–1882) x Elisabeth Josina van Dijk (1812–1895)';
+        html = `<p>Ouders van stamvader Benjamin Willem Schot te Tholen.</p>`;
+      }
+      if (badge) badge.innerText = bTxt;
+      if (title) title.innerText = tTxt;
+      if (content) content.innerHTML = html;
+      if (openDrawer) toggleRightDrawer(true);
+    }
+
+    function loadPhotoDatabase() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_PHOTOS);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) { photoDatabase = parsed; return; }
+        }
+      } catch (e) {}
+      photoDatabase = [...DEFAULT_ARCHIVE_PHOTOS];
+    }
+
+    function savePhotoDatabase() {
+      try { localStorage.setItem(STORAGE_KEY_PHOTOS, JSON.stringify(photoDatabase)); } catch (e) {}
+    }
+
+    function handleDragOver(e) { e.preventDefault(); e.stopPropagation(); }
+    function handleDragLeave(e) { e.preventDefault(); e.stopPropagation(); }
+    function handleFileDrop(e) {
+      e.preventDefault(); e.stopPropagation();
+      if (e.dataTransfer?.files?.length) queueSelectedFiles(e.dataTransfer.files);
+    }
+    function handlePhotoSelection(e) {
+      if (e.target?.files?.length) queueSelectedFiles(e.target.files);
+    }
+    function queueSelectedFiles(fileList) {
+      pendingUploadFiles = Array.from(fileList);
+      const st = document.getElementById('selectedFilesStatus');
+      if (st) st.innerText = `${pendingUploadFiles.length} bestand(en) geselecteerd.`;
+    }
+
+    function processPendingUploads() {
+      if (!pendingUploadFiles.length) { showToast('Selecteer eerst een foto.'); return; }
+      const customTitle = document.getElementById('upPhotoTitle').value.trim();
+      const category = document.getElementById('upPhotoCategory').value;
+      const year = document.getElementById('upPhotoYear').value.trim() || 'Archief';
+      const location = document.getElementById('upPhotoLocation').value.trim() || 'Tholen';
+      const desc = document.getElementById('upPhotoDesc').value.trim() || 'Geüploade archieffoto.';
+      let done = 0;
+      pendingUploadFiles.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const dataUrl = evt.target.result;
+          const img = new Image();
+          img.onload = function() {
+            photoDatabase.unshift({
+              id: 'upload-' + Date.now() + '-' + idx,
+              title: customTitle || file.name.replace(/\.[^/.]+$/, ''),
+              category, year, location, desc,
+              dimensions: `${img.naturalWidth} x ${img.naturalHeight} px`,
+              sizeText: `${Math.round(file.size / 1024)} KB`,
+              dataUrl
+            });
+            done++;
+            if (done === pendingUploadFiles.length) {
+              savePhotoDatabase();
+              renderPhotoAlbum();
+              pendingUploadFiles = [];
+              switchSubTab('tabFotos', 'subFotosOverzicht');
+              showToast('Foto toegevoegd aan het album.');
+            }
+          };
+          img.src = dataUrl;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function filterPhotosByCategory(cat) { currentPhotoFilter = cat; renderPhotoAlbum(); }
+    function setAlbumLayout(layout) { currentAlbumLayout = layout; renderPhotoAlbum(); }
+
+    function renderPhotoAlbum() {
+      const container = document.getElementById('photoAlbumContainer');
+      const badge = document.getElementById('albumCountBadge');
+      const query = (document.getElementById('photoSearchInput')?.value || '').toLowerCase().trim();
+      const filtered = photoDatabase.filter(item => {
+        const matchCat = currentPhotoFilter === 'ALLE' || item.category === currentPhotoFilter;
+        const matchQ = !query || item.title.toLowerCase().includes(query) || item.desc.toLowerCase().includes(query);
+        return matchCat && matchQ;
+      });
+      if (badge) badge.innerText = `${filtered.length} van ${photoDatabase.length} items`;
+      if (!container) return;
+      if (currentAlbumLayout === 'table') {
+        container.className = 'block overflow-x-auto border border-zeeuws-border rounded-lg';
+        container.innerHTML = `<table class="w-full text-left border-collapse text-xs sm:text-sm"><thead class="bg-meekrab-800 text-white font-mono text-xs"><tr><th class="p-2.5">Beeld</th><th class="p-2.5">Titel</th><th class="p-2.5">Jaar &amp; Locatie</th><th class="p-2.5">Actie</th></tr></thead><tbody class="divide-y divide-zeeuws-border">${filtered.map(item => `<tr><td class="p-2.5 w-28"><img src="${item.dataUrl}" alt="${item.title}" class="w-24 h-16 object-cover rounded cursor-pointer" onclick="openPhotoLightbox('${item.id}')"/></td><td class="p-2.5 font-bold">${item.title}<div class="text-xs font-normal text-zinc-600">${item.desc}</div></td><td class="p-2.5 text-xs">${item.year} | ${item.location}</td><td class="p-2.5"><button onclick="openPhotoLightbox('${item.id}')" class="px-2.5 py-1 bg-meekrab-700 text-white rounded text-xs">Vergroot</button></td></tr>`).join('')}</tbody></table>`;
+      } else {
+        container.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+        container.innerHTML = filtered.map(item => `
+          <article class="bg-white border border-zeeuws-border rounded-lg overflow-hidden flex flex-col justify-between">
+            <div>
+              <div class="bg-zeeuws-sand border-b border-zeeuws-border px-3 py-1.5 flex items-center justify-between text-xs font-mono">
+                <span class="text-meekrab-800 font-semibold">${item.category}</span>
+                <span>${item.year}</span>
+              </div>
+              <div class="p-2.5 bg-zeeuws-sand flex items-center justify-center">
+                <img src="${item.dataUrl}" alt="${item.title}" onclick="openPhotoLightbox('${item.id}')" class="w-full h-52 object-contain bg-white rounded border border-zeeuws-border cursor-pointer" />
+              </div>
+              <div class="p-3.5 space-y-1">
+                <h3 class="font-serif font-bold text-base text-zinc-900">${item.title}</h3>
+                <p class="text-xs sm:text-sm text-zinc-700">${item.desc}</p>
+              </div>
+            </div>
+            <div class="px-3.5 pb-3.5 flex items-center justify-between gap-2">
+              <span class="text-xs font-mono text-zinc-500">${item.location}</span>
+              <button onclick="openPhotoLightbox('${item.id}')" class="px-3 py-1 bg-meekrab-700 text-white rounded text-xs font-semibold">Vergroot</button>
+            </div>
+          </article>
+        `).join('');
+      }
+    }
+
+    function openPhotoLightbox(photoId) {
+      const item = photoDatabase.find(p => p.id === photoId);
+      if (!item) return;
+      document.getElementById('lbCategoryBadge').innerText = item.category;
+      document.getElementById('lbTitle').innerText = item.title;
+      document.getElementById('lbImage').src = item.dataUrl;
+      document.getElementById('lbYear').innerText = item.year;
+      document.getElementById('lbLocation').innerText = item.location;
+      document.getElementById('lbTech').innerText = `${item.dimensions} (${item.sizeText})`;
+      document.getElementById('lbDesc').innerText = item.desc;
+      openModal('photoLightboxModal');
+    }
+
+    function exportPhotosJson() {
+      const a = document.createElement('a');
+      a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(photoDatabase, null, 2));
+      a.download = 'solid-pod-fotoalbum-schot-tholen.json';
+      a.click();
+    }
+
+    function importPhotosJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = e => {
+        try {
+          const imp = JSON.parse(e.target.result);
+          if (Array.isArray(imp)) { photoDatabase = imp; savePhotoDatabase(); renderPhotoAlbum(); showToast('Fotoalbum geïmporteerd.'); }
+        } catch (err) { showToast('Ongeldig JSON-bestand.'); }
+      };
+      r.readAsText(file);
+    }
+
+    function switchDocTab(paneId) {
+      document.querySelectorAll('.doc-subpane').forEach(el => el.classList.add('hidden'));
+      document.getElementById('docPane' + paneId.replace('doc', ''))?.classList.remove('hidden');
+      document.querySelectorAll('#docMainTabsBar button').forEach(btn => {
+        btn.classList.toggle('sub-tab-active', btn.id === 'btn-' + paneId);
+      });
+    }
+
+    function switchSubDocA(subId) {
+      ['subDocProfiel', 'subDocKruittoren', 'subDocVloot', 'subDocWatersnood', 'subDocZierikzee', 'subDocChronologie'].forEach(id => {
+        document.getElementById(id)?.classList.add('hidden');
+      });
+      document.getElementById('subDoc' + subId.replace('sub', ''))?.classList.remove('hidden');
+      ['btn-subProfiel', 'btn-subKruittoren', 'btn-subVloot', 'btn-subWatersnood', 'btn-subZierikzee', 'btn-subChronologie'].forEach(id => {
+        document.getElementById(id)?.classList.toggle('sub-tab-active', id === 'btn-' + subId);
+      });
+    }
+
+    function createNewDocTab() {
+      const title = document.getElementById('newDocTitle').value.trim();
+      const year = document.getElementById('newDocYear').value.trim() || 'Archief';
+      const content = document.getElementById('newDocContent').value.trim();
+      if (!title) { showToast('Vul een titel in.'); return; }
+      const cid = 'Custom' + Date.now();
+      const bar = document.getElementById('docMainTabsBar');
+      const btn = document.createElement('button');
+      btn.id = 'btn-doc' + cid;
+      btn.className = 'sub-tab-btn';
+      btn.innerText = title;
+      btn.onclick = () => switchDocTab('doc' + cid);
+      bar.insertBefore(btn, document.getElementById('btn-docNew'));
+
+      const pane = document.createElement('div');
+      pane.id = 'docPane' + cid;
+      pane.className = 'doc-subpane hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2';
+      pane.innerHTML = `<div class="font-bold text-base text-meekrab-800">${title} (${year})</div><p class="text-sm whitespace-pre-line">${content}</p>`;
+      document.getElementById('customDocPanesContainer').appendChild(pane);
+      switchDocTab('doc' + cid);
+      showToast('Nieuw dossier aangemaakt.');
+    }
+
+    function updateSvgMapLayers() {
+      const gR = document.getElementById('svgGroupRoutes');
+      const gL = document.getElementById('svgGroupLodijke');
+      if (gR) gR.style.display = document.getElementById('layerRoutes')?.checked ? 'block' : 'none';
+      if (gL) gL.style.display = document.getElementById('layerLodijke')?.checked ? 'block' : 'none';
+    }
+
+    function inspectFeature(key, openDrawer) {
+      const info = {
+        lodijke369: { title: 'Oesterperceel No. 369 — Bol van Lodijke', tag: '12,5 Hectare', desc: 'Kweekperceel No. 369 op de Bol van Lodijke (12,5 ha), geëxploiteerd door B.W. Schot met de hoogaarzen TH 2 en TH 90.' },
+        kasteelLodijke: { title: 'Verdronken Kasteel Lodijke (ARC-LOD-01)', tag: 'Reimerswaal 1530', desc: 'Fundamentresten van kasteel en ambacht Lodijke nabij Perceel 369.' },
+        weerE: { title: 'Weervisserij Weer E op Eldernissen', tag: 'Sinds 1825', desc: 'Gepacht door de familie Van Dort; vanaf 1877 verpacht voor fl. 7.200 per jaar.' },
+        oudvossemeer1906: { title: 'Watersnood Oud-Vossemeer (12–13 maart 1906)', tag: 'Redding TH 12', desc: 'Evacuatie met de roeiboot van hoogaars TH 12 "Niets zonder Gods zegen" van B.W. Schot.' },
+        flauwers1912: { title: 'Flauwers onder Zierikzee (1912)', tag: 'Pacht mr. Fokker', desc: 'Uitbreiding door Kees, Jacob en Willem Schot naar Schouwen-Duiveland.' },
+        gortzak360: { title: 'Hofstede De Gortzak (Schakerloo Sectie I nr. 360)', tag: '122 Gemeten', desc: '1768 Boogaart -> Tichelaar; 1893 erven mr. T.A. Wagtho; 1915 Jacob Moelker -> Thoolse Bank.' },
+        kandia: { title: 'Hofstede Kandia (Broekpolder & Rooland)', tag: '>76 Hectare', desc: 'Eigendom P.J. de Caters / V. Claeijssens; pachters Adam en M.C. van Tilburg.' },
+        kruittoren: { title: "Kruittoren 23 & Contr'Escarpe Tholen", tag: 'Stad & Haven', desc: 'Woonhuis B.W. Schot (Wijk A 107), werf Van Duivendijk en oesterloods Schot & Kegge (1913).' },
+        scherpenisse: { title: 'Scherpenisse Sectie E 1551–1552 (Platteweg)', tag: 'Bolier 1840', desc: 'Geboortegrond van Maria Mathea Bolier (1840) en locatie van eikenhouten polder-klepduikers.' },
+        watervliet: { title: 'Hofstede Molenvliet (43,3 ha) & Watervliet (77 ha)', tag: 'Thoolse Polders', desc: 'Eigendom van A. Dumont Catshoek en mr. François Ermerins.' }
+      };
+      if (info[key]) {
+        document.getElementById('mapInspectTitle').innerText = info[key].title;
+        document.getElementById('mapInspectTag').innerText = info[key].tag;
+        document.getElementById('mapInspectDesc').innerText = info[key].desc;
+        if (openDrawer) toggleRightDrawer(true);
+      }
+    }
+
+    function addArcheoRecord() {
+      const code = document.getElementById('arcInputCode').value.trim() || 'ARC-LOD-09';
+      const loc = document.getElementById('arcInputLoc').value.trim() || 'Bol van Lodijke';
+      const desc = document.getElementById('arcInputDesc').value.trim();
+      if (!desc) return;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="p-2.5 font-mono font-bold text-meekrab-800">${code}</td><td class="p-2.5">-2,00m NAP</td><td class="p-2.5 font-semibold">${desc}</td><td class="p-2.5">${loc}</td>`;
+      document.getElementById('archeoTableBody')?.prepend(tr);
+      switchSubTab('tabArcheologie', 'subArcRegister');
+    }
+
+    function addGeoRecord() {
+      const code = document.getElementById('geoInputCode').value.trim() || 'GEO-04';
+      const polder = document.getElementById('geoInputPolder').value.trim() || 'Tholen';
+      const layer = document.getElementById('geoInputLayer').value.trim();
+      if (!layer) return;
+      const div = document.createElement('div');
+      div.className = 'p-3.5 bg-zeeuws-sand border border-zeeuws-border rounded-lg';
+      div.innerHTML = `<strong>${code} (${polder}):</strong> ${layer}`;
+      document.getElementById('subGeoBoringen')?.appendChild(div);
+      switchSubTab('tabGeologie', 'subGeoBoringen');
+    }
+
+    function calcToHectare(val) {
+      const g = parseFloat(val);
+      const out = document.getElementById('calcResultHectare');
+      if (out) out.innerText = isNaN(g) ? '0,00 ha' : (g * 0.44056).toFixed(2).replace('.', ',') + ' ha';
+    }
+
+    function addKadasterRecord() {
+      const s = document.getElementById('kadInputSectie').value.trim();
+      const n = document.getElementById('kadInputNaam').value.trim();
+      const g = document.getElementById('kadInputGrootte').value.trim() || '-';
+      const e = document.getElementById('kadInputEigenaar').value.trim() || '-';
+      if (!s || !n) return;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="p-2.5 font-mono font-bold text-meekrab-800">${s}</td><td class="p-2.5 font-semibold">${n}</td><td class="p-2.5">${g}</td><td class="p-2.5">${e}</td>`;
+      document.getElementById('kadasterTableBody')?.prepend(tr);
+      switchSubTab('tabKadaster', 'subKadRegister');
+    }
+
+    function addWooRecord() {
+      const c = document.getElementById('wooInputCode').value.trim() || 'WOO-NEW';
+      const i = document.getElementById('wooInputInstantie').value.trim() || 'Rechtbank';
+      const b = document.getElementById('wooInputBesluit').value.trim();
+      if (!b) return;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="p-2.5 font-mono font-bold text-meekrab-800">${c}</td><td class="p-2.5 font-semibold">${i}</td><td class="p-2.5">${b}</td>`;
+      document.getElementById('wooTableBody')?.prepend(tr);
+      switchSubTab('tabWoo', 'subWooRegister');
+    }
+
+    function createCustomTab() {
+      const name = document.getElementById('customTabNameInput').value.trim();
+      const type = document.getElementById('customTabTypeInput').value;
+      const content = document.getElementById('customTabFirstEntry').value.trim();
+      if (!name) return;
+      const tid = 'tabCustom_' + Date.now();
+      const btn = document.createElement('button');
+      btn.id = 'btn-' + tid;
+      btn.className = 'folder-tab-btn';
+      btn.innerText = name;
+      btn.onclick = () => switchTab(tid);
+      document.getElementById('mainSlidingTabStrip').appendChild(btn);
+
+      const pane = document.createElement('div');
+      pane.id = tid;
+      pane.className = 'tab-pane hidden p-4 bg-zeeuws-sand border border-zeeuws-border rounded-lg space-y-2';
+      pane.innerHTML = `<div class="font-serif font-bold text-base text-meekrab-800">${name} (${type})</div><p class="text-sm whitespace-pre-line">${content}</p>`;
+      document.getElementById('dynamicMainTabsPanes').appendChild(pane);
+      switchTab(tid);
+    }
+
+    function generateViewportSnippet() {
+      const box = document.getElementById('viewportCodeSnippet');
+      if (box) box.value = `<div style="font-size:19px;line-height:1.6;font-family:'Inter',sans-serif;background:#f9f7f2;color:#18181b;border:2px solid #8b2229;border-radius:10px;padding:20px;"><strong>Archief Familie Schot & Bout (Tholen & Bol van Lodijke Perceel 369)</strong><p>Benjamin Willem Schot (1840–1935) • Hoogaarzen TH 2, TH 12 & TH 90 • AVG-afgeschermd.</p></div>`;
+    }
+
+    function copyViewportSnippet() {
+      const box = document.getElementById('viewportCodeSnippet');
+      if (box) navigator.clipboard.writeText(box.value).then(() => showToast('Embed-code gekopieerd.'));
+    }
+
+    function performGlobalSearch(query) {
+      const q = (query || '').toLowerCase().trim();
+      const box = document.getElementById('globalSearchResultsBox');
+      const sum = document.getElementById('globalSearchSummary');
+      if (!q) { box?.classList.add('hidden'); return; }
+      const pHits = photoDatabase.filter(p => p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
+      const cHits = cmsDatabase.filter(c => c.title.toLowerCase().includes(q) || c.body.toLowerCase().includes(q));
+      box?.classList.remove('hidden');
+      if (sum) sum.innerHTML = `Zoekterm <strong>"${q}"</strong>: <button onclick="switchTab('tabFotos')" class="underline font-bold mx-1">${pHits.length} foto's</button> | <button onclick="switchTab('tabRustCms')" class="underline font-bold mx-1">${cHits.length} CMS-records</button>`;
+    }
+
+    function clearGlobalSearch() {
+      document.getElementById('globalSearchInput').value = '';
+      document.getElementById('globalSearchResultsBox')?.classList.add('hidden');
+    }
+
+    function loadCmsDatabase() {
+      try {
+        const s = localStorage.getItem(STORAGE_KEY_CMS);
+        if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) { cmsDatabase = p; return; } }
+      } catch (e) {}
+      cmsDatabase = [...DEFAULT_CMS_RECORDS];
+    }
+
+    function saveCmsDatabase() {
+      try { localStorage.setItem(STORAGE_KEY_CMS, JSON.stringify(cmsDatabase)); } catch (e) {}
+    }
+
+    async function syncWithRustBackend(silent = false) {
+      const badge = document.getElementById('rustApiStatusBadge');
+      try {
+        const res = await fetch(RUST_API_URL);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length) { cmsDatabase = data; saveCmsDatabase(); renderRustCmsRecords(); }
+          if (badge) { badge.innerText = 'Rust Axum Online (8082)'; badge.className = 'px-2.5 py-0.5 bg-green-800 text-white font-mono text-xs rounded'; }
+          if (!silent) showToast('Gesynchroniseerd met Rust Axum server op 127.0.0.1:8082.');
+          return;
+        }
+      } catch (e) {
+        if (badge) { badge.innerText = 'Solid POD Lokaal / Vercel'; badge.className = 'px-2.5 py-0.5 bg-meekrab-700 text-white font-mono text-xs rounded'; }
+        if (!silent) showToast('Rust server niet actief; Solid POD modus gebruikt.');
+      }
+    }
+
+    async function publishRustCmsItem() {
+      const title = document.getElementById('cmsInputTitle').value.trim();
+      const category = document.getElementById('cmsInputCategory').value;
+      const date = document.getElementById('cmsInputDate').value.trim() || 'Archief';
+      const body = document.getElementById('cmsInputBody').value.trim();
+      if (!title || !body) { showToast('Vul titel en inhoud in.'); return; }
+      const rec = { id: 'cms-' + Date.now(), title, category, date, body };
+      cmsDatabase.unshift(rec);
+      saveCmsDatabase();
+      renderRustCmsRecords();
+      try {
+        await fetch(RUST_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rec) });
+      } catch (e) {}
+      document.getElementById('cmsInputTitle').value = '';
+      document.getElementById('cmsInputBody').value = '';
+      showToast('Archiefstuk gepubliceerd in Rust CMS.');
+    }
+
+    function deleteCmsRecord(id) {
+      cmsDatabase = cmsDatabase.filter(c => c.id !== id);
+      saveCmsDatabase();
+      renderRustCmsRecords();
+    }
+
+    function renderRustCmsRecords() {
+      const c = document.getElementById('rustCmsRecordsContainer');
+      if (!c) return;
+      c.innerHTML = cmsDatabase.map(item => `
+        <article class="bg-white border border-zeeuws-border rounded-lg p-3.5 flex items-center justify-between gap-3">
+          <div>
+            <div class="font-mono text-xs text-meekrab-700 font-semibold">[${item.category}] ${item.date}</div>
+            <h4 class="font-serif font-bold text-base text-zinc-900">${item.title}</h4>
+            <p class="text-xs sm:text-sm text-zinc-700 mt-0.5">${item.body}</p>
+          </div>
+          <button onclick="deleteCmsRecord('${item.id}')" class="px-2.5 py-1 bg-zeeuws-sand border border-zeeuws-border rounded text-xs font-semibold">Verwijder</button>
+        </article>
+      `).join('');
+    }
+
+    function exportCmsJson() {
+      const a = document.createElement('a');
+      a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(cmsDatabase, null, 2));
+      a.download = 'rust-axum-cms-lodijke.json';
+      a.click();
+    }
+  </script>
+</body>
 </html>
