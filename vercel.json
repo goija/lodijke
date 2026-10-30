@@ -1,9 +1,7 @@
 {
-  "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/((?!.*\\.).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/graphql", "destination": "/api/graphql" },
+    { "source": "/graphql", "destination": "/api/graphql" },
+    { "source": "/((?!api/|graphql).*)", "destination": "/index.html" }
   ]
 }

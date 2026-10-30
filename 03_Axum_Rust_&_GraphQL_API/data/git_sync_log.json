@@ -1,0 +1,418 @@
+[
+  {
+    "shortHash": "a6e17b9",
+    "fullHash": "a6e17b996b0684e7401133be450679c35ce24887",
+    "author": "goija",
+    "date": "2026-10-30 00:00:06 +0100",
+    "message": "style: Update interface theme to Crisp White with Zeeland Meekrab Red (#A31C1C) accents",
+    "changes": [
+      ".../frontend/src/components/MainInterface.vue      | 153 ++++++++++++++++-----",
+      "1 file changed, 117 insertions(+), 36 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "f7f6954",
+    "fullHash": "f7f6954e8654fa8a2ad8fa9b1bd80d81aa3af743",
+    "author": "goija",
+    "date": "2026-10-29 23:59:19 +0100",
+    "message": "fix: Leaflet Map bugfixes - Resolve container re-initialization error, add ResizeObserver for invalidateSize, and fix Vue Proxy reactivity bugs",
+    "changes": [
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue | 1474 +-------------------",
+      "1 file changed, 6 insertions(+), 1468 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "70f7ba0",
+    "fullHash": "70f7ba0e9f7ba06dadf470077551b4426f5754b9",
+    "author": "goija",
+    "date": "2026-10-29 23:46:54 +0100",
+    "message": "fix: Leaflet Map bugfixes - Resolve container re-initialization error, add ResizeObserver for invalidateSize, and fix Vue Proxy reactivity bugs",
+    "changes": [
+      ".../frontend/src/components/Tab04Kaarten.vue       | 232 +++++++++++++++------",
+      "1 file changed, 172 insertions(+), 60 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "1bb284f",
+    "fullHash": "1bb284f574471c7f81a34c4093683e70da66a750",
+    "author": "goija",
+    "date": "2026-10-29 23:43:03 +0100",
+    "message": "fix: Bugfixes & Master Release v3.0 - Full Index Navigation, GRAMPS Core API, PDF Reader/Editor, Leaflet GIS 1892 & Vercel SPA Routing",
+    "changes": [
+      "Cargo.lock   | 3282 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+      "vue_5173.log |    1 +",
+      "2 files changed, 3283 insertions(+)"
+    ]
+  },
+  {
+    "shortHash": "fb26b70",
+    "fullHash": "fb26b70e6b6f98cde85bc272e9781ae1defae35c",
+    "author": "goija",
+    "date": "2026-10-29 23:36:20 +0100",
+    "message": "fix: Add PDF Module (M-12) and GRAMPS Core (M-02) explicitly to index navigation menu",
+    "changes": [
+      ".../frontend/src/components/MainInterface.vue      | 26 +++++++++++-----------",
+      "1 file changed, 13 insertions(+), 13 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "a79c1e8",
+    "fullHash": "a79c1e8c13f5dd6d6f8e67a4cac824a9a5416e4c",
+    "author": "goija",
+    "date": "2026-10-29 23:18:01 +0100",
+    "message": "feat: Inbouw GRAMPS Full Core & PDF Reader/Editor Module (M-12)",
+    "changes": [
+      ".../frontend/src/components/Tab01Genealogie.vue    | 640 +++++++--------------",
+      ".../frontend/src/components/Tab12PdfModule.vue     | 110 +---",
+      "2 files changed, 211 insertions(+), 539 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "fef1c60",
+    "fullHash": "fef1c6017cb842c4dfb2c1e5e727d36ab1b4005d",
+    "author": "goija",
+    "date": "2026-10-29 23:16:15 +0100",
+    "message": "feat: Inbouw GRAMPS Genealogy Core (alle 4 stamboomtakken) & Veld-voor-Veld Bronvergelijker met conflictdetectie",
+    "changes": [
+      ".../frontend/src/components/Tab01Genealogie.vue    | 718 ++++++++++++---------",
+      "1 file changed, 429 insertions(+), 289 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "4572a59",
+    "fullHash": "4572a59490ed40a4cc1d8a64e7333edec43c05f0",
+    "author": "goija",
+    "date": "2026-10-29 22:57:12 +0100",
+    "message": "fix: Bugfixes & Master Release - GRAMPS Full Core, PDF Reader/Editor, Leaflet GIS 1892, 6 Mappenbomen & Multi-Viewport Interface",
+    "changes": [
+      "04_CMS_Document_Tabs_Frontend/frontend/index.html  | 64 +++-------------------",
+      "04_CMS_Document_Tabs_Frontend/frontend/vercel.json | 33 +----------",
+      "vercel.json                                        | 11 ++--",
+      "vue_5173.log                                       |  1 +",
+      "4 files changed, 17 insertions(+), 92 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "0fd2674",
+    "fullHash": "0fd267479f7493bb2732aa97f82f3a17b56637cd",
+    "author": "goija",
+    "date": "2026-10-29 22:51:21 +0100",
+    "message": "feat: Inbouw GRAMPS Web Full Core (Pedigree, Events, Media, GEDCOM) & PDF Reader/Editor Module (M-12)",
+    "changes": [
+      ".../frontend/src/components/MainInterface.vue      | 209 +++++++++++++++++++++",
+      ".../frontend/src/components/Tab01Genealogie.vue    | 162 +++++++++++++---",
+      ".../frontend/src/components/Tab12PdfModule.vue     | 110 +++++++++--",
+      "3 files changed, 439 insertions(+), 42 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "4cbc2b3",
+    "fullHash": "4cbc2b3d42c1478bb5b43ffa6f46bf8bbc83053b",
+    "author": "goija",
+    "date": "2026-10-29 22:48:24 +0100",
+    "message": "feat: Inbouw GRAMPS Full Core & PDF Reader/Editor Module (M-12)",
+    "changes": [
+      ".../frontend/src/components/Tab01Genealogie.vue    | 640 +++++++--------------",
+      ".../frontend/src/components/Tab12PdfModule.vue     | 220 +++++++",
+      "2 files changed, 414 insertions(+), 446 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "c224d2d",
+    "fullHash": "c224d2d40d14121b6cf0cf9ab9d23ee1619fb13a",
+    "author": "goija",
+    "date": "2026-10-29 22:47:28 +0100",
+    "message": "feat: Inbouw GRAMPS Genealogy Core (alle 4 stamboomtakken) & Veld-voor-Veld Bronvergelijker met conflictdetectie",
+    "changes": [
+      ".../frontend/src/components/Tab01Genealogie.vue    | 507 +++++++++++++++++++++",
+      "1 file changed, 507 insertions(+)"
+    ]
+  },
+  {
+    "shortHash": "85ce88d",
+    "fullHash": "85ce88db7f60a0f89055cfd8e2a758055b4b1370",
+    "author": "goija",
+    "date": "2026-10-29 22:40:51 +0100",
+    "message": "feat: Alle 6 Mappenbomen geïntegreerd met complete data-structuur in TabMappenbomen.vue",
+    "changes": [
+      "vue_5173.log | 1 +",
+      "1 file changed, 1 insertion(+)"
+    ]
+  },
+  {
+    "shortHash": "ad210d6",
+    "fullHash": "ad210d6c92598a1b4e0a7f2252e182412d76440d",
+    "author": "goija",
+    "date": "2026-10-29 22:34:49 +0100",
+    "message": "feat: Alle 6 Mappenbomen geïntegreerd met complete data-structuur in TabMappenbomen.vue",
+    "changes": [
+      ".../frontend/src/components/TabMappenbomen.vue     | 876 +++++++--------------",
+      "1 file changed, 278 insertions(+), 598 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "f4a9643",
+    "fullHash": "f4a9643cdffeebd15238e7496b38c93c24ca78c8",
+    "author": "goija",
+    "date": "2026-10-29 21:57:53 +0100",
+    "message": "fix(TabMappenbomen): Syntax-veilige compacte boomgenerator voor alle 6 Master Mappenbomen",
+    "changes": [
+      ".../frontend/dist/assets/index-Ba5FODGf.js         |  34 ---",
+      ".../frontend/dist/assets/index-CBPAbO7H.css        |   1 -",
+      ".../frontend/dist/assets/index-CIBLgA8i.css        |   1 +",
+      ".../frontend/dist/assets/index-Loz_bhEi.js         |  34 +++",
+      ".../frontend/dist/index.html                       |   4 +-",
+      ".../frontend/src/components/TabMappenbomen.vue     | 284 ---------------------",
+      "vue_5173.log                                       |   1 +",
+      "7 files changed, 38 insertions(+), 321 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "8fe6e51",
+    "fullHash": "8fe6e51757cf082c7479e61ebda2283fb403980d",
+    "author": "goija",
+    "date": "2026-10-29 21:57:29 +0100",
+    "message": "fix(TabMappenbomen): Syntax-veilige compacte boomgenerator voor alle 6 Master Mappenbomen",
+    "changes": [
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue | 1180 +++++++++++---------",
+      ".../frontend/src/components/TabMappenbomen.vue     |  977 ++++++++++++----",
+      "vue_5173.log                                       |  Bin 353 -> 22954 bytes",
+      "3 files changed, 1432 insertions(+), 725 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "c9d0a2a",
+    "fullHash": "c9d0a2a83373ccfaafc26ab83805caec81dadede",
+    "author": "goija",
+    "date": "2026-10-29 21:46:30 +0100",
+    "message": "fix(gis): Snelle WMTS tegels (PDOK BRT/Ortho), PDOK Kadaster v5 laagnamen & ResizeObserver bugfix",
+    "changes": [
+      "vue_5173.log | Bin 346 -> 353 bytes",
+      "1 file changed, 0 insertions(+), 0 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "34f1260",
+    "fullHash": "34f12602e9eaa08de4c83a88525935e88a2a7512",
+    "author": "goija",
+    "date": "2026-10-29 21:42:09 +0100",
+    "message": "fix(gis): Snelle WMTS tegels (PDOK BRT/Ortho), PDOK Kadaster v5 laagnamen & ResizeObserver bugfix",
+    "changes": [
+      ".../frontend/dist/assets/index-BBj3VW55.js         |  34 --",
+      ".../frontend/dist/assets/index-Ba5FODGf.js         |  34 ++",
+      ".../frontend/dist/assets/index-Bpdt7Zc3.css        |   1 -",
+      ".../frontend/dist/assets/index-CBPAbO7H.css        |   1 +",
+      ".../frontend/dist/index.html                       |  66 ++-",
+      "04_CMS_Document_Tabs_Frontend/frontend/index.html  |  64 ++-",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue | 537 ++++++++++-----------",
+      "vue_5173.log                                       |  12 +-",
+      "8 files changed, 408 insertions(+), 341 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "cf81dea",
+    "fullHash": "cf81dea8221b8bec3f3eef553f16a6a85812da2c",
+    "author": "goija",
+    "date": "2026-10-29 21:36:49 +0100",
+    "message": "feat(platform): Weergavepagina Perceel 369 GIS, 6 Woo-Sporen (A-F) met delete/sliding drawers, 6 Mappenbomen & Beoosten Schelde API/RSS",
+    "changes": [
+      ".../frontend/dist/assets/index--cHkctCs.js         |   38 -",
+      ".../frontend/dist/assets/index-BBj3VW55.js         |   34 +",
+      ".../frontend/dist/assets/index-Bpdt7Zc3.css        |    1 +",
+      ".../frontend/dist/assets/index-QOIbCreb.css        |    1 -",
+      ".../frontend/dist/index.html                       |   20 +-",
+      ".../frontend/frontend/package-lock.json            | 1151 +++++++++++++++",
+      ".../frontend/frontend/src/App.vue                  |  330 ++++-",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue | 1514 +++++++++++++++++---",
+      ".../frontend/src/components/TabMappenbomen.vue     |  428 ++++++",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/main.js |    6 +-",
+      "frontend/index.html                                |  673 +--------",
+      "frontend/node_modules/.package-lock.json           |    5 +",
+      "frontend/package-lock.json                         |    6 +",
+      "frontend/package.json                              |    1 +",
+      "frontend/src/App.vue                               |  951 +++++++++---",
+      "vercel.json                                        |   11 +-",
+      "vue_5173.log                                       |   16 +",
+      "17 files changed, 4090 insertions(+), 1096 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "6b7c6f8",
+    "fullHash": "6b7c6f818c67d9ca5439166d4c0fb6bb9a316d61",
+    "author": "goija",
+    "date": "2026-10-29 21:08:09 +0100",
+    "message": "feat: Leaflet GIS kaartweergave uitgebouwd met RD/WGS84 lagen, Perceel 369, Kasteel Lodijke & Geosites",
+    "changes": [
+      "03_Axum_Rust_&_GraphQL_API/data/cms_records.json   |  18 +",
+      ".../frontend/backend/Cargo.toml                    |  13 +",
+      ".../frontend/backend/src/main.rs                   | 225 ++++++++++++",
+      ".../frontend/frontend/.env.development             |   2 +",
+      ".../frontend/frontend/.env.production              |   2 +",
+      ".../frontend/frontend/index.html                   |  16 +",
+      ".../frontend/frontend/package.json                 |  19 +",
+      ".../frontend/public/data/lodijke_snapshot.json     | 107 ++++++",
+      ".../frontend/frontend/src/App.vue                  | 296 ++++++++++++++++",
+      ".../frontend/frontend/src/main.js                  |   4 +",
+      ".../frontend/frontend/vite.config.js               |  10 +",
+      ".../frontend/opstart_all.sh                        |  85 +++++",
+      ".../frontend/push_github.sh                        |  36 ++",
+      ".../frontend/src/components/Tab04Kaarten.vue       | 385 +++++++++++++++++++++",
+      "04_CMS_Document_Tabs_Frontend/frontend/vercel.json |  33 +-",
+      "15 files changed, 1249 insertions(+), 2 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "86b6749",
+    "fullHash": "86b6749acfbd5534e23faa5338ed354f31456bf4",
+    "author": "goija",
+    "date": "2026-10-29 15:46:59 +0100",
+    "message": "fix: HTML doctype, Vercel SPA asset rewrites en Axum GraphQL links hersteld",
+    "changes": [
+      "04_CMS_Document_Tabs_Frontend/frontend/index.html      | 18 +++++++++---------",
+      ".../frontend/src/components/Tab00Home.vue              | 16 ++++++++--------",
+      "04_CMS_Document_Tabs_Frontend/frontend/vercel.json     |  6 +++++-",
+      "vercel.json                                            |  6 +++++-",
+      "4 files changed, 27 insertions(+), 19 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "cdb3bf5",
+    "fullHash": "cdb3bf5a206295393e5cb829f883d02ddd2dd910",
+    "author": "goija",
+    "date": "2026-10-29 15:44:03 +0100",
+    "message": "feat: Vercel live URL (https://lodijke.vercel.app/) en GitHub repo gekoppeld op Home Page",
+    "changes": [
+      ".../frontend/src/components/Tab00Home.vue          | 267 +++++++++++++++++++++",
+      "1 file changed, 267 insertions(+)"
+    ]
+  },
+  {
+    "shortHash": "d37f5a4",
+    "fullHash": "d37f5a419a83b5daa5fb36874e79b72875b0589a",
+    "author": "goija",
+    "date": "2026-10-29 15:40:29 +0100",
+    "message": "fix: GraphQL Studio preset auto-executie, inline argumenten-parser en scrollbar fixes",
+    "changes": [
+      "03_Axum_Rust_&_GraphQL_API/data/cms_records.json |  18 ++++",
+      "03_Axum_Rust_&_GraphQL_API/src/main.rs           | 111 +++++++++++++++--------",
+      "2 files changed, 92 insertions(+), 37 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "2ab8d37",
+    "fullHash": "2ab8d3767eb814ae256ab4b2adf0700e72a1b442",
+    "author": "goija",
+    "date": "2026-10-29 15:30:50 +0100",
+    "message": "feat: Standalone zero-dependency GraphQL Studio & Axum backend actief op poort 8082",
+    "changes": [
+      "03_Axum_Rust_&_GraphQL_API/Cargo.lock              | 3230 +++-----------------",
+      "03_Axum_Rust_&_GraphQL_API/Cargo.toml              |    7 +-",
+      "03_Axum_Rust_&_GraphQL_API/data/cms_records.json   |   32 +",
+      "03_Axum_Rust_&_GraphQL_API/src/main.rs             |  244 +-",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue |  394 +--",
+      "5 files changed, 732 insertions(+), 3175 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "5e77938",
+    "fullHash": "5e7793825a4962da783b133f644efb870bedd961",
+    "author": "goija",
+    "date": "2026-10-29 14:41:24 +0100",
+    "message": "fix: herstel quirks-modus, broken cdn link en mappenboom hash routing",
+    "changes": [
+      ".../{index-DMDXjN9-.js => index--cHkctCs.js}       |   6 +-",
+      ".../{index-er8-sr_i.css => index-QOIbCreb.css}     |   2 +-",
+      ".../frontend/dist/favicon.ico                      |   0",
+      ".../frontend/dist/index.html                       |   4 +-",
+      ".../frontend/public/favicon.ico                    |   0",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue |  23 +-",
+      ".../frontend/vite.config.js                        |   3 +-",
+      "index.html                                         | 370 +--------------------",
+      "8 files changed, 28 insertions(+), 380 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "54f1f2d",
+    "fullHash": "54f1f2dc1a354ae83a561bf38471d14eb54ec93b",
+    "author": "goija",
+    "date": "2026-10-29 14:33:03 +0100",
+    "message": "fix: herstel MIME-type fout door leaflet css via npm in te laden",
+    "changes": [
+      "04_CMS_Document_Tabs_Frontend/frontend/dist/index.html | 16 ----------------",
+      "04_CMS_Document_Tabs_Frontend/frontend/index.html      | 16 ----------------",
+      "2 files changed, 32 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "12c4723",
+    "fullHash": "12c4723d2290f0929bb503b1e422f168e0e65cbb",
+    "author": "goija",
+    "date": "2026-10-29 14:30:41 +0100",
+    "message": "fix: gegarandeerde leaflet kaartweergave met globale cdn css en meervoudige invalidateSize",
+    "changes": [
+      ".../{index-DkY7y_Y2.js => index-DMDXjN9-.js}       | 18 ++---",
+      ".../frontend/dist/assets/index-DT4YmwOt.css        |  1 -",
+      ".../frontend/dist/assets/index-er8-sr_i.css        |  1 +",
+      ".../frontend/dist/index.html                       | 22 +++++-",
+      "04_CMS_Document_Tabs_Frontend/frontend/index.html  | 18 ++++-",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue | 78 +++++++++++-----------",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/main.js |  1 +",
+      "7 files changed, 86 insertions(+), 53 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "fd09c1a",
+    "fullHash": "fd09c1a720b6fd6d7c93fc98dde8f44775787212",
+    "author": "goija",
+    "date": "2026-10-29 14:27:50 +0100",
+    "message": "fix: hash routing ondersteuning voor #sporen en tegel-herberekening op vercel",
+    "changes": [
+      ".../{index-pHpqzI8P.css => index-DT4YmwOt.css}     |   2 +-",
+      ".../frontend/dist/assets/index-DkY7y_Y2.js         |  38 +++++++",
+      ".../frontend/dist/assets/index-DoQQqVIi.js         |  38 -------",
+      ".../frontend/dist/index.html                       |   4 +-",
+      "04_CMS_Document_Tabs_Frontend/frontend/src/App.vue | 116 +++++++++++++++++----",
+      "5 files changed, 135 insertions(+), 63 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "9d751f6",
+    "fullHash": "9d751f637e07eb226bcb299ee74b83283b339a3d",
+    "author": "goija",
+    "date": "2026-10-29 14:20:14 +0100",
+    "message": "fix: definitieve correctie regel 286 index.html",
+    "changes": [
+      "dist/index.html | 2 +-",
+      "index.html      | 2 +-",
+      "2 files changed, 2 insertions(+), 2 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "9af5d3a",
+    "fullHash": "9af5d3a8d63ff10453e31bb697aaa63dea1d98c7",
+    "author": "goija",
+    "date": "2026-10-29 14:14:52 +0100",
+    "message": "fix: herstel index.html commentaar en root build configuratie voor Vercel",
+    "changes": [
+      "dist/index.html   |  360 ++++++++++++++++",
+      "index.html        |    8 +-",
+      "package-lock.json | 1203 +++++++++++++++++++++++++++++++++++++++++++++++++++++",
+      "package.json      |   23 +-",
+      "4 files changed, 1585 insertions(+), 9 deletions(-)"
+    ]
+  },
+  {
+    "shortHash": "89778ae",
+    "fullHash": "89778aee67874b15b0b1b6185db618db7d2285c7",
+    "author": "goija",
+    "date": "2026-10-29 14:07:30 +0100",
+    "message": "fix: herstel HTML comment syntax in index.html voor Vercel build",
+    "changes": [
+      ".../frontend/dist/assets/index-DoQQqVIi.js         | 38 ++++++++++++++++++++++",
+      ".../frontend/dist/assets/index-pHpqzI8P.css        |  1 +",
+      ".../frontend/dist/index.html                       | 13 ++++++++",
+      "index.html                                         |  2 +-",
+      "4 files changed, 53 insertions(+), 1 deletion(-)"
+    ]
+  }
+]
